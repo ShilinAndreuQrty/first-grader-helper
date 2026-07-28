@@ -2,6 +2,7 @@ import {
   Icon28BookSpreadOutline,
   Icon28HelpCircleOutline,
   Icon28PlaceOutline,
+  Icon28SettingsOutline,
   Icon28Users3Outline,
 } from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -205,6 +206,13 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           subtitle="О проекте и обратная связь"
         >
           Помощь
+        </SimpleCell>
+        <SimpleCell
+          before={<Icon28SettingsOutline />}
+          subtitle="Группы, напоминания и приватность"
+          onClick={() => void navigator.push(PANEL_PATHS.settings)}
+        >
+          Настройки
         </SimpleCell>
       </Group>
 

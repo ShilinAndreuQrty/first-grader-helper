@@ -15,6 +15,7 @@ from app.config import get_settings
 from app.db import engine
 from app.events.router import router as events_router
 from app.knowledge.router import router as knowledge_router
+from app.notifications.router import router as notifications_router
 from app.schedule.router import router as schedule_router
 from app.students.router import router as students_router
 
@@ -39,6 +40,7 @@ app.include_router(events_router)
 app.include_router(admin_router)
 app.include_router(schedule_router)
 app.include_router(campus_router)
+app.include_router(notifications_router)
 
 
 @app.middleware("http")
@@ -70,12 +72,13 @@ async def readiness() -> dict[str, str]:
 
 
 @app.get("/api/config", tags=["system"])
-async def public_config() -> dict[str, str | bool]:
+async def public_config() -> dict[str, str | bool | int | None]:
     return {
         "app_name": settings.app_name,
         "environment": settings.app_env,
         "vk_enabled": bool(settings.vk_app_id),
         "notifications_enabled": settings.notifications_enabled,
+        "vk_community_id": settings.vk_community_id,
         "assistant_mode": (
             "retrieval" if not settings.ai_assistant_enabled else settings.assistant_mode
         ),

@@ -417,3 +417,61 @@ class ExternalScheduleCache(Base):
     payload_json: Mapped[str] = mapped_column(Text)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class NotificationPreference(TimestampMixin, Base):
+    __tablename__ = "notification_preferences"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    union_meetings: Mapped[bool] = mapped_column(Boolean, default=False)
+    selected_events: Mapped[bool] = mapped_column(Boolean, default=False)
+    announcements: Mapped[bool] = mapped_column(Boolean, default=False)
+    minutes_before: Mapped[int] = mapped_column(Integer, default=60)
+    in_app_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    vk_notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    community_messages_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class NotificationJob(TimestampMixin, Base):
+    __tablename__ = "notification_jobs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    idempotency_key: Mapped[str] = mapped_column(String(220), unique=True, index=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+    event_id: Mapped[str | None] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+    )
+    series_id: Mapped[str | None] = mapped_column(
+        ForeignKey("event_series.id", ondelete="CASCADE"),
+    )
+    occurrence_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    scheduled_for: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    channel: Mapped[str] = mapped_column(String(32), default="in_app")
+    payload_json: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="pending", index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str] = mapped_column(String(200), default="")
+
+
+class NotificationDelivery(Base):
+    __tablename__ = "notification_deliveries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("notification_jobs.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+    )
+    provider: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(24), index=True)
+    provider_message_id: Mapped[str] = mapped_column(String(160), default="")
+    error_code: Mapped[str] = mapped_column(String(80), default="")
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

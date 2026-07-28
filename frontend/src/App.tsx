@@ -14,6 +14,7 @@ import { EventsPanel } from './pages/EventsPanel'
 import { HomePanel } from './pages/HomePanel'
 import { MorePanel } from './pages/MorePanel'
 import { SchedulePanel } from './pages/SchedulePanel'
+import { SettingsPanel } from './pages/SettingsPanel'
 
 const AdminPanel = lazy(() =>
   import('./pages/AdminPanel').then((module) => ({
@@ -61,6 +62,7 @@ export function App() {
               <MorePanel id="more" />
               <LazyAdminPanel id="admin" />
               <LazyMapPanel id="map" />
+              <SettingsPanel id="settings" />
             </View>
           </Epic>
         </AppRoot>

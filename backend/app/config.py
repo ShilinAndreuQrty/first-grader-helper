@@ -28,8 +28,13 @@ class Settings(BaseSettings):
     vk_launch_max_age_seconds: int = 900
     vk_app_id: str = ""
     vk_app_secret: str = ""
+    vk_service_token: str = Field(default="", repr=False)
+    vk_community_id: int | None = None
+    vk_community_token: str = Field(default="", repr=False)
+    vk_notifications_enabled: bool = False
     bootstrap_admin_vk_ids: str = ""
     notifications_enabled: bool = False
+    notification_poll_seconds: float = 5
     tulsu_schedule_base_url: str = "https://tulsu.ru"
     tulsu_timeout_seconds: float = 8
     tulsu_cache_ttl_seconds: int = 900
@@ -59,6 +64,10 @@ class Settings(BaseSettings):
                 raise ValueError("COOKIE_SECURE must be true in production")
         if self.ai_assistant_enabled and not self.ai_api_key:
             raise ValueError("AI_API_KEY is required when AI_ASSISTANT_ENABLED=true")
+        if self.notifications_enabled and not self.vk_community_token:
+            raise ValueError(
+                "VK_COMMUNITY_TOKEN is required when NOTIFICATIONS_ENABLED=true"
+            )
         return self
 
 
