@@ -174,3 +174,87 @@ class AssistantQueryLog(Base):
     result_type: Mapped[str] = mapped_column(String(24), index=True)
     faq_ids_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class StudentGroup(TimestampMixin, Base):
+    __tablename__ = "student_groups"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    code: Mapped[str] = mapped_column(String(80))
+    normalized_code: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    academic_year: Mapped[str] = mapped_column(String(16), default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Tutor(TimestampMixin, Base):
+    __tablename__ = "tutors"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    full_name: Mapped[str] = mapped_column(String(160))
+    vk_user_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)
+    vk_url: Mapped[str] = mapped_column(String(500))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    photo_url: Mapped[str | None] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class GroupTutor(Base):
+    __tablename__ = "group_tutors"
+
+    group_id: Mapped[str] = mapped_column(
+        ForeignKey("student_groups.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    tutor_id: Mapped[str] = mapped_column(
+        ForeignKey("tutors.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class UserGroupBookmark(Base):
+    __tablename__ = "user_group_bookmarks"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    group_id: Mapped[str] = mapped_column(
+        ForeignKey("student_groups.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    group: Mapped[StudentGroup] = relationship(lazy="selectin")
+
+
+class ResourceCategory(TimestampMixin, Base):
+    __tablename__ = "resource_categories"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    slug: Mapped[str] = mapped_column(String(80), unique=True)
+    title: Mapped[str] = mapped_column(String(120))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ResourceLink(TimestampMixin, Base):
+    __tablename__ = "resource_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    category_id: Mapped[str] = mapped_column(
+        ForeignKey("resource_categories.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(200))
+    url: Mapped[str] = mapped_column(String(1000))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    icon: Mapped[str] = mapped_column(String(80), default="link")
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    category: Mapped[ResourceCategory] = relationship(lazy="selectin")

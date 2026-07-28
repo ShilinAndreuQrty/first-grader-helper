@@ -19,11 +19,15 @@ import {
   Text,
   Title,
 } from '@vkontakte/vkui'
+import { useQuery } from '@tanstack/react-query'
 
+import { getMyGroups } from '../api/students'
 import { PANEL_PATHS } from '../router'
 
 export function HomePanel({ id = 'home' }: { id?: string }) {
   const navigator = useRouteNavigator()
+  const groups = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
+  const primaryGroup = groups.data?.find((group) => group.is_primary)
 
   return (
     <Panel id={id}>
@@ -31,17 +35,24 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
       <Group>
         <Div className="hero">
           <Text className="eyebrow">ТУЛГУ · ПЕРВЫЙ КУРС</Text>
-          <Title level="1">Спокойно. Всё важное рядом.</Title>
+          <Title level="1">
+            {primaryGroup ? `Сегодня у ${primaryGroup.code}` : 'Укажите свою группу'}
+          </Title>
           <Text className="hero__text">
-            Расписание, наставники, полезные места и ответы тьюторского
-            сообщества в одном приложении.
+            {primaryGroup
+              ? 'Ближайшая пара появится здесь после обновления расписания.'
+              : 'Это откроет расписание, контакт тьютора и персональные напоминания.'}
           </Text>
           <Button
             size="l"
             stretched
-            onClick={() => void navigator.push(PANEL_PATHS.assistant)}
+            onClick={() =>
+              void navigator.push(
+                primaryGroup ? PANEL_PATHS.assistant : PANEL_PATHS.more,
+              )
+            }
           >
-            Задать вопрос
+            {primaryGroup ? 'Задать вопрос' : 'Указать свою группу'}
           </Button>
         </Div>
       </Group>
