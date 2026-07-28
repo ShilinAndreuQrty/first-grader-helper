@@ -10,6 +10,7 @@ from sqlalchemy import text
 
 from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
+from app.campus.router import router as campus_router
 from app.config import get_settings
 from app.db import engine
 from app.events.router import router as events_router
@@ -37,6 +38,7 @@ app.include_router(students_router)
 app.include_router(events_router)
 app.include_router(admin_router)
 app.include_router(schedule_router)
+app.include_router(campus_router)
 
 
 @app.middleware("http")

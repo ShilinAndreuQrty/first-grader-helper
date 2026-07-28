@@ -190,6 +190,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         <SimpleCell
           before={<Icon28PlaceOutline />}
           subtitle="Корпуса, аудитории и маршруты"
+          onClick={() => void navigator.push(PANEL_PATHS.map)}
         >
           Карта
         </SimpleCell>

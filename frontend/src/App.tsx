@@ -20,11 +20,24 @@ const AdminPanel = lazy(() =>
     default: module.AdminPanel,
   })),
 )
+const MapPanel = lazy(() =>
+  import('./pages/MapPanel').then((module) => ({
+    default: module.MapPanel,
+  })),
+)
 
 function LazyAdminPanel({ id }: { id: string }) {
   return (
     <Suspense fallback={<div aria-label="Загрузка админ-панели" />}>
       <AdminPanel id={id} />
+    </Suspense>
+  )
+}
+
+function LazyMapPanel({ id }: { id: string }) {
+  return (
+    <Suspense fallback={<div aria-label="Загрузка карты" />}>
+      <MapPanel id={id} />
     </Suspense>
   )
 }
@@ -47,6 +60,7 @@ export function App() {
               <AssistantPanel id="assistant" />
               <MorePanel id="more" />
               <LazyAdminPanel id="admin" />
+              <LazyMapPanel id="map" />
             </View>
           </Epic>
         </AppRoot>
