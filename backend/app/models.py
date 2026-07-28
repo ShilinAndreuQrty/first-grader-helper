@@ -96,3 +96,81 @@ class AuditLog(Base):
     __table_args__ = (
         Index("ix_audit_log_entity", "entity_type", "entity_id", "created_at"),
     )
+
+
+class FaqCategory(TimestampMixin, Base):
+    __tablename__ = "faq_categories"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    source_key: Mapped[str] = mapped_column(String(160), unique=True)
+    title: Mapped[str] = mapped_column(String(200))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    entries: Mapped[list[FaqEntry]] = relationship(back_populates="category", lazy="selectin")
+
+
+class FaqEntry(TimestampMixin, Base):
+    __tablename__ = "faq_entries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    category_id: Mapped[str] = mapped_column(
+        ForeignKey("faq_categories.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    question: Mapped[str] = mapped_column(String(500))
+    answer_markdown: Mapped[str] = mapped_column(Text)
+    search_keywords_json: Mapped[str] = mapped_column(Text, default="[]")
+    source_key: Mapped[str] = mapped_column(String(220), unique=True, index=True)
+    source_url: Mapped[str | None] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(24), default="needs_review", index=True)
+    is_time_sensitive: Mapped[bool] = mapped_column(Boolean, default=False)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    updated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    category: Mapped[FaqCategory] = relationship(back_populates="entries", lazy="selectin")
+
+    __table_args__ = (
+        Index("ix_faq_entries_public", "status", "valid_until", "deleted_at"),
+    )
+
+
+class FaqEntryVersion(Base):
+    __tablename__ = "faq_entry_versions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    faq_entry_id: Mapped[str] = mapped_column(
+        ForeignKey("faq_entries.id", ondelete="CASCADE"),
+        index=True,
+    )
+    version: Mapped[int] = mapped_column(Integer)
+    snapshot_json: Mapped[str] = mapped_column(Text)
+    changed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class FaqFeedback(Base):
+    __tablename__ = "faq_feedback"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    faq_entry_id: Mapped[str] = mapped_column(
+        ForeignKey("faq_entries.id", ondelete="CASCADE"),
+        index=True,
+    )
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    is_helpful: Mapped[bool] = mapped_column(Boolean)
+    comment: Mapped[str] = mapped_column(String(1000), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class AssistantQueryLog(Base):
+    __tablename__ = "assistant_query_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    query_hash: Mapped[str] = mapped_column(String(64), index=True)
+    query_hint: Mapped[str] = mapped_column(String(120), default="")
+    result_type: Mapped[str] = mapped_column(String(24), index=True)
+    faq_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

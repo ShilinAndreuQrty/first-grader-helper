@@ -1,0 +1,677 @@
+{
+  "schema_version": 1,
+  "categories": [
+    {
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "title": "Адаптация и начало обучения",
+      "sort_order": 1
+    },
+    {
+      "source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "title": "Инфраструктура и расположение",
+      "sort_order": 2
+    },
+    {
+      "source_key": "category-3-uchebnyi-process",
+      "title": "Учебный процесс",
+      "sort_order": 3
+    },
+    {
+      "source_key": "category-4-profsoyuznaya-deyatelnost",
+      "title": "Профсоюзная деятельность",
+      "sort_order": 4
+    },
+    {
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "title": "Стипендии и материальная помощь",
+      "sort_order": 5
+    },
+    {
+      "source_key": "category-6-obschezhitie",
+      "title": "Общежитие",
+      "sort_order": 6
+    },
+    {
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "title": "Досуг, оздоровление и дополнительные возможности",
+      "sort_order": 7
+    },
+    {
+      "source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya",
+      "title": "Перевод и изменение условий обучения",
+      "sort_order": 8
+    }
+  ],
+  "entries": [
+    {
+      "category_source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "question": "Как найти свою группу?",
+      "answer_markdown": "Номер своей группы ты можешь увидеть на извещении, которое получил на собрании первокурсников.",
+      "search_keywords": [],
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kak-naiti-svoyu-gruppu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "question": "Как найти своего тьютора?",
+      "answer_markdown": "Своего тьютора ты можешь найти в сообществе «Профком студентов и аспирантов ТулГУ» по номеру своей группы, либо на торжественном собрании 1 сентября.",
+      "search_keywords": [
+        "найти наставника",
+        "тьютор группы",
+        "мой тьютор"
+      ],
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kak-naiti-svoego-tyutora",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "question": "Кто такой тьютор?",
+      "answer_markdown": "Тьютор-это старшекурсник, который прошел обучение в «Школе тьюторов» и готов помочь тебе в адаптации к студенческой жизни.",
+      "search_keywords": [],
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kto-takoi-tyutor",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "question": "Какие обязанности выполняет тьютор?",
+      "answer_markdown": "Тьютор помогает адаптироваться первокурсникам, рассказывает о студенческой жизни и о первичной профсоюзной организации студентов и аспирантов ТулГУ, он помогает вступать первокурсникам в профсоюз, помогает зарегистрироваться в СКС РФ и собрать команду на легендарный посвят - « Тропа первака»",
+      "search_keywords": [],
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kakie-obyazannosti-vypolnyaet-tyutor",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-1-adaptaciya-i-nachalo-obucheniya",
+      "question": "Как стать тьютором?",
+      "answer_markdown": "Чтобы стать тьютором, необходимо быть членом профсоюза, состоять в профбюро своего института и пройти «Школу тьюторов».",
+      "search_keywords": [],
+      "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kak-stat-tyutorom",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Где находится дирекция?",
+      "answer_markdown": "Дирекция ИПМКН находится в главном корпусе, 425 кабинет.",
+      "search_keywords": [
+        "деканат",
+        "дирекция ипмкн",
+        "кабинет дирекции"
+      ],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-nahoditsya-direkciya",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Где находится вход в главный учебный корпус?",
+      "answer_markdown": "Вход в главный корпус находится со стороны улицы Смидович, там же, где и вход в 9 корпус.",
+      "search_keywords": [],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-nahoditsya-vhod-v-glavnyi-uchebnyi-korpus",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Как отличить главный корпус от девятого?",
+      "answer_markdown": "Главный корпус отделен от девятого большим зеркальным коридором, поэтому, чтобы попасть в главный корпус, нужно его пройти!",
+      "search_keywords": [],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-kak-otlichit-glavnyi-korpus-ot-devyatogo",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Где находится концертный зал ТулГУ?",
+      "answer_markdown": "Концертный зал находится  в девятом корпусе на 4 этаже.",
+      "search_keywords": [],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-nahoditsya-koncertnyi-zal-tulgu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Где я могу посмотреть нахождение каждого корпуса ТулГУ?",
+      "answer_markdown": "Поэтажную карту корпусов можно найти на сайте 2 ГИС!",
+      "search_keywords": [],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-ya-mogu-posmotret-nahozhdenie-kazhdogo-korpusa-tulgu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-2-infrastruktura-i-raspolozhenie",
+      "question": "Где можно покушать в учебное время?",
+      "answer_markdown": "На территории нашего университета  предусмотрены две столовые, которые находятся в девятом и пятом корпусах, так же есть множество буфетов и кафе «Кафедра» напротив главного корпуса.",
+      "search_keywords": [],
+      "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-mozhno-pokushat-v-uchebnoe-vremya",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Где я могу посмотреть расписание ?",
+      "answer_markdown": "Расписание ты можешь посмотреть на сайте ТулГУ, написав номер своей учебной группы, либо в своем личном кабинете.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-gde-ya-mogu-posmotret-raspisanie",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Как зайти в личный кабинет ТулГУ?",
+      "answer_markdown": "Необходимо вбить в поиск «Кабинет ТулГУ» и перейти на страницу [https://lk.tsu.tula.ru:3443/](https://lk.tsu.tula.ru:3443/), далее авторизоваться через госуслуги и все готово!",
+      "search_keywords": [
+        "лк тулгу",
+        "личный кабинет",
+        "вход в лк"
+      ],
+      "source_key": "category-3-uchebnyi-process-kak-zaiti-v-lichnyi-kabinet-tulgu",
+      "source_url": "https://lk.tsu.tula.ru:3443/",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Какие обязанности выполняет староста группы?",
+      "answer_markdown": "Староста следит за посещаемостью, посредством ведения журнала посещения, является связующим звеном между преподавателями и всей группой.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-starosta-gruppy",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Как оформить пропуск?",
+      "answer_markdown": "Пропуск в ТулГУ-это банковская карта с изображением одного из корпусов университета, чтобы ее получить, необходимо прийти в институт\n\nв назначенное время, которое вам скажет куратор",
+      "search_keywords": [
+        "карта пропуск",
+        "студенческий пропуск",
+        "получить пропуск"
+      ],
+      "source_key": "category-3-uchebnyi-process-kak-oformit-propusk",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Кто такой куратор?",
+      "answer_markdown": "Куратор -  это педагог, который выполняет роль наставника для студентов. Он служит связующим звеном между администрацией, преподавателями и студенческой группой.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kto-takoi-kurator",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Какие обязанности выполняет староста группы?",
+      "answer_markdown": "Староста следит за посещаемостью, посредством ведения журнала посещения, является связующим звеном между преподавателями и всей группой.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-starosta-gruppy-duplicate-2",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Кто такой профорг?",
+      "answer_markdown": "Профорг- это член профсоюза среди студентов, он связующее звено между профсоюзом и учебной группой.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kto-takoi-proforg",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Какие обязанности выполняет профорг группы?",
+      "answer_markdown": "Профорг группы ходит на собрания профоргов и оповещает свою группу о предстоящих профсоюзных мероприятиях и собраниях.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-proforg-gruppy",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Какие отделения предусмотрены на физ.культуре?",
+      "answer_markdown": "В ТулГУ есть такие отделения как: АФК(Адаптивная физическая культура); Аквааэробика; Баскетбол; Волейбол; Тренажерный зал для девушек; Оздоровительная гимнастика; ОФП (Общая физическая подготовка); Плавание; Скандинавская ходьба; Футбол; Атлетическая гимнастика; Художественная гимнастика.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kakie-otdeleniya-predusmotreny-na-fiz-kulture",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "В расписании много иностранных языков, нужно ли мне на все ходить?",
+      "answer_markdown": "Нет, в нашем институте по программе предусмотрен один иностранный язык на выбор: английский, французский или немецкий. Необходимо выбрать один из этих языков и ходить только на него.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-v-raspisanii-mnogo-inostrannyh-yazykov-nuzhno-li-mne-na-vse-hodit",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Где взять контакты преподавателя?",
+      "answer_markdown": "Контакты преподавателя ты можешь взять через старосту или найти страничку преподавателя в чате «Первокурсники ИПМКН».",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-gde-vzyat-kontakty-prepodavatelya",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Что будет,если не ходить на пары?",
+      "answer_markdown": "Если не посещать пары больше, чем 10 часов в месяц, то за этим следует дисциплинарное взыскание, если студент набирает 3 дисциплинарных взыскания, то его отчисляют.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-chto-budet-esli-ne-hodit-na-pary",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Что такое академический отпуск?",
+      "answer_markdown": "Академический отпуск — это право студента сделать перерыв в учёбе по уважительным причинам. Некоторые из них: медицинские показания, уход за родственником, финансовые трудности, призыв в армию и другие.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-chto-takoe-akademicheskii-otpusk",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Как я могу получить справку об обучении в институте?",
+      "answer_markdown": "Чтобы получить справку, необходимо заполнить форму в сообществе «ИПМКН@ТулГУ = {кибернетика, мехмат}», или перейдя по ссылке: [https://vk.com/pm2kn?from=search](https://vk.com/pm2kn?from=search) . Далее, когда справка готова и вас оповестят, то ее можно забрать в дирекции (Гл. 425 каб.)",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-kak-ya-mogu-poluchit-spravku-ob-obuchenii-v-institute",
+      "source_url": "https://vk.com/pm2kn?from=search",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-3-uchebnyi-process",
+      "question": "Что такое военно-учебный центр ТулГУ и как туда поступить?",
+      "answer_markdown": "Военный учебный центр (ВУЦ) осуществляет подготовку граждан по программам военной подготовки из числа обучающихся в университете по очной форме обучения по основной образовательной программе высшего образования с получением квалификации «бакалавр» или «специалист». Чтобы туда поступить, необходимо пройти конкурсный отбор, в котором учитываются физически возможности и оценки. Отбор происходит в конце первого учебного года.",
+      "search_keywords": [],
+      "source_key": "category-3-uchebnyi-process-chto-takoe-voenno-uchebnyi-centr-tulgu-i-kak-tuda-postupit",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Где находится кабинет профкома и какой график его работы?",
+      "answer_markdown": "Профком находится в главном корпусе, в 123 и 125 кабинета. Работает он с понедельника по пятницу с 10:00 до 17:30.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-gde-nahoditsya-kabinet-profkoma-i-kakoi-grafik-ego-raboty",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что такое профсоюз студентов и аспирантов ?",
+      "answer_markdown": "Профсоюз студентов и аспирантов — это форма студенческого самоуправления, цель которой — защита прав и интересов студентов, поддержка студенческих инициатив.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-profsoyuz-studentov-i-aspirantov",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Как мне стать членом профсоюза?",
+      "answer_markdown": "Чтобы войти в первичную профсоюзную организацию студентов и аспирантов ТулГУ и стать членом профсоюза, необходимо подписать заявление на вступление, которое ты можешь взять у своего тьютора. Так же стоит отметить, что при вступлении в профсоюз ежемесячно взимается профсоюзный сбор, составляющий 2,5% от стипендии, если у первокурсника нет стипендии, то он ничего не платит.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-kak-mne-stat-chlenom-profsoyuza",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Когда и где проходят профсоюзные собрания?",
+      "answer_markdown": "Профсоюзные собрания проходят каждый четверг в 17:30 в главном корпусе 403 кабинет. С нетерпением будем тебя ждать!",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-kogda-i-gde-prohodyat-profsoyuznye-sobraniya",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что будет на профсоюзном собрании?",
+      "answer_markdown": "Собрания — важная часть деятельности\n\nактива. Здесь мы узнаем самые важные новости, встречаем своих друзей, а иногда\n\nпринимаем участие в розыгрыше классных призов!\n\nТематические собрания по поводу различных праздников — Новый год, 23 Февраля и 8 Марта, День космонавтики, 9 Мая порадуют активистов особенными активностями и интересными интерактивами",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-budet-na-profsoyuznom-sobranii",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что такое профком?",
+      "answer_markdown": "Профком (профсоюзный комитет) —выборный постоянно действующий\n\nколлегиальный орган первичной профсоюзной организации, который\n\nосуществляет руководство деятельностью организации и её структурных подразделений\n\n(профсоюзных бюро), основной задачей которого является защита и представительство\n\nправ обучающихся-членов Профсоюза. Профком обеспечивает информационную,\n\nконсультативную, правовую, материальную и другие виды помощи членам Профсоюза,\n\nа также занимается организационно-массовой деятельностью.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-profkom",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что такое профбюро?",
+      "answer_markdown": "Профбюро — это профсоюзная организация студентов одного института. Состоит из председателя, его заместителя, профоргов и активистов. Профбюро занимается созданием различных мероприятий своего института.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-profbyuro",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Как мне стать членом профбюро?",
+      "answer_markdown": "Чтобы стать членом профбюро, необходимо вступить в профсоюз, ходить на собрания и всячески участвовать в жизни университета.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-kak-mne-stat-chlenom-profbyuro",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что такое команда организаторов?",
+      "answer_markdown": "Команда организаторов — это объединение самых креативных и находчивых активистов профессионалов по созданию профсоюзных мероприятий. У каждого члена команды есть своя роль, и вместе они вдохновлённо трудятся над новыми проектами, чтобы сделать студенчество в ТулГУ активнее и круче. Руководитель команды организаторов —\n\nИванникова Елизавета Олеговна.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-komanda-organizatorov",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что такое СКС РФ?",
+      "answer_markdown": "Студенческий координационный совет Общероссийского Профсоюза образования (СКС РФ) — постоянно действующий представительный орган первичных профсоюзных организаций\n\nстудентов (объединённых первичных профсоюзных организаций), действующий в рамках существующей структуры Профессионального союза работников народного образования и науки Российской̆ Федерации. Объединяет все профсоюзные организации обучающихся России и более 1,4 миллионов обучающихся — членов Профсоюза.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-sks-rf",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-4-profsoyuznaya-deyatelnost",
+      "question": "Что нужно сделать, чтобы пользоваться СКС РФ?",
+      "answer_markdown": "«СКС-дисконт» — самая большая дисконтная система для студентов всей страны в формате приложения. Программа реализуется Студенческим координационным советом Общероссийского профсоюза образования с сотрудничество с федеральным агентством по делам молодежи Росмолодежь. Приложение «СКС РФ» предоставляет возможность получать скидки и специальные предложения от партнеров программы. Для этого необходимо быть членом профсоюза и подтвердить аккаунт в профкоме.",
+      "search_keywords": [],
+      "source_key": "category-4-profsoyuznaya-deyatelnost-chto-nuzhno-sdelat-chtoby-polzovatsya-sks-rf",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Куда мне будет приходить стипендия и материальная помощь?",
+      "answer_markdown": "Стипендия и материальная помощь будет приходить на тот счет, который привязан к пропуску.",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-kuda-mne-budet-prihodit-stipendiya-i-materialnaya-pomosch",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Буду ли я получать стипендию до первой сессии, если обучаюсь на бюджете?",
+      "answer_markdown": "Да, все студенты первого курса, обучающиеся на бюджетной основе, получают стипендию до прохождения первой сессии.",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-budu-li-ya-poluchat-stipendiyu-do-pervoi-sessii-esli-obuchayus-na-byudzhete",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить академическую стипендию?",
+      "answer_markdown": "При отсутствии оценки «удовлитворительно», академических задолжностей и дисциплинарных взысканий выплачивается академическая стипендия.  Оформлять академическую стипендию никак не нужно, она автоматически придет на счет. Узнать подробную информацию ты можешь в сообществе «Профком студентов и аспирантов ТулГУ», либо перейдя по ссылке: https://vk.com/@profcom_tsu-scholarships",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-akademicheskuyu-stipendiyu",
+      "source_url": "https://vk.com/@profcom_tsu-scholarships",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить социальную стипендию?",
+      "answer_markdown": "Заявление на социальную стипендию подается через личный кабинет ТулГУ, с порядком оформления, а так же бланком заяления ты можешь ознакомиться в сообществе «Профком студентов и аспирантов ТулГУ», либо перейдя по ссылке: https://vk.com/@profcom_tsu-scholarships",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-socialnuyu-stipendiyu",
+      "source_url": "https://vk.com/@profcom_tsu-scholarships",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить повышенную академическую стипендию?",
+      "answer_markdown": "Заявление на повышенную академическую стипендию подается через личный кабинет ТулГУ, с порядком оформления, а так же бланком заяления ты можешь ознакомиться в сообществе «Профком студентов и аспирантов ТулГУ», либо перейдя по ссылке: [https://vk.com/@profcom_tsu-scholarships](https://vk.com/@profcom_tsu-scholarships)\n\nРазмеры выплат:\n34000 – 1 уровень\n17000 – 2 уровень\n9000 – 3 уровень\n3500 – 7 уровень",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-povyshennuyu-akademicheskuyu-stipendiyu",
+      "source_url": "https://vk.com/@profcom_tsu-scholarships",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить повышенную социальную стипендию?",
+      "answer_markdown": "Заявление на повышенную социальную стипендию  подавать не нужно,  ознакомиться  подробнее ты можешь в сообществе «Профком студентов и аспирантов ТулГУ», либо перейдя по ссылке: [https://vk.com/@profcom_tsu-scholarships](https://vk.com/@profcom_tsu-scholarships)\n\nУсловия назначения выплаты:\n\n- студентам-бюджетникам 1-2 курса очной формы обучения\n– оценки только «отлично» и (или) «хорошо»;\n– отсутствие академической задолженности;\n– из категории лиц, имеющих право на получение ГСС.\n\nРазмер выплаты:\n– 11600 руб. в месяц",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-povyshennuyu-socialnuyu-stipendiyu",
+      "source_url": "https://vk.com/@profcom_tsu-scholarships",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить ежемесячную материальную помощь?",
+      "answer_markdown": "Ежемесячная материальная помощь в ТулГУ назначается нуждающимся студентам-очникам, имеющим постоянную или временную регистрацию в Тульской области. Она предоставляется на один семестр по заявлению при наличии сложного финансового положения (например, низкий доход семьи, наличие детей, потеря кормильца) или по медицинским показаниям. Решение принимает стипендиальная комиссия на основании поданных документов, подтверждающих необходимость помощи.\n\nПодать заяление на ежемесячную материальную помощь и узнать о ней поподробнее ты можешь на сайте ТулГУ, либо перейдя по ссылке: [https://tulsu.ru/scholarship/financial-assistance/monthly-financial-assistance](https://tulsu.ru/scholarship/financial-assistance/monthly-financial-assistance)",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-ezhemesyachnuyu-materialnuyu-pomosch",
+      "source_url": "https://tulsu.ru/scholarship/financial-assistance/monthly-financial-assistance",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-5-stipendii-i-materialnaya-pomosch",
+      "question": "Где и как мне оформить единовременную материальную помощь?",
+      "answer_markdown": "Единовременную материальную помощь в ТулГУ могут получить студенты-очники, имеющие регистрацию в Тульской области, оказавшиеся в сложной жизненной ситуации (чрезвычайные обстоятельства, тяжелое материальное положение, необходимость лечения). Для получения необходимо подать заявление и подтверждающие документы в дирекцию своего института узнать о ней поподробнее ты можешь на сайте ТулГУ, либо перейдя по ссылке: [https://tulsu.ru/scholarship/financial-assistance/one-time-financial-assistance](https://tulsu.ru/scholarship/financial-assistance/one-time-financial-assistance)",
+      "search_keywords": [],
+      "source_key": "category-5-stipendii-i-materialnaya-pomosch-gde-i-kak-mne-oformit-edinovremennuyu-materialnuyu-pomosch",
+      "source_url": "https://tulsu.ru/scholarship/financial-assistance/one-time-financial-assistance",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-6-obschezhitie",
+      "question": "Кому предоставляются места в общежитии?",
+      "answer_markdown": "Места в общежитиях предоставляются всем иногородним обучающимся очной формы обучения, нуждающимся в жилой площади, при условии полного обеспечения местами в общежитии всех нуждающихся в жилой площади, постоянное место жительства которых находится не ближе 35 км от города Тулы, на основании:\n\nличного заявления;\n\nдокументов (при их наличии), подтверждающих принадлежность к категориям граждан, имеющим право на внеочередное поселение приказа о вселении;\n\nзаключенного договора найма специализированного жилого помещения.",
+      "search_keywords": [
+        "общага",
+        "заселение",
+        "место в общежитии"
+      ],
+      "source_key": "category-6-obschezhitie-komu-predostavlyayutsya-mesta-v-obschezhitii",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-6-obschezhitie",
+      "question": "Какие процедуры необходимо пройти, чтобы заселиться в общежитие?",
+      "answer_markdown": "Всем первокурсникам для заселения в общежитие необходимо:\n\nПройти медосмотр в медцентре ТулГУ (Оружейная, 15, 2 этаж), предоставив копии документов: паспорта, СНИЛС, полиса ОМС, справки 086-У, флюорографии, справки об эпидокружении и от дерматовенеролога (оригиналы не отдавать!).\n\nПолучить договор найма и пропуск в каб. 414, имея при себе: справку о прохождении медосмотра, копию паспорта, 3 фото 3×4 и квитанцию об оплате проживания (оплата в каб. 106).\n\nВселение происходит только при наличии договора найма.",
+      "search_keywords": [],
+      "source_key": "category-6-obschezhitie-kakie-procedury-neobhodimo-proiti-chtoby-zaselitsya-v-obschezhitie",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое студенческий журнал «Импульс» и где его можно найти?",
+      "answer_markdown": "Студенческий журнал «Импульс» — медиа-проект ППОСиА ТулГУ, над которым\n\nтрудится большая редакционная команда. Тут пишут о студентах и для студентов, о\n\nвсех университетских, городских и даже международных мероприятиях, интересных\n\nличностях нашего университета и многом другом. Выпускающий редактор — Анастасия\n\nКуликова. «Импульс» можно найти в коридорах корпусов ТулГУ.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-studencheskii-zhurnal-impuls-i-gde-ego-mozhno-naiti",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое «Бунырево» и как туда попасть?",
+      "answer_markdown": "В учебно-оздоровительном комплексе ТулГУ «Политехник» в селе Бунырёво и на Черноморском побережье. Ежегодно проводится несколько смен в формате\n\n«лагеря для взрослых» с насыщенной развлекательной программой. Новые\n\nзнакомства, незабываемые эмоции, красивая природа. А в 2024 году, благодаря усилиям\n\nпервичной профсоюзной организации, в Бунырёво смогли отправиться и студенты\n\nкоммерческой формы обучения.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-bunyrevo-i-kak-tuda-popast",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Как поехать на море от Первичной профсоюзной организации студентов и аспирантов ТулГУ?",
+      "answer_markdown": "Все очень просто! Проведи незабываемый отдых у моря в студенческой компании! Тёплые волны, красивые закаты, питание, проживание и экскурсия — всё это ждёт тебя уже в августе.\n\nНе забудь собрать все документы:\n\n→ Паспорт\n\n→ Зачётная книжка (копия диплома)\n\n→ Студенческий билет\n\n→ Профсоюзный билет\n\nЧтобы стать одним из тех, кто попадёт на Черноморское побережье, оплатив только дорогу, необходимо пройти рейтинговый отбор. Он зависит от твоего среднего балла за всё время обучения + рейтинга за различные достижения.\n\nПовысить личный рейтинг можно с помощью документов, подтверждающих достижения в творческой, общественной, научно-исследовательской и спортивной деятельности (копии грамот, дипломов, научных публикаций и иных документов). Если такие достижения у тебя есть, то бери с собой их копии и приноси к нам в профком.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-kak-poehat-na-more-ot-pervichnoi-profsoyuznoi-organizacii-studentov-i-aspirantov-tulgu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое «Профилак» и как туда попасть?",
+      "answer_markdown": "В санатории-профилактории ТулГУ вас ждут вкусные бесплатные обеды в столовой 9-го корпуса, бассейн, расслабляющие массажи и море положительных эмоций!\n\n- Оформить медицинскую справку (форма 070/у)\n\nв медицинском клиническом центре ТулГУ\n\nнужен паспорт и студенческий билет адрес МКЦ: ул. Оружейная, д. 15, к. 2\n\nграфик работы: с 9:00 до 15:00\n\n- Написать заявление на получение санаторно-курортной курсовки в профкоме (гл.-125)\n\nпотребуется санаторно-курортная карта и медицинская справка\n\n- Оформить санаторно-курортную карту (форма 072/у) в студенческой поликлинике или в поликлинике по месту жительства\n\nадрес поликлиники: ул. Смидович, д. 12\n\n- 26 мая с 8:30 до 16:00 прийти в МКЦ ТулГУ для оформления заезда.\n\nДокументы для регистрации:\n\n﻿﻿Санаторно-курортная курсовка\n\n﻿﻿Санаторно-курортная карта\n\n﻿﻿Паспорт\n\nс копией 2-5 страниц (фото и прописка)\n\n- Получить рекомендации врача по программе индивидуального оздоровления\n\n- Получить электронную карту для питания в столовой.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-profilak-i-kak-tuda-popast",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое посвят «Тропа Первака»?",
+      "answer_markdown": "«Тропа первака» — это посвящение первокурсников в студенты в формате квест-игры. «Тропа Первака» познакомит студентов с территорией студенческого городка, студенческими объединениями и историей университета. После Тропы группа станет дружной и сплоченной командой, с которой будет так легко и приятно провести студенческие годы от поступления до диплома.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-posvyat-tropa-pervaka",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое выездное обучение «Учись быть первым»?",
+      "answer_markdown": "«Учись быть первым» — выездное обучение для первокурсников, где новоиспеченные\n\nстуденты узнают об основах студенчества и профсоюзной деятельности, познакомятся со студентами других институтов, и, конечно же, смогут сплотиться со своей командой. Какая команда окажется самой сплоченной, и кто из первокурсников проявит себя как\n\nнастоящий лидер? «Учись быть первым» покажет.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-vyezdnoe-obuchenie-uchis-byt-pervym",
+      "source_url": null,
+      "status": "published",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Какие студенческие клубы есть в ТулГУ?",
+      "answer_markdown": "В ТулГУ функционируют такие студенческие клубы как: Спортивный клуб ТулГУ; Танцевальный коллектив Dance-show INSIDE; Школа звукорежиссеров и светооператоров; Лига КВН ТулГУ; Клуб военно-исторического моделирования «Факел»; Клуб парламентских дебатов; Студенческое и аспирантское научное общество; Военно-прикладной, патриотический, командо-спортивный клуб «ОМБА».",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-kakie-studencheskie-kluby-est-v-tulgu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Что такое хакатон TulaHack?",
+      "answer_markdown": "Хакатон TulaHack— это площадка для взаимодействия представителей ведущих IT-компаний с молодежным IT-сообществом, вовлечения компаний-партнеров в образовательный процесс, содействие трудоустройству выпускников IT-специальностей и развитие у них профессиональных Hard Skills и Soft Skills.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-hakaton-tulahack",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Какие скидки предусмотрены студентам?",
+      "answer_markdown": "Студентам-бюджетникам очной формы обучения предусмотрены многие скидки, начиная от многих заведений, музеев, заканчивая проездом по тульской области. Подробную информацию ты можешь уточнить у своего тьютора.",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-kakie-skidki-predusmotreny-studentam",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti",
+      "question": "Как стать волонтером?",
+      "answer_markdown": "Чтобы стать волонтером, необходимо написать в чат волонтеров в сообществе: «Объединенный волонтерский центр ТулГУ» или по ссылке: [https://vk.com/volunteers_tulgu?from=search](https://vk.com/volunteers_tulgu?from=search)",
+      "search_keywords": [],
+      "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-kak-stat-volonterom",
+      "source_url": "https://vk.com/volunteers_tulgu?from=search",
+      "status": "needs_review",
+      "is_time_sensitive": false
+    },
+    {
+      "category_source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya",
+      "question": "Могу ли я перевестись в другую группу?",
+      "answer_markdown": "Да, студент может перевестись в другую группу, но для этого необходимо обратиться к заместителю директора по учебной работе Андрияновой М.А. и написать заявление о переводе.",
+      "search_keywords": [],
+      "source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya-mogu-li-ya-perevestis-v-druguyu-gruppu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya",
+      "question": "Могу ли я перевестись в другой институт ТулГУ?",
+      "answer_markdown": "Да, студент может перевестись в другой институт ТулГУ, но для этого необходимо обратиться к заместителю директора по учебной работе Андрияновой М.А. и написать заявление о переводе.",
+      "search_keywords": [],
+      "source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya-mogu-li-ya-perevestis-v-drugoi-institut-tulgu",
+      "source_url": null,
+      "status": "needs_review",
+      "is_time_sensitive": true
+    },
+    {
+      "category_source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya",
+      "question": "Могу ли я перевестись на бюджет?",
+      "answer_markdown": "Да, студент может перевестись на бюджет, при наличии свободных бюджетных мест и отсутствии плохих оценок и задолжностей, а подробную информацию можно найти в сообществе «Профком студентов и аспирантов ТулГУ» или перейдя по ссылке:\n\nhttps://vk.com/@profcom_tsu-budget",
+      "search_keywords": [],
+      "source_key": "category-8-perevod-i-izmenenie-uslovii-obucheniya-mogu-li-ya-perevestis-na-byudzhet",
+      "source_url": "https://vk.com/@profcom_tsu-budget",
+      "status": "needs_review",
+      "is_time_sensitive": true
+    }
+  ],
+  "report": {
+    "categories": 8,
+    "questions": 60,
+    "links": 17,
+    "skipped_paragraphs": 9,
+    "duplicates": [
+      "Какие обязанности выполняет староста группы?"
+    ],
+    "warnings": []
+  }
+}

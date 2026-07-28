@@ -11,6 +11,7 @@ from sqlalchemy import text
 from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.db import engine
+from app.knowledge.router import router as knowledge_router
 
 settings = get_settings()
 app = FastAPI(
@@ -27,6 +28,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "X-CSRF-Token", "X-Request-ID"],
 )
 app.include_router(auth_router)
+app.include_router(knowledge_router)
 
 
 @app.middleware("http")
