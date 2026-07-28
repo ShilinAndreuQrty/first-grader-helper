@@ -1,0 +1,12 @@
+{
+  "name": "first-grader-helper",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "frontend:dev": "pnpm --filter frontend dev",
+    "frontend:build": "pnpm --filter frontend build",
+    "frontend:lint": "pnpm --filter frontend lint",
+    "frontend:test": "pnpm --filter frontend test:run",
+    "frontend:e2e": "pnpm --filter frontend e2e"
+  }
+}
