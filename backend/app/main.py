@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.db import engine
@@ -33,6 +34,7 @@ app.include_router(auth_router)
 app.include_router(knowledge_router)
 app.include_router(students_router)
 app.include_router(events_router)
+app.include_router(admin_router)
 
 
 @app.middleware("http")

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import {
   AdaptivityProvider,
   AppRoot,
@@ -13,6 +14,20 @@ import { EventsPanel } from './pages/EventsPanel'
 import { HomePanel } from './pages/HomePanel'
 import { MorePanel } from './pages/MorePanel'
 import { SchedulePanel } from './pages/SchedulePanel'
+
+const AdminPanel = lazy(() =>
+  import('./pages/AdminPanel').then((module) => ({
+    default: module.AdminPanel,
+  })),
+)
+
+function LazyAdminPanel({ id }: { id: string }) {
+  return (
+    <Suspense fallback={<div aria-label="Загрузка админ-панели" />}>
+      <AdminPanel id={id} />
+    </Suspense>
+  )
+}
 
 export function App() {
   const { panel = 'home' } = useActiveVkuiLocation()
@@ -31,6 +46,7 @@ export function App() {
               <EventsPanel id="events" />
               <AssistantPanel id="assistant" />
               <MorePanel id="more" />
+              <LazyAdminPanel id="admin" />
             </View>
           </Epic>
         </AppRoot>

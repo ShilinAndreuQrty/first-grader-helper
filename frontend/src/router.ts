@@ -11,6 +11,7 @@ export const PANEL_PATHS = {
   events: '/events',
   assistant: '/assistant',
   more: '/more',
+  admin: '/admin',
 } as const
 
 const routes = RoutesConfig.create([
@@ -20,10 +21,10 @@ const routes = RoutesConfig.create([
     createPanel('events', PANEL_PATHS.events),
     createPanel('assistant', PANEL_PATHS.assistant),
     createPanel('more', PANEL_PATHS.more),
+    createPanel('admin', PANEL_PATHS.admin),
   ]),
 ])
 
 // Hash routing keeps VK launch parameters in the query string and makes direct
 // links work without special rewrites on the static frontend server.
 export const router = createHashRouter(routes.getRoutes())
-

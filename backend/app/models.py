@@ -342,3 +342,68 @@ class EventSubscription(Base):
     occurrence_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class CampusBuilding(TimestampMixin, Base):
+    __tablename__ = "campus_buildings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    name: Mapped[str] = mapped_column(String(200))
+    short_name: Mapped[str] = mapped_column(String(80), unique=True)
+    address: Mapped[str] = mapped_column(String(300))
+    entrance_hint: Mapped[str] = mapped_column(String(500), default="")
+    dgis_url: Mapped[str] = mapped_column(String(1000))
+    latitude: Mapped[str | None] = mapped_column(String(32))
+    longitude: Mapped[str | None] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(24), default="needs_review", index=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CampusRoom(TimestampMixin, Base):
+    __tablename__ = "campus_rooms"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    building_id: Mapped[str] = mapped_column(
+        ForeignKey("campus_buildings.id", ondelete="CASCADE"),
+        index=True,
+    )
+    room_number: Mapped[str] = mapped_column(String(40))
+    title: Mapped[str] = mapped_column(String(160))
+    floor: Mapped[str] = mapped_column(String(20), default="")
+    directions: Mapped[str] = mapped_column(String(500), default="")
+    status: Mapped[str] = mapped_column(String(24), default="needs_review", index=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("uq_campus_room_building_number", "building_id", "room_number", unique=True),
+    )
+
+
+class Announcement(TimestampMixin, Base):
+    __tablename__ = "announcements"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    title: Mapped[str] = mapped_column(String(200))
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    importance: Mapped[str] = mapped_column(String(20), default="normal")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OnboardingStep(TimestampMixin, Base):
+    __tablename__ = "onboarding_steps"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    slug: Mapped[str] = mapped_column(String(100), unique=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(String(500), default="")
+    action_path: Mapped[str] = mapped_column(String(300), default="")
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

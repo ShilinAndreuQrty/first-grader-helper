@@ -122,3 +122,18 @@ def test_dev_auth_creates_cookie_backed_admin_session(auth_client: TestClient) -
     assert response.json()["user"]["roles"] == ["superadmin"]
     assert "ipmkn_session" in auth_client.cookies
     assert auth_client.get("/api/auth/me").status_code == 200
+    assert auth_client.get("/api/admin/dashboard").status_code == 200
+
+
+def test_student_cannot_open_admin_api(auth_client: TestClient) -> None:
+    response = auth_client.post(
+        "/api/auth/dev",
+        json={
+            "vk_user_id": 78,
+            "display_name": "Test student",
+            "profile": "student",
+        },
+    )
+
+    assert response.status_code == 200
+    assert auth_client.get("/api/admin/dashboard").status_code == 403

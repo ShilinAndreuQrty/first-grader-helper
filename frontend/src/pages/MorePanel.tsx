@@ -19,7 +19,9 @@ import {
   Spinner,
 } from '@vkontakte/vkui'
 import { useState } from 'react'
+import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 
+import { getCurrentUser } from '../api/auth'
 import {
   findGroups,
   getMyGroups,
@@ -29,9 +31,11 @@ import {
   saveGroup,
 } from '../api/students'
 import { openExternalUrl } from '../platformLinks'
+import { PANEL_PATHS } from '../router'
 
 export function MorePanel({ id = 'more' }: { id?: string }) {
   const queryClient = useQueryClient()
+  const navigator = useRouteNavigator()
   const [groupQuery, setGroupQuery] = useState('')
   const groups = useQuery({
     queryKey: ['groups', groupQuery],
@@ -49,6 +53,14 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     queryKey: ['resources'],
     queryFn: getResources,
   })
+  const currentUser = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+    retry: false,
+  })
+  const isEditor = currentUser.data?.roles.some((role) =>
+    ['superadmin', 'content_editor', 'events_editor'].includes(role),
+  )
   const refreshGroups = () =>
     queryClient.invalidateQueries({ queryKey: ['my-groups'] })
   const addGroup = useMutation({
@@ -213,6 +225,16 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           />
         )}
       </Group>
+      {isEditor && (
+        <Group header={<Header>Для команды</Header>}>
+          <SimpleCell
+            subtitle="Контент, события и аудит"
+            onClick={() => void navigator.push(PANEL_PATHS.admin)}
+          >
+            Админ-панель
+          </SimpleCell>
+        </Group>
+      )}
     </Panel>
   )
 }
