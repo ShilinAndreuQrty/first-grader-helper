@@ -58,6 +58,16 @@ export function askAssistant(
   })
 }
 
+export function sendFaqFeedback(
+  faqId: string,
+  isHelpful: boolean,
+): Promise<{ id: string }> {
+  return apiRequest(`/faq/${faqId}/feedback`, {
+    method: 'POST',
+    body: JSON.stringify({ is_helpful: isHelpful, comment: '' }),
+  })
+}
+
 function getAssistantSessionId(): string {
   const key = 'ipmkn.assistant-session'
   const current = sessionStorage.getItem(key)
@@ -66,4 +76,3 @@ function getAssistantSessionId(): string {
   sessionStorage.setItem(key, created)
   return created
 }
-

@@ -14,6 +14,7 @@ class DashboardRead(BaseModel):
     failed_assistant_queries: int
     unconfirmed_series: int
     recent_audit: int
+    open_issue_reports: int
 
 
 class FaqAdminRead(BaseModel):
@@ -91,4 +92,3 @@ class OnboardingStepWrite(BaseModel):
     action_path: str = Field(default="", max_length=300)
     sort_order: int = Field(default=0, ge=0, le=1000)
     status: ContentStatus = "draft"
-

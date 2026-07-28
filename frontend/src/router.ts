@@ -14,6 +14,7 @@ export const PANEL_PATHS = {
   admin: '/admin',
   map: '/map',
   settings: '/settings',
+  onboarding: '/onboarding',
 } as const
 
 const routes = RoutesConfig.create([
@@ -26,6 +27,7 @@ const routes = RoutesConfig.create([
     createPanel('admin', PANEL_PATHS.admin),
     createPanel('map', PANEL_PATHS.map),
     createPanel('settings', PANEL_PATHS.settings),
+    createPanel('onboarding', PANEL_PATHS.onboarding),
   ]),
 ])
 

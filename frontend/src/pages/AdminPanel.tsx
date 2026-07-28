@@ -49,6 +49,7 @@ const metricLabels: Record<string, string> = {
   failed_assistant_queries: 'Проблемные запросы',
   unconfirmed_series: 'Серии без подтверждения',
   recent_audit: 'Изменения за 7 дней',
+  open_issue_reports: 'Новые сообщения',
 }
 
 export function AdminPanel({ id = 'admin' }: { id?: string }) {

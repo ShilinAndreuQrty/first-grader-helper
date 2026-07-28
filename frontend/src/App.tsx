@@ -13,6 +13,7 @@ import { AssistantPanel } from './pages/AssistantPanel'
 import { EventsPanel } from './pages/EventsPanel'
 import { HomePanel } from './pages/HomePanel'
 import { MorePanel } from './pages/MorePanel'
+import { OnboardingPanel } from './pages/OnboardingPanel'
 import { SchedulePanel } from './pages/SchedulePanel'
 import { SettingsPanel } from './pages/SettingsPanel'
 
@@ -63,6 +64,7 @@ export function App() {
               <LazyAdminPanel id="admin" />
               <LazyMapPanel id="map" />
               <SettingsPanel id="settings" />
+              <OnboardingPanel id="onboarding" />
             </View>
           </Epic>
         </AppRoot>

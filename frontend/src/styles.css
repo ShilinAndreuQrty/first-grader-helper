@@ -137,6 +137,17 @@ body {
   border: 1px dashed var(--vkui--color_separator_primary);
 }
 
+.onboarding-progress {
+  display: grid;
+  gap: 10px;
+}
+
+.answer-feedback {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 @media (min-width: 768px) {
   .hero {
     padding: 42px;

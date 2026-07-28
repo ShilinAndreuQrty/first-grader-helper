@@ -475,3 +475,31 @@ class NotificationDelivery(Base):
     error_code: Mapped[str] = mapped_column(String(80), default="")
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class UserOnboardingProgress(Base):
+    __tablename__ = "user_onboarding_progress"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    step_id: Mapped[str] = mapped_column(
+        ForeignKey("onboarding_steps.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class IssueReport(Base):
+    __tablename__ = "issue_reports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        index=True,
+    )
+    context: Mapped[str] = mapped_column(String(100), index=True)
+    message: Mapped[str] = mapped_column(String(2000))
+    status: Mapped[str] = mapped_column(String(24), default="new", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

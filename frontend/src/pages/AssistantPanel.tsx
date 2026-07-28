@@ -26,9 +26,14 @@ import {
   askAssistant,
   getFaq,
   getFaqCategories,
+  sendFaqFeedback,
 } from '../api/knowledge'
 
 function AnswerCard({ entry }: { entry: FaqEntry }) {
+  const feedback = useMutation({
+    mutationFn: (isHelpful: boolean) => sendFaqFeedback(entry.id, isHelpful),
+  })
+
   return (
     <Card mode="shadow" className="answer-card">
       <Div>
@@ -52,6 +57,28 @@ function AnswerCard({ entry }: { entry: FaqEntry }) {
               : 'дата не указана'}
           </Text>
         )}
+        <div className="answer-feedback">
+          {feedback.isSuccess ? (
+            <Text className="muted">Спасибо за оценку</Text>
+          ) : (
+            <>
+              <Button
+                size="s"
+                mode="tertiary"
+                onClick={() => feedback.mutate(true)}
+              >
+                Полезно
+              </Button>
+              <Button
+                size="s"
+                mode="tertiary"
+                onClick={() => feedback.mutate(false)}
+              >
+                Есть ошибка
+              </Button>
+            </>
+          )}
+        </div>
       </Div>
     </Card>
   )

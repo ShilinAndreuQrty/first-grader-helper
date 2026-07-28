@@ -16,6 +16,7 @@ from app.db import engine
 from app.events.router import router as events_router
 from app.knowledge.router import router as knowledge_router
 from app.notifications.router import router as notifications_router
+from app.onboarding.router import router as onboarding_router
 from app.schedule.router import router as schedule_router
 from app.students.router import router as students_router
 
@@ -41,6 +42,7 @@ app.include_router(admin_router)
 app.include_router(schedule_router)
 app.include_router(campus_router)
 app.include_router(notifications_router)
+app.include_router(onboarding_router)
 
 
 @app.middleware("http")

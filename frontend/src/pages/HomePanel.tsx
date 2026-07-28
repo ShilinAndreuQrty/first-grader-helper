@@ -22,12 +22,20 @@ import {
 import { useQuery } from '@tanstack/react-query'
 
 import { getMyGroups } from '../api/students'
+import { getOnboarding } from '../api/onboarding'
 import { PANEL_PATHS } from '../router'
 
 export function HomePanel({ id = 'home' }: { id?: string }) {
   const navigator = useRouteNavigator()
   const groups = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
+  const onboarding = useQuery({
+    queryKey: ['onboarding'],
+    queryFn: getOnboarding,
+  })
   const primaryGroup = groups.data?.find((group) => group.is_primary)
+  const nextStep = onboarding.data?.find((step) => !step.completed)
+  const completedSteps =
+    onboarding.data?.filter((step) => step.completed).length ?? 0
 
   return (
     <Panel id={id}>
@@ -97,6 +105,17 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
           </Card>
         </CardGrid>
       </Group>
+
+      {nextStep && (
+        <Group header={<Header>Маршрут первокурсника</Header>}>
+          <SimpleCell
+            subtitle={`${completedSteps} из ${onboarding.data?.length ?? 0} · ${nextStep.description}`}
+            onClick={() => void navigator.push(PANEL_PATHS.onboarding)}
+          >
+            Следующий шаг: {nextStep.title}
+          </SimpleCell>
+        </Group>
+      )}
 
       <Group>
         <Banner

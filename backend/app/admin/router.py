@@ -29,6 +29,7 @@ from app.models import (
     EventSeries,
     FaqEntry,
     FaqEntryVersion,
+    IssueReport,
     OnboardingStep,
     ResourceCategory,
     ResourceLink,
@@ -111,6 +112,11 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
         recent_audit=await count(
             select(func.count()).select_from(AuditLog).where(
                 AuditLog.created_at >= now - timedelta(days=7)
+            )
+        ),
+        open_issue_reports=await count(
+            select(func.count()).select_from(IssueReport).where(
+                IssueReport.status == "new"
             )
         ),
     )
@@ -348,4 +354,3 @@ async def audit_log(_: AdminUser, db: Db) -> list[dict[str, Any]]:
         }
         for row in rows
     ]
-
