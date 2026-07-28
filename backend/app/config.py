@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:5173"
     cookie_secure: bool = False
     dev_auth_enabled: bool = True
+    session_ttl_seconds: int = 86_400
+    vk_launch_max_age_seconds: int = 900
     vk_app_id: str = ""
     vk_app_secret: str = ""
     bootstrap_admin_vk_ids: str = ""
