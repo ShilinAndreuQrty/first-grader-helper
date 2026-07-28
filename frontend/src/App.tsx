@@ -12,6 +12,7 @@ import { AppTabbar } from './components/AppTabbar'
 import { AssistantPanel } from './pages/AssistantPanel'
 import { EventsPanel } from './pages/EventsPanel'
 import { HomePanel } from './pages/HomePanel'
+import { LegalPanel } from './pages/LegalPanel'
 import { MorePanel } from './pages/MorePanel'
 import { OnboardingPanel } from './pages/OnboardingPanel'
 import { SchedulePanel } from './pages/SchedulePanel'
@@ -65,6 +66,8 @@ export function App() {
               <LazyMapPanel id="map" />
               <SettingsPanel id="settings" />
               <OnboardingPanel id="onboarding" />
+              <LegalPanel id="about" kind="about" />
+              <LegalPanel id="privacy" kind="privacy" />
             </View>
           </Epic>
         </AppRoot>

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import logging
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -21,6 +23,7 @@ from app.schedule.router import router as schedule_router
 from app.students.router import router as students_router
 
 settings = get_settings()
+logger = logging.getLogger("ipmkn.http")
 app = FastAPI(
     title=f"{settings.app_name} API",
     version="0.1.0",
@@ -53,11 +56,26 @@ async def request_context(
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     started = time.monotonic()
     response = await call_next(request)
+    duration_ms = (time.monotonic() - started) * 1000
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
-    response.headers["Server-Timing"] = f"app;dur={(time.monotonic() - started) * 1000:.1f}"
+    response.headers["Server-Timing"] = f"app;dur={duration_ms:.1f}"
+    # Query strings are deliberately excluded because VK launch params contain
+    # signatures and identifiers that must never reach application logs.
+    logger.info(
+        json.dumps(
+            {
+                "event": "http_request",
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": round(duration_ms, 1),
+            }
+        )
+    )
     return response
 
 

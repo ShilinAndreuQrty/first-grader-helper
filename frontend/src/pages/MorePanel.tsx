@@ -204,6 +204,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         <SimpleCell
           before={<Icon28HelpCircleOutline />}
           subtitle="О проекте и обратная связь"
+          onClick={() => void navigator.push(PANEL_PATHS.about)}
         >
           Помощь
         </SimpleCell>
@@ -213,6 +214,12 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           onClick={() => void navigator.push(PANEL_PATHS.settings)}
         >
           Настройки
+        </SimpleCell>
+        <SimpleCell
+          subtitle="Какие данные сохраняются"
+          onClick={() => void navigator.push(PANEL_PATHS.privacy)}
+        >
+          Конфиденциальность
         </SimpleCell>
       </Group>
 

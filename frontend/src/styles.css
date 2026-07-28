@@ -1,6 +1,6 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color-scheme: light;
+  color-scheme: light dark;
   --app-accent: #5b5ce2;
   --app-accent-deep: #4546c8;
 }
@@ -146,6 +146,12 @@ body {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+}
+
+.legal-copy {
+  display: grid;
+  gap: 14px;
+  line-height: 1.55;
 }
 
 @media (min-width: 768px) {

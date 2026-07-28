@@ -1,0 +1,82 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ipmkn}
+      POSTGRES_USER: ${POSTGRES_USER:-ipmkn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ipmkn} -d ${POSTGRES_DB:-ipmkn}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [internal]
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ipmkn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ipmkn}
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ipmkn}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ipmkn}
+    command: python -m app.worker
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal]
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_APP_NAME: ${APP_NAME:-ИПМКН Старт}
+        VITE_DGIS_MAPGL_KEY: ${VITE_DGIS_MAPGL_KEY:-}
+    restart: unless-stopped
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
+    depends_on: [api, frontend]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
