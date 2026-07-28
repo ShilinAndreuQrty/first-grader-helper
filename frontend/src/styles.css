@@ -108,6 +108,11 @@ body {
   gap: 6px;
 }
 
+.lesson-card {
+  display: grid;
+  gap: 8px;
+}
+
 @media (min-width: 768px) {
   .hero {
     padding: 42px;

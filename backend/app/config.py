@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     vk_app_secret: str = ""
     bootstrap_admin_vk_ids: str = ""
     notifications_enabled: bool = False
+    tulsu_schedule_base_url: str = "https://tulsu.ru"
+    tulsu_timeout_seconds: float = 8
+    tulsu_cache_ttl_seconds: int = 900
     assistant_mode: Literal["retrieval", "ai"] = "retrieval"
     ai_assistant_enabled: bool = False
     ai_api_key: str = Field(default="", repr=False)

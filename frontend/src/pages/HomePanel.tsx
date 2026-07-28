@@ -48,7 +48,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
             stretched
             onClick={() =>
               void navigator.push(
-                primaryGroup ? PANEL_PATHS.assistant : PANEL_PATHS.more,
+                primaryGroup ? PANEL_PATHS.assistant : PANEL_PATHS.schedule,
               )
             }
           >

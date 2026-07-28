@@ -407,3 +407,13 @@ class OnboardingStep(TimestampMixin, Base):
     valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ExternalScheduleCache(Base):
+    __tablename__ = "external_schedule_cache"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    cache_key: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    payload_json: Mapped[str] = mapped_column(Text)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
