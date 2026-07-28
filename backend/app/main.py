@@ -11,6 +11,7 @@ from sqlalchemy import text
 from app.auth.router import router as auth_router
 from app.config import get_settings
 from app.db import engine
+from app.events.router import router as events_router
 from app.knowledge.router import router as knowledge_router
 from app.students.router import router as students_router
 
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(knowledge_router)
 app.include_router(students_router)
+app.include_router(events_router)
 
 
 @app.middleware("http")

@@ -88,6 +88,19 @@ body {
   font-size: 12px;
 }
 
+.event-card {
+  display: grid;
+  gap: 10px;
+}
+
+.event-card .vkuiButton {
+  justify-self: start;
+}
+
+.event-card--cancelled {
+  opacity: 0.7;
+}
+
 @media (min-width: 768px) {
   .hero {
     padding: 42px;

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -258,3 +258,87 @@ class ResourceLink(TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     category: Mapped[ResourceCategory] = relationship(lazy="selectin")
+
+
+class EventSeries(TimestampMixin, Base):
+    __tablename__ = "event_series"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default="")
+    event_type: Mapped[str] = mapped_column(String(60), default="meeting", index=True)
+    recurrence_weekday: Mapped[int] = mapped_column(Integer)
+    local_start_time: Mapped[time] = mapped_column()
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    timezone: Mapped[str] = mapped_column(String(64), default="Europe/Moscow")
+    starts_on: Mapped[date] = mapped_column()
+    ends_on: Mapped[date] = mapped_column()
+    location: Mapped[str] = mapped_column(String(300), default="")
+    organizer: Mapped[str] = mapped_column(String(200), default="")
+    external_url: Mapped[str | None] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    is_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Event(TimestampMixin, Base):
+    __tablename__ = "events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default="")
+    event_type: Mapped[str] = mapped_column(String(60), default="other", index=True)
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    all_day: Mapped[bool] = mapped_column(Boolean, default=False)
+    location: Mapped[str] = mapped_column(String(300), default="")
+    organizer: Mapped[str] = mapped_column(String(200), default="")
+    external_url: Mapped[str | None] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    is_confirmed: Mapped[bool] = mapped_column(Boolean, default=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class EventOccurrenceOverride(TimestampMixin, Base):
+    __tablename__ = "event_occurrence_overrides"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    series_id: Mapped[str] = mapped_column(
+        ForeignKey("event_series.id", ondelete="CASCADE"),
+        index=True,
+    )
+    original_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    replacement_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    replacement_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(24), default="moved")
+    location: Mapped[str | None] = mapped_column(String(300))
+    is_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    __table_args__ = (
+        Index(
+            "uq_event_override_series_start",
+            "series_id",
+            "original_start",
+            unique=True,
+        ),
+    )
+
+
+class EventSubscription(Base):
+    __tablename__ = "event_subscriptions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+    event_id: Mapped[str | None] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"),
+    )
+    series_id: Mapped[str | None] = mapped_column(
+        ForeignKey("event_series.id", ondelete="CASCADE"),
+    )
+    occurrence_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
