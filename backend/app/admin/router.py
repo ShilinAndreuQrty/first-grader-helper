@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.schemas import (
+    AdminStudentRead,
     AnnouncementWrite,
     BuildingWrite,
     DashboardRead,
@@ -33,7 +34,9 @@ from app.models import (
     OnboardingStep,
     ResourceCategory,
     ResourceLink,
+    StudentGroup,
     User,
+    UserGroupBookmark,
     UserSession,
     new_id,
     utc_now,
@@ -44,6 +47,7 @@ AdminUser = Annotated[
     User,
     Depends(require_roles("superadmin", "content_editor", "events_editor")),
 ]
+SuperadminUser = Annotated[User, Depends(require_roles("superadmin"))]
 ContentUser = Annotated[
     User,
     Depends(require_roles("superadmin", "content_editor")),
@@ -121,6 +125,52 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
             )
         ),
     )
+
+
+@router.get("/users", response_model=list[AdminStudentRead])
+async def admin_users(_: SuperadminUser, db: Db) -> list[AdminStudentRead]:
+    primary_group = (
+        select(
+            UserGroupBookmark.user_id.label("user_id"),
+            StudentGroup.code.label("group_code"),
+        )
+        .join(StudentGroup, StudentGroup.id == UserGroupBookmark.group_id)
+        .where(UserGroupBookmark.is_primary.is_(True))
+        .subquery()
+    )
+    last_activity = (
+        select(
+            UserSession.user_id.label("user_id"),
+            func.max(UserSession.last_seen_at).label("last_seen_at"),
+        )
+        .group_by(UserSession.user_id)
+        .subquery()
+    )
+    rows = (
+        await db.execute(
+            select(
+                User,
+                primary_group.c.group_code,
+                last_activity.c.last_seen_at,
+            )
+            .outerjoin(primary_group, primary_group.c.user_id == User.id)
+            .outerjoin(last_activity, last_activity.c.user_id == User.id)
+            .order_by(User.created_at.desc())
+            .limit(500)
+        )
+    ).all()
+    return [
+        AdminStudentRead(
+            id=user.id,
+            vk_user_id=user.vk_user_id,
+            display_name=user.display_name or f"VK ID {user.vk_user_id}",
+            profile_url=f"https://vk.ru/id{user.vk_user_id}",
+            primary_group=group_code,
+            first_login_at=user.created_at,
+            last_activity_at=last_seen_at,
+        )
+        for user, group_code, last_seen_at in rows
+    ]
 
 
 @router.get("/faq", response_model=list[FaqAdminRead])

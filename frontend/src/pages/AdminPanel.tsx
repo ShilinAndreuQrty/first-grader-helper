@@ -27,8 +27,10 @@ import {
   createEvent,
   getAdminDashboard,
   getAdminFaq,
+  getAdminStudents,
 } from '../api/admin'
 import { ApiError } from '../api/client'
+import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
 
 const eventSchema = z
@@ -63,6 +65,12 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
   const faq = useQuery({
     queryKey: ['admin-faq'],
     queryFn: getAdminFaq,
+    retry: false,
+    enabled: dashboard.isSuccess,
+  })
+  const users = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: getAdminStudents,
     retry: false,
     enabled: dashboard.isSuccess,
   })
@@ -211,6 +219,27 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
               </SimpleCell>
             ))}
           </Group>
+
+          {users.data && (
+            <Group header={<Header>Пользователи</Header>}>
+              {users.data.map((user) => (
+                <SimpleCell
+                  key={user.id}
+                  indicator={user.primary_group ?? 'Без группы'}
+                  subtitle={`Первый вход: ${new Date(
+                    user.first_login_at,
+                  ).toLocaleString('ru-RU')} · Активность: ${
+                    user.last_activity_at
+                      ? new Date(user.last_activity_at).toLocaleString('ru-RU')
+                      : 'нет данных'
+                  }`}
+                  onClick={() => void openExternalUrl(user.profile_url)}
+                >
+                  {user.display_name}
+                </SimpleCell>
+              ))}
+            </Group>
+          )}
         </>
       )}
     </Panel>

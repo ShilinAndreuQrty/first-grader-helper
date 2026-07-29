@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hmac
 from collections.abc import Callable
+from datetime import UTC, timedelta
 from typing import Annotated
 
 from fastapi import Cookie, Depends, Header, HTTPException, status
@@ -10,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.service import hash_token
 from app.db import get_session
-from app.models import User, UserSession
+from app.models import User, UserSession, utc_now
 
 SESSION_COOKIE = "ipmkn_session"
 
@@ -27,6 +28,14 @@ async def get_current_session(
     )
     if user_session is None or not user_session.is_valid or not user_session.user.is_active:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session is invalid or expired")
+    last_seen = user_session.last_seen_at
+    if last_seen.tzinfo is None:
+        last_seen = last_seen.replace(tzinfo=UTC)
+    # A short write throttle keeps "last activity" useful without updating the
+    # session row on every API request from an open WebView.
+    if utc_now() - last_seen >= timedelta(minutes=5):
+        user_session.last_seen_at = utc_now()
+        await db.commit()
     return user_session
 
 

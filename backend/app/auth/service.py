@@ -88,6 +88,8 @@ async def get_or_create_user(
     *,
     vk_user_id: int,
     display_name: str,
+    first_name: str = "",
+    last_name: str = "",
     settings: Settings,
     force_superadmin: bool = False,
 ) -> User:
@@ -95,11 +97,22 @@ async def get_or_create_user(
         select(User).options(selectinload(User.roles)).where(User.vk_user_id == vk_user_id)
     )
     if user is None:
-        user = User(vk_user_id=vk_user_id, display_name=display_name, roles=[])
+        user = User(
+            vk_user_id=vk_user_id,
+            display_name=display_name,
+            first_name=first_name,
+            last_name=last_name,
+            roles=[],
+        )
         session.add(user)
         await session.flush()
-    elif display_name and display_name != user.display_name:
-        user.display_name = display_name
+    else:
+        if display_name and display_name != user.display_name:
+            user.display_name = display_name
+        if first_name and first_name != user.first_name:
+            user.first_name = first_name
+        if last_name and last_name != user.last_name:
+            user.last_name = last_name
 
     is_bootstrap_admin = vk_user_id in parse_bootstrap_admins(settings.bootstrap_admin_vk_ids)
     if force_superadmin or is_bootstrap_admin:

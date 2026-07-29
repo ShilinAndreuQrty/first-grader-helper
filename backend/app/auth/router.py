@@ -29,6 +29,9 @@ def auth_user(user: User) -> AuthUser:
         id=user.id,
         vk_user_id=user.vk_user_id,
         display_name=user.display_name,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        profile_url=f"https://vk.ru/id{user.vk_user_id}",
         roles=sorted(user_role.role for user_role in user.roles),
     )
 
@@ -64,10 +67,16 @@ async def vk_auth(
         secret=settings.vk_app_secret,
         max_age_seconds=settings.vk_launch_max_age_seconds,
     )
+    if payload.profile and payload.profile.id != verified.vk_user_id:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "VK profile does not match launch user")
+    first_name = payload.profile.first_name.strip() if payload.profile else ""
+    last_name = payload.profile.last_name.strip() if payload.profile else ""
     user = await get_or_create_user(
         db,
         vk_user_id=verified.vk_user_id,
-        display_name="",
+        display_name=" ".join(part for part in (first_name, last_name) if part),
+        first_name=first_name,
+        last_name=last_name,
         settings=settings,
     )
     token, csrf_token, _ = await create_session(db, user=user, settings=settings)
@@ -90,6 +99,8 @@ async def dev_auth(
         db,
         vk_user_id=payload.vk_user_id,
         display_name=payload.display_name,
+        first_name=payload.first_name.strip(),
+        last_name=payload.last_name.strip(),
         settings=settings,
         force_superadmin=payload.profile == "superadmin",
     )

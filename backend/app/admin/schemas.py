@@ -17,6 +17,16 @@ class DashboardRead(BaseModel):
     open_issue_reports: int
 
 
+class AdminStudentRead(BaseModel):
+    id: str
+    vk_user_id: int
+    display_name: str
+    profile_url: str
+    primary_group: str | None
+    first_login_at: datetime
+    last_activity_at: datetime | None
+
+
 class FaqAdminRead(BaseModel):
     id: str
     question: str

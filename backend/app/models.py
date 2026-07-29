@@ -42,6 +42,8 @@ class User(TimestampMixin, Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     vk_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(160), default="")
+    first_name: Mapped[str] = mapped_column(String(80), default="")
+    last_name: Mapped[str] = mapped_column(String(80), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     roles: Mapped[list[UserRole]] = relationship(
         back_populates="user",

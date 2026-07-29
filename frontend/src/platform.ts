@@ -35,7 +35,20 @@ export async function bootstrapPlatform(
 ): Promise<AuthBootstrap> {
   if (isVkLaunch(search)) {
     await bridge.send('VKWebAppInit')
-    return postAuth('/auth/vk', { launch_params: search }, transport)
+    let profile:
+      | { id: number; first_name: string; last_name: string }
+      | undefined
+    try {
+      const user = await bridge.send('VKWebAppGetUserInfo')
+      profile = {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      }
+    } catch {
+      // A denied profile request must not block signed VK authentication.
+    }
+    return postAuth('/auth/vk', { launch_params: search, profile }, transport)
   }
 
   // Browser mode is intentionally a separate backend endpoint that disappears
@@ -45,6 +58,8 @@ export async function bootstrapPlatform(
     {
       vk_user_id: 1,
       display_name: 'Локальный разработчик',
+      first_name: 'Локальный',
+      last_name: 'разработчик',
       profile: 'superadmin',
     },
     transport,

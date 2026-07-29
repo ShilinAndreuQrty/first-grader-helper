@@ -92,6 +92,28 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
       >
         Ещё
       </PanelHeader>
+      <Group header={<Header>Профиль</Header>}>
+        {currentUser.data && (
+          <SimpleCell
+            before={
+              <Avatar
+                size={48}
+                initials={
+                  currentUser.data.first_name.slice(0, 1) ||
+                  currentUser.data.display_name.slice(0, 1) ||
+                  'VK'
+                }
+              />
+            }
+            subtitle={`VK ID ${currentUser.data.vk_user_id}${
+              primaryGroup ? ` · группа ${primaryGroup.code}` : ' · группа не выбрана'
+            }`}
+            onClick={() => void openExternalUrl(currentUser.data.profile_url)}
+          >
+            {currentUser.data.display_name || 'Пользователь VK'}
+          </SimpleCell>
+        )}
+      </Group>
       <Group header={<Header>Мои группы</Header>}>
         <SimpleCell
           subtitle="Шесть цифр или шесть цифр и двухзначный суффикс"
