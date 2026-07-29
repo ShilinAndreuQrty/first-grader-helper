@@ -46,21 +46,27 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
       savedGroups = [
         {
           id: 'group-1',
-          code: 'Б260211',
+          code: '220031-22',
           academic_year: '2026/27',
           is_primary: true,
         },
       ]
       return json(savedGroups[0])
     }
-    if (path === '/api/schedule/groups') return json(['Б260211', 'Б260221'])
-    if (path === '/api/schedule/%D0%91260211') {
+    if (path === '/api/schedule/groups') {
       return json({
-        group_code: 'Б260211',
+        groups: ['220031-22'],
+        fetched_at: '2026-07-29T10:00:00Z',
+        is_stale: false,
+      })
+    }
+    if (path === '/api/schedule/220031-22') {
+      return json({
+        group_code: '220031-22',
         lessons: [],
         fetched_at: '2026-07-29T10:00:00Z',
         is_stale: true,
-        source_url: 'https://tulsu.ru/schedule/?search=Б260211',
+        source_url: 'https://tulsu.ru/schedule/?search=220031-22',
       })
     }
     if (path === '/api/groups/group-1/tutors') {
@@ -69,7 +75,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           id: 'tutor',
           full_name: 'Анна Тьютор',
           vk_url: 'https://vk.ru/id1',
-          description: 'Тьютор группы Б260211',
+          description: 'Тьютор группы 220031-22',
           photo_url: null,
           valid_until: null,
         },
@@ -147,11 +153,11 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
   await mockApi(page)
   await page.goto('/#/schedule')
 
-  await page.getByPlaceholder('Начните вводить номер группы').fill('Б2602')
+  await page.getByPlaceholder('Например, 220031-22').fill('220031-22')
   await page.getByRole('button', { name: 'Выбрать' }).first().click()
   await page.getByRole('button', { name: 'Ещё' }).click()
 
-  await expect(page.getByText('Б260211').last()).toBeVisible()
+  await expect(page.getByText('220031-22').last()).toBeVisible()
   await expect(page.getByText('Анна Тьютор')).toBeVisible()
 })
 
@@ -172,7 +178,7 @@ test('stale schedule and map fallback remain useful', async ({ page }) => {
   await mockApi(page, [
     {
       id: 'group-1',
-      code: 'Б260211',
+      code: '220031-22',
       academic_year: '2026/27',
       is_primary: true,
     },

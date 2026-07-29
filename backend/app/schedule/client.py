@@ -8,6 +8,7 @@ import httpx
 from pydantic import TypeAdapter, ValidationError
 
 from app.schedule.schemas import CalendarPeriod, DictionaryItem, RawScheduleLesson
+from app.students.service import is_valid_group_code, normalize_group_code
 
 ALLOWED_ENDPOINTS = {
     "dictionaries": "/schedule/queries/GetDictionaries.php",
@@ -57,8 +58,14 @@ class TulsuClient:
             items = TypeAdapter(list[DictionaryItem]).validate_python(payload)
         except ValidationError as error:
             raise TulsuUnavailable("Invalid Tulsu dictionary response") from error
-        # SORT=1 is the group namespace; teachers, rooms and subjects share this API.
-        return list(dict.fromkeys(item.value for item in items if item.kind == 1))[:30]
+        # SORT=1 also contains service variants such as subgroups after a colon.
+        # Only public group codes accepted by the app may reach persistence.
+        groups = (
+            normalize_group_code(item.value)
+            for item in items
+            if item.kind == 1 and is_valid_group_code(item.value)
+        )
+        return list(dict.fromkeys(groups))[:30]
 
     async def schedule(self, group_code: str) -> list[RawScheduleLesson]:
         payload = await self._json(
@@ -92,4 +99,3 @@ class TulsuClient:
             except (KeyError, TypeError, ValueError) as error:
                 raise TulsuUnavailable("Invalid Tulsu calendar response") from error
         return result
-

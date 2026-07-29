@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from app.db import SessionFactory
 from app.models import GroupTutor, StudentGroup, Tutor
-from app.students.service import normalize_group_code
+from app.students.service import require_valid_group_code
 
 
 class TutorCsvRow(BaseModel):
@@ -35,10 +35,15 @@ def parse_tutors_csv(path: Path) -> CsvImportResult:
         for number, raw in enumerate(csv.DictReader(source), start=2):
             try:
                 row = TutorCsvRow.model_validate(raw)
-                row.group_code = normalize_group_code(row.group_code)
+                row.group_code = require_valid_group_code(row.group_code)
                 rows.append(row)
-            except ValidationError as error:
-                errors.append(f"row {number}: {error.errors()[0]['msg']}")
+            except (ValidationError, ValueError) as error:
+                message = (
+                    error.errors()[0]["msg"]
+                    if isinstance(error, ValidationError)
+                    else str(error)
+                )
+                errors.append(f"row {number}: {message}")
     return CsvImportResult(rows=rows, errors=errors)
 
 

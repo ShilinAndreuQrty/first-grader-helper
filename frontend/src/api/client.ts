@@ -28,7 +28,14 @@ export async function apiRequest<T>(
     credentials: 'include',
   })
   if (!response.ok) {
-    throw new ApiError('Сервис временно недоступен', response.status)
+    let message = 'Сервис временно недоступен'
+    try {
+      const payload = (await response.json()) as { detail?: unknown }
+      if (typeof payload.detail === 'string') message = payload.detail
+    } catch {
+      // Some upstream failures return an empty or non-JSON body.
+    }
+    throw new ApiError(message, response.status)
   }
   if (response.status === 204) {
     return undefined as T

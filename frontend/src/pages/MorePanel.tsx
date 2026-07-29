@@ -15,16 +15,12 @@ import {
   Header,
   Panel,
   PanelHeader,
-  Search,
   SimpleCell,
-  Spinner,
 } from '@vkontakte/vkui'
-import { useState } from 'react'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 
 import { getCurrentUser } from '../api/auth'
 import {
-  findGroups,
   getMyGroups,
   getResources,
   getTutors,
@@ -37,12 +33,6 @@ import { PANEL_PATHS } from '../router'
 export function MorePanel({ id = 'more' }: { id?: string }) {
   const queryClient = useQueryClient()
   const navigator = useRouteNavigator()
-  const [groupQuery, setGroupQuery] = useState('')
-  const groups = useQuery({
-    queryKey: ['groups', groupQuery],
-    queryFn: () => findGroups(groupQuery),
-    enabled: groupQuery.trim().length > 0,
-  })
   const saved = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const primaryGroup = saved.data?.find((group) => group.is_primary)
   const tutors = useQuery({
@@ -64,10 +54,6 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
   )
   const refreshGroups = () =>
     queryClient.invalidateQueries({ queryKey: ['my-groups'] })
-  const addGroup = useMutation({
-    mutationFn: (groupId: string) => saveGroup(groupId),
-    onSuccess: refreshGroups,
-  })
   const makePrimary = useMutation({
     mutationFn: (groupId: string) => saveGroup(groupId, true),
     onSuccess: refreshGroups,
@@ -81,35 +67,12 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     <Panel id={id}>
       <PanelHeader>Ещё</PanelHeader>
       <Group header={<Header>Мои группы</Header>}>
-        <Search
-          value={groupQuery}
-          placeholder="Например, ИВТ-101"
-          onChange={(event) => setGroupQuery(event.target.value)}
-        />
-        {groups.isFetching && <Spinner size="s" />}
-        {groupQuery && groups.data?.length === 0 && (
-          <Banner
-            title="Группа не найдена"
-            subtitle="Проверьте номер. Мы не подставляем похожую группу автоматически."
-          />
-        )}
-        {groups.data?.map((group) => (
-          <SimpleCell
-            key={group.id}
-            subtitle={group.academic_year || 'Учебный год не указан'}
-            after={
-              <Button
-                size="s"
-                loading={addGroup.isPending}
-                onClick={() => addGroup.mutate(group.id)}
-              >
-                Сохранить
-              </Button>
-            }
-          >
-            {group.code}
-          </SimpleCell>
-        ))}
+        <SimpleCell
+          subtitle="Шесть цифр или шесть цифр и двухзначный суффикс"
+          onClick={() => void navigator.push(PANEL_PATHS.schedule)}
+        >
+          Найти и сохранить группу
+        </SimpleCell>
         {saved.data?.map((group) => (
           <SimpleCell
             key={group.id}

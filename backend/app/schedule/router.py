@@ -16,11 +16,12 @@ from app.schedule.client import TulsuClient, TulsuUnavailable
 from app.schedule.schemas import (
     CalendarPeriod,
     GroupCodeCreate,
+    GroupSuggestionsRead,
     ScheduleRead,
 )
-from app.schedule.service import get_group_schedule
+from app.schedule.service import get_group_schedule, get_group_suggestions
 from app.students.schemas import GroupRead
-from app.students.service import normalize_group_code
+from app.students.service import require_valid_group_code
 
 router = APIRouter(prefix="/api", tags=["schedule"])
 limiter = InMemoryRateLimiter()
@@ -39,18 +40,35 @@ def tulsu_http_client(settings: Settings) -> httpx.AsyncClient:
     )
 
 
-@router.get("/schedule/groups", response_model=list[str])
+def valid_group_code(value: str) -> str:
+    try:
+        return require_valid_group_code(value)
+    except ValueError as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Номер группы: шесть цифр и, при наличии, дефис с двумя цифрами",
+        ) from error
+
+
+@router.get("/schedule/groups", response_model=GroupSuggestionsRead)
 async def schedule_groups(
     query: str,
     request: Request,
+    db: Annotated[AsyncSession, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> list[str]:
+) -> GroupSuggestionsRead:
     if not 1 <= len(query) <= 80:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid query")
+    normalized = valid_group_code(query)
     limiter.check(f"schedule-search:{client_key(request)}", limit=20, window_seconds=60)
     async with tulsu_http_client(settings) as http:
         try:
-            return await TulsuClient(http).group_suggestions(query)
+            return await get_group_suggestions(
+                db,
+                TulsuClient(http),
+                normalized,
+                ttl_seconds=settings.tulsu_cache_ttl_seconds,
+            )
         except TulsuUnavailable as error:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -65,17 +83,22 @@ async def save_discovered_group(
     db: Annotated[AsyncSession, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> GroupRead:
-    normalized = normalize_group_code(payload.code)
+    normalized = valid_group_code(payload.code)
     async with tulsu_http_client(settings) as http:
         try:
-            suggestions = await TulsuClient(http).group_suggestions(normalized)
+            suggestions = await get_group_suggestions(
+                db,
+                TulsuClient(http),
+                normalized,
+                ttl_seconds=settings.tulsu_cache_ttl_seconds,
+            )
         except TulsuUnavailable as error:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
                 "Не удалось проверить группу в ТулГУ",
             ) from error
     exact = next(
-        (item for item in suggestions if normalize_group_code(item) == normalized),
+        (item for item in suggestions.groups if item == normalized),
         None,
     )
     if exact is None:
@@ -128,7 +151,7 @@ async def group_schedule(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ScheduleRead:
     limiter.check(f"schedule:{client_key(request)}", limit=30, window_seconds=60)
-    normalized = normalize_group_code(group_code)
+    normalized = valid_group_code(group_code)
     async with tulsu_http_client(settings) as http:
         try:
             return await get_group_schedule(
@@ -149,12 +172,12 @@ async def academic_calendar(
     group_code: str,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> list[CalendarPeriod]:
+    normalized = valid_group_code(group_code)
     async with tulsu_http_client(settings) as http:
         try:
-            return await TulsuClient(http).calendar(normalize_group_code(group_code))
+            return await TulsuClient(http).calendar(normalized)
         except TulsuUnavailable as error:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
                 "Календарь ТулГУ временно недоступен",
             ) from error
-

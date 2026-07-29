@@ -41,6 +41,12 @@ class ScheduleRead(BaseModel):
     source_url: str
 
 
+class GroupSuggestionsRead(BaseModel):
+    groups: list[str]
+    fetched_at: datetime
+    is_stale: bool
+
+
 class CalendarPeriod(BaseModel):
     starts_on: date
     ends_on: date
@@ -50,4 +56,3 @@ class CalendarPeriod(BaseModel):
 class GroupCodeCreate(BaseModel):
     code: str = Field(min_length=1, max_length=80)
     is_primary: bool = True
-

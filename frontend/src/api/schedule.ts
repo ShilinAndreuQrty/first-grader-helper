@@ -18,7 +18,13 @@ export interface GroupSchedule {
   source_url: string
 }
 
-export function findScheduleGroups(query: string): Promise<string[]> {
+export interface GroupSuggestions {
+  groups: string[]
+  fetched_at: string
+  is_stale: boolean
+}
+
+export function findScheduleGroups(query: string): Promise<GroupSuggestions> {
   return apiRequest(`/schedule/groups?query=${encodeURIComponent(query)}`)
 }
 
@@ -32,4 +38,3 @@ export function saveGroupByCode(code: string): Promise<StudentGroup> {
 export function getSchedule(groupCode: string): Promise<GroupSchedule> {
   return apiRequest(`/schedule/${encodeURIComponent(groupCode)}`)
 }
-

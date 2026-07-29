@@ -17,27 +17,36 @@ import {
   Text,
   Title,
 } from '@vkontakte/vkui'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
+import { ApiError } from '../api/client'
 import {
   findScheduleGroups,
   getSchedule,
   saveGroupByCode,
 } from '../api/schedule'
 import { getMyGroups } from '../api/students'
+import {
+  GROUP_CODE_HINT,
+  isValidGroupCode,
+  normalizeGroupCode,
+} from '../groupCode'
 import { openExternalUrl } from '../platformLinks'
 
 export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedCode, setSelectedCode] = useState('')
+  const normalizedSearch = useMemo(() => normalizeGroupCode(search), [search])
+  const hasValidSearch = isValidGroupCode(normalizedSearch)
   const saved = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const primary = saved.data?.find((group) => group.is_primary)
   const activeCode = selectedCode || primary?.code || ''
   const suggestions = useQuery({
-    queryKey: ['schedule-groups', search],
-    queryFn: () => findScheduleGroups(search),
-    enabled: search.trim().length > 0,
+    queryKey: ['schedule-groups', normalizedSearch],
+    queryFn: () => findScheduleGroups(normalizedSearch),
+    enabled: hasValidSearch,
+    retry: false,
   })
   const schedule = useQuery({
     queryKey: ['schedule', activeCode],
@@ -59,11 +68,30 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
       <Group header={<Header>Учебная группа</Header>}>
         <Search
           value={search}
-          placeholder="Начните вводить номер группы"
+          placeholder="Например, 220031-22"
           onChange={(event) => setSearch(event.target.value)}
         />
+        {search.length > 0 && !hasValidSearch && (
+          <Banner
+            title="Проверьте формат номера"
+            subtitle={GROUP_CODE_HINT}
+          />
+        )}
         {suggestions.isFetching && <Spinner size="s" />}
-        {suggestions.data?.slice(0, 10).map((code) => (
+        {suggestions.data?.is_stale && (
+          <Banner
+            title="Показан сохранённый результат"
+            subtitle={`ТулГУ сейчас недоступен. Данные обновлены ${new Date(
+              suggestions.data.fetched_at,
+            ).toLocaleString('ru-RU')}.`}
+            actions={
+              <Button onClick={() => void suggestions.refetch()}>
+                Повторить
+              </Button>
+            }
+          />
+        )}
+        {suggestions.data?.groups.slice(0, 10).map((code) => (
           <SimpleCell
             key={code}
             after={
@@ -79,10 +107,43 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
             {code}
           </SimpleCell>
         ))}
+        {hasValidSearch &&
+          suggestions.isSuccess &&
+          !suggestions.data.is_stale &&
+          suggestions.data.groups.length === 0 && (
+            <Banner
+              title="Группа не найдена"
+              subtitle="ТулГУ ответил успешно, но такого номера в актуальном словаре нет."
+              actions={
+                <Button mode="secondary" onClick={() => void suggestions.refetch()}>
+                  Повторить
+                </Button>
+              }
+            />
+          )}
         {suggestions.isError && (
           <Banner
             title="Поиск групп недоступен"
-            subtitle="ТулГУ временно не отвечает. Сохранённые группы останутся доступны."
+            subtitle="ТулГУ временно не отвечает. Это не означает, что группы не существует; сохранённые группы останутся доступны."
+            actions={
+              <Button onClick={() => void suggestions.refetch()}>
+                Повторить
+              </Button>
+            }
+          />
+        )}
+        {save.isError && (
+          <Banner
+            title={
+              save.error instanceof ApiError && save.error.status === 404
+                ? 'Группа не найдена'
+                : 'Не удалось сохранить группу'
+            }
+            subtitle={
+              save.error instanceof ApiError && save.error.status === 404
+                ? 'ТулГУ ответил успешно, но такого номера нет в актуальном словаре.'
+                : 'Проверка ТулГУ временно недоступна. Уже сохранённые группы не изменены.'
+            }
           />
         )}
         <Div>
@@ -121,6 +182,9 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
           <Banner
             title="Расписание временно недоступно"
             subtitle="Для этой группы ещё нет сохранённой копии. Попробуйте позднее."
+            actions={
+              <Button onClick={() => void schedule.refetch()}>Повторить</Button>
+            }
           />
         </Group>
       )}
