@@ -46,17 +46,29 @@ TIME_SENSITIVE_MARKERS = (
 )
 
 PUBLISHABLE_STABLE_QUESTIONS = {
+    "как найти свою группу?",
     "кто такой тьютор?",
+    "какие обязанности выполняет тьютор?",
+    "где находится дирекция?",
+    "где находится вход в главный учебный корпус?",
+    "как отличить главный корпус от девятого?",
+    "где я могу посмотреть нахождение каждого корпуса тулгу?",
+    "где я могу посмотреть расписание?",
+    "какие обязанности выполняет староста группы?",
     "кто такой куратор?",
     "кто такой профорг?",
+    "какие обязанности выполняет профорг группы?",
     "что такое академический отпуск?",
     "что такое профсоюз студентов и аспирантов?",
+    "что будет на профсоюзном собрании?",
     "что такое профком?",
     "что такое профбюро?",
+    "как мне стать членом профбюро?",
     "что такое команда организаторов?",
     "что такое скс рф?",
     "что такое посвят «тропа первака»?",
     "что такое выездное обучение «учись быть первым»?",
+    "что такое хакатон tulahack?",
 }
 
 ALIASES = {
@@ -147,7 +159,8 @@ def normalize_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).replace("ё", "е").lower()
     normalized = normalized.replace("–", "-").replace("—", "-").replace("‑", "-")
     normalized = re.sub(r"[^\w\s?«»-]", " ", normalized, flags=re.UNICODE)
-    return WHITESPACE_RE.sub(" ", normalized).strip()
+    normalized = WHITESPACE_RE.sub(" ", normalized).strip()
+    return re.sub(r"\s+\?", "?", normalized)
 
 
 def slugify(value: str, *, max_length: int = 96) -> str:
@@ -230,6 +243,7 @@ def parse_docx(path: Path) -> ImportResult:
         source_key = base_key if occurrence == 1 else f"{base_key}-duplicate-{occurrence}"
         needs_review = should_review(current_question, answer)
         time_sensitive = is_time_sensitive(current_question, answer)
+        status = "archived" if occurrence > 1 else "needs_review" if needs_review else "published"
         entries.append(
             ImportedFaq(
                 category_source_key=current_category.source_key,
@@ -238,7 +252,7 @@ def parse_docx(path: Path) -> ImportResult:
                 search_keywords=ALIASES.get(normalized_question, []),
                 source_key=source_key,
                 source_url=answer_links[0] if answer_links else None,
-                status="needs_review" if needs_review else "published",
+                status=status,
                 is_time_sensitive=time_sensitive,
             )
         )

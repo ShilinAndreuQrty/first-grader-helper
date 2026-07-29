@@ -121,9 +121,6 @@ class DeterministicRetrievalProvider:
         return self._not_found()
 
     def _answer(self, entry: FaqEntry) -> dict:
-        source = {"title": entry.question, "verified_at": entry.verified_at}
-        if entry.source_url:
-            source["url"] = entry.source_url
         return {
             "type": "answer",
             "answer": public_entry(entry),
@@ -131,7 +128,8 @@ class DeterministicRetrievalProvider:
             "faq_ids": [entry.id],
             "suggestions": [],
             "confidence": "high",
-            "sources": [source],
+            "sources": [],
+            "official_source": None,
             "verified_at": entry.verified_at,
             "mode": "retrieval",
         }
@@ -153,6 +151,7 @@ class DeterministicRetrievalProvider:
             "suggestions": suggestions,
             "confidence": "medium",
             "sources": [],
+            "official_source": None,
             "verified_at": None,
             "mode": "retrieval",
         }
@@ -166,6 +165,7 @@ class DeterministicRetrievalProvider:
             "suggestions": [],
             "confidence": "low",
             "sources": [],
+            "official_source": None,
             "verified_at": None,
             "mode": "retrieval",
         }

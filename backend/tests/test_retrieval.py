@@ -44,6 +44,8 @@ def test_typo_returns_grounded_answer() -> None:
     assert result["type"] == "answer"
     assert result["faq_ids"] == ["tutor"]
     assert result["answer"]["answer_markdown"] == entries[0].answer_markdown
+    assert result["sources"] == []
+    assert result["official_source"] is None
 
 
 def test_unpublished_entry_is_never_returned() -> None:

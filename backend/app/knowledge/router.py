@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.config import Settings, get_settings
 from app.db import get_session
-from app.knowledge.openrouter import OpenRouterFaqSelector
+from app.knowledge.openrouter import OpenRouterFaqComposer
 from app.knowledge.retrieval import (
     anonymized_query,
     is_publicly_available,
@@ -84,9 +84,7 @@ async def faq_detail(
     db: Annotated[AsyncSession, Depends(get_session)],
 ) -> FaqRead:
     entry = await db.scalar(
-        select(FaqEntry)
-        .options(selectinload(FaqEntry.category))
-        .where(FaqEntry.id == faq_id)
+        select(FaqEntry).options(selectinload(FaqEntry.category)).where(FaqEntry.id == faq_id)
     )
     if entry is None or not is_publicly_available(entry):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "FAQ entry not found")
@@ -117,7 +115,7 @@ async def assistant_query(
         ).all()
     )
 
-    selector = None
+    composer = None
     if settings.ai_assistant_enabled and await ai_budget_available(db, settings, now):
         client = httpx.AsyncClient(
             base_url=f"{settings.openrouter_base_url.rstrip('/')}/",
@@ -129,9 +127,9 @@ async def assistant_query(
             },
         )
         async with client:
-            selector = OpenRouterFaqSelector(client, model=settings.openrouter_model)
+            composer = OpenRouterFaqComposer(client, model=settings.openrouter_model)
             run = await GroundedAssistantService(
-                selector,
+                composer,
                 top_n=settings.assistant_top_n,
             ).answer(payload.text, entries, payload.selected_faq_id)
     else:
@@ -150,9 +148,7 @@ async def assistant_query(
             AssistantQueryLog(
                 query_hash=query_hash,
                 query_hint=query_hint,
-                result_type=(
-                    f"ai_{run.ai_status}" if run.ai_attempted else result["type"]
-                ),
+                result_type=(f"ai_{run.ai_status}" if run.ai_attempted else result["type"]),
                 faq_ids_json=json.dumps(result["faq_ids"]),
             )
         )

@@ -35,6 +35,7 @@ def test_importer_keeps_multiline_and_inline_answers(tmp_path: Path) -> None:
     assert "Сохраните номер группы." in result.entries[1].answer_markdown
     assert result.entries[2].answer_markdown == "Зачёт — форма промежуточной аттестации."
     assert result.entries[0].status == "published"
+    assert normalize_text("Где расписание ?") == "где расписание?"
 
 
 def test_importer_is_deterministic(tmp_path: Path) -> None:
@@ -56,6 +57,8 @@ def test_committed_seed_matches_source_baseline() -> None:
     assert len(payload["categories"]) == 8
     assert len(payload["entries"]) == 60
     assert len(payload["report"]["duplicates"]) == 1
+    assert sum(item["status"] == "published" for item in payload["entries"]) == 23
+    assert sum(item["status"] == "archived" for item in payload["entries"]) == 1
 
 
 def test_russian_normalization_handles_typos_preprocessing() -> None:

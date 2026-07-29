@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
@@ -34,11 +34,12 @@ import { AppPanelHeader } from '../components/AppPanelHeader'
 import { PANEL_PATHS } from '../router'
 
 const HISTORY_KEY = 'ipmkn.assistant-history-v1'
-const FALLBACK_QUESTIONS = [
+const QUICK_QUESTIONS = [
   'Кто такой тьютор?',
-  'Кто такой куратор?',
-  'Что такое «Тропа Первака»?',
-  'Что такое профсоюз?',
+  'Где находится дирекция?',
+  'Что такое профсоюз студентов и аспирантов?',
+  'Что такое академический отпуск?',
+  'Кому предоставляются места в общежитии?',
 ]
 
 interface ChatTurn {
@@ -47,12 +48,6 @@ interface ChatTurn {
   text?: string
   question?: string
   result?: AssistantResponse
-}
-
-function formatDate(value: string | null): string {
-  return value
-    ? new Date(value).toLocaleDateString('ru-RU')
-    : 'дата не указана'
 }
 
 function readHistory(): ChatTurn[] {
@@ -92,39 +87,16 @@ function AnswerText({ text }: { text: string }) {
   )
 }
 
-function Sources({ result }: { result: AssistantResponse }) {
-  const sources =
-    result.sources.length > 0
-      ? result.sources
-      : result.answer
-        ? [
-            {
-              title: result.answer.question,
-              url: result.answer.source_url,
-              verified_at: result.answer.verified_at,
-            },
-          ]
-        : []
-
-  if (sources.length === 0) return null
+function OfficialSource({ result }: { result: AssistantResponse }) {
+  if (!result.official_source) return null
   return (
-    <div className="assistant-sources">
-      <Text className="eyebrow">Источники</Text>
-      {sources.map((source) => (
-        <button
-          key={`${source.title}-${source.url ?? ''}`}
-          type="button"
-          className="assistant-source"
-          disabled={!source.url}
-          onClick={() =>
-            source.url ? void openExternalUrl(source.url) : undefined
-          }
-        >
-          <span>{source.title}</span>
-          <small>Проверено: {formatDate(source.verified_at)}</small>
-        </button>
-      ))}
-    </div>
+    <Button
+      size="s"
+      mode="secondary"
+      onClick={() => void openExternalUrl(result.official_source!.url)}
+    >
+      Подробнее на официальном сайте ТулГУ
+    </Button>
   )
 }
 
@@ -145,7 +117,7 @@ function AnswerActions({
     mutationFn: () =>
       reportIssue(
         'assistant',
-        `Проверить ответ помощника. FAQ: ${result.faq_ids.join(', ') || 'не найдено'}.`,
+        'Ответ помощника требует проверки.',
       ),
   })
 
@@ -217,7 +189,7 @@ function AssistantResult({
         <AnswerText
           text={result.message ?? result.answer?.answer_markdown ?? ''}
         />
-        <Sources result={result} />
+        <OfficialSource result={result} />
         <AnswerActions result={result} onTutor={onTutor} />
       </>
     )
@@ -270,9 +242,6 @@ function FaqCard({ entry }: { entry: FaqEntry }) {
             Открыть источник
           </Button>
         )}
-        <Text className="muted">
-          Проверено: {formatDate(entry.verified_at)}
-        </Text>
       </Div>
     </Card>
   )
@@ -297,12 +266,7 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
     mutationFn: ({ query, faqId }: { query: string; faqId?: string }) =>
       askAssistant(query, faqId),
   })
-  const visibleFaq = useMemo(() => faq.data?.slice(0, 12) ?? [], [faq.data])
-  const visibleQuestions = visibleFaq
-    .slice(0, 4)
-    .map((entry) => entry.question)
-  const quickQuestions =
-    visibleQuestions.length > 0 ? visibleQuestions : FALLBACK_QUESTIONS
+  const visibleFaq = faq.data ?? []
 
   useEffect(() => {
     sessionStorage.setItem(HISTORY_KEY, JSON.stringify(turns.slice(-16)))
@@ -359,7 +323,7 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
           </Text>
         </Div>
         <Div className="assistant-quick-topics">
-          {quickQuestions.map((question) => (
+          {QUICK_QUESTIONS.map((question) => (
             <Button
               key={question}
               size="s"

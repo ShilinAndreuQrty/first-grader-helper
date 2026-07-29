@@ -40,6 +40,11 @@ class AssistantSource(BaseModel):
     verified_at: datetime | None = None
 
 
+class AssistantOfficialSource(BaseModel):
+    title: str
+    url: str
+
+
 class AssistantResponse(BaseModel):
     type: Literal["answer", "suggestions", "clarification", "not_found"]
     answer: FaqRead | None = None
@@ -48,5 +53,6 @@ class AssistantResponse(BaseModel):
     suggestions: list[AssistantSuggestion]
     confidence: Literal["high", "medium", "low"]
     sources: list[AssistantSource]
+    official_source: AssistantOfficialSource | None = None
     verified_at: datetime | None = None
-    mode: Literal["retrieval", "grounded_ai"] = "retrieval"
+    mode: Literal["retrieval", "grounded_ai", "official_tulsu"] = "retrieval"

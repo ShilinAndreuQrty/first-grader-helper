@@ -34,8 +34,12 @@ export interface AssistantResponse {
     url: string | null
     verified_at: string | null
   }>
+  official_source: {
+    title: string
+    url: string
+  } | null
   verified_at: string | null
-  mode: 'retrieval' | 'grounded_ai'
+  mode: 'retrieval' | 'grounded_ai' | 'official_tulsu'
 }
 
 export function getFaqCategories(): Promise<FaqCategory[]> {

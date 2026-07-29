@@ -50,7 +50,7 @@
       "search_keywords": [],
       "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kak-naiti-svoyu-gruppu",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -84,7 +84,7 @@
       "search_keywords": [],
       "source_key": "category-1-adaptaciya-i-nachalo-obucheniya-kakie-obyazannosti-vypolnyaet-tyutor",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -108,7 +108,7 @@
       ],
       "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-nahoditsya-direkciya",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": true
     },
     {
@@ -118,7 +118,7 @@
       "search_keywords": [],
       "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-nahoditsya-vhod-v-glavnyi-uchebnyi-korpus",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -128,7 +128,7 @@
       "search_keywords": [],
       "source_key": "category-2-infrastruktura-i-raspolozhenie-kak-otlichit-glavnyi-korpus-ot-devyatogo",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -148,7 +148,7 @@
       "search_keywords": [],
       "source_key": "category-2-infrastruktura-i-raspolozhenie-gde-ya-mogu-posmotret-nahozhdenie-kazhdogo-korpusa-tulgu",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -165,10 +165,14 @@
       "category_source_key": "category-3-uchebnyi-process",
       "question": "Где я могу посмотреть расписание ?",
       "answer_markdown": "Расписание ты можешь посмотреть на сайте ТулГУ, написав номер своей учебной группы, либо в своем личном кабинете.",
-      "search_keywords": [],
+      "search_keywords": [
+        "пары",
+        "расписание группы",
+        "занятия сегодня"
+      ],
       "source_key": "category-3-uchebnyi-process-gde-ya-mogu-posmotret-raspisanie",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": true
     },
     {
@@ -192,7 +196,7 @@
       "search_keywords": [],
       "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-starosta-gruppy",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -226,7 +230,7 @@
       "search_keywords": [],
       "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-starosta-gruppy-duplicate-2",
       "source_url": null,
-      "status": "needs_review",
+      "status": "archived",
       "is_time_sensitive": false
     },
     {
@@ -246,7 +250,7 @@
       "search_keywords": [],
       "source_key": "category-3-uchebnyi-process-kakie-obyazannosti-vypolnyaet-proforg-gruppy",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -336,7 +340,7 @@
       "search_keywords": [],
       "source_key": "category-4-profsoyuznaya-deyatelnost-chto-takoe-profsoyuz-studentov-i-aspirantov",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -366,7 +370,7 @@
       "search_keywords": [],
       "source_key": "category-4-profsoyuznaya-deyatelnost-chto-budet-na-profsoyuznom-sobranii",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -396,7 +400,7 @@
       "search_keywords": [],
       "source_key": "category-4-profsoyuznaya-deyatelnost-kak-mne-stat-chlenom-profbyuro",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {
@@ -610,7 +614,7 @@
       "search_keywords": [],
       "source_key": "category-7-dosug-ozdorovlenie-i-dopolnitelnye-vozmozhnosti-chto-takoe-hakaton-tulahack",
       "source_url": null,
-      "status": "needs_review",
+      "status": "published",
       "is_time_sensitive": false
     },
     {

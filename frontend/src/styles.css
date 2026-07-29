@@ -259,42 +259,6 @@ html.vkui .vkuiPanel__in {
   border-color: var(--vkui--color_stroke_negative);
 }
 
-.assistant-sources {
-  display: grid;
-  gap: 6px;
-  padding-top: 12px;
-  border-top: 1px solid var(--app-border);
-}
-
-.assistant-source {
-  display: grid;
-  gap: 2px;
-  min-height: 44px;
-  padding: 8px 0;
-  color: var(--app-accent);
-  font: inherit;
-  text-align: left;
-  background: transparent;
-  border: 0;
-}
-
-.assistant-source:not(:disabled) {
-  cursor: pointer;
-}
-
-.assistant-source:disabled {
-  color: var(--vkui--color_text_secondary);
-}
-
-.assistant-source small {
-  color: var(--vkui--color_text_secondary);
-}
-
-.assistant-source:focus-visible {
-  outline: 2px solid var(--app-accent);
-  outline-offset: 2px;
-}
-
 .assistant-compose-actions .vkuiButton:first-child {
   flex: 1 1 220px;
 }
