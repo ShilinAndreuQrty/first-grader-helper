@@ -29,6 +29,9 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           id: 'user',
           vk_user_id: 1,
           display_name: 'E2E',
+          first_name: 'E2E',
+          last_name: '',
+          profile_url: 'https://vk.ru/id1',
           roles: ['superadmin'],
         },
       })
@@ -38,6 +41,9 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
         id: 'user',
         vk_user_id: 1,
         display_name: 'E2E',
+        first_name: 'E2E',
+        last_name: '',
+        profile_url: 'https://vk.ru/id1',
         roles: ['superadmin'],
       })
     }
@@ -124,6 +130,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
         suggestions: [],
         confidence: 'high',
         sources: [],
+        official_source: null,
         verified_at: '2026-07-29T00:00:00Z',
         mode: 'retrieval',
       })
@@ -179,6 +186,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
       })
     }
     if (path === '/api/admin/faq') return json([])
+    if (path === '/api/admin/users') return json([])
     if (path === '/api/admin/events') return json({ id: 'event' }, 201)
     if (path === '/api/campus/buildings') {
       return json([
@@ -187,6 +195,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           slug: 'main',
           name: 'Главный учебный корпус ТулГУ',
           short_name: 'Главный',
+          kind: 'academic',
           building_number: 'Главный',
           address: 'Тула, проспект Ленина, 92',
           entrance_hint: '',
@@ -207,6 +216,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           slug: 'building-9',
           name: 'Учебный корпус №9 ТулГУ',
           short_name: 'Корпус №9',
+          kind: 'academic',
           building_number: '9',
           address: 'Тула, проспект Ленина, 92',
           entrance_hint: 'Вход через 9-й корпус.',
@@ -235,7 +245,9 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
 
   await page.getByPlaceholder('Например, 220031-22').fill('220031-22')
   await page.getByRole('button', { name: 'Выбрать' }).first().click()
-  await page.getByRole('button', { name: 'Ещё' }).click()
+  await page
+    .getByRole('button', { name: 'Открыть раздел «Ещё»' })
+    .click()
 
   await expect(page.getByText('220031-22').last()).toBeVisible()
   await expect(page.getByText('Анна Тьютор')).toBeVisible()
@@ -244,7 +256,15 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
 test('home keeps a coherent dark surface and 2x2 quick start', async ({
   page,
 }) => {
-  await mockApi(page)
+  await mockApi(page, [
+    {
+      id: 'group-1',
+      code: '220031-22',
+      academic_year: '2026/27',
+      is_primary: true,
+    },
+  ])
+  await page.setViewportSize({ width: 390, height: 700 })
   await page.goto('/?vk_color_scheme=client_dark#/')
 
   await expect(page.locator('.quick-start-card')).toHaveCount(4)
@@ -259,6 +279,8 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
       document.querySelector('.quick-start-grid')!,
     ).gridTemplateColumns,
     overflow: document.documentElement.scrollWidth > window.innerWidth,
+    verticalOverflow:
+      document.documentElement.scrollHeight > window.innerHeight,
   }))
 
   expect(surface.html).toBe('rgb(25, 25, 26)')
@@ -267,8 +289,13 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
   expect(surface.panel).toBe('rgb(25, 25, 26)')
   expect(surface.columns.trim().split(/\s+/)).toHaveLength(2)
   expect(surface.overflow).toBe(false)
+  expect(surface.verticalOverflow).toBe(false)
 
-  await page.getByRole('button', { name: /Карта Корпуса и кабинеты/ }).click()
+  await page
+    .getByRole('button', {
+      name: /Важные кабинеты Дирекция и профком/,
+    })
+    .click()
   await expect(page).toHaveURL(/#\/map$/)
 
   await page.goto('/?vk_color_scheme=light#/')
@@ -287,15 +314,22 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
 test('quick start stays accessible on an extreme narrow viewport', async ({
   page,
 }) => {
-  await mockApi(page)
+  await mockApi(page, [
+    {
+      id: 'group-1',
+      code: '220031-22',
+      academic_year: '2026/27',
+      is_primary: true,
+    },
+  ])
   await page.setViewportSize({ width: 280, height: 700 })
   await page.goto('/?vk_color_scheme=client_dark#/')
 
   const quickActions = [
-    /Расписание Пары и аудитории/,
-    /События Что будет рядом/,
-    /Помощник Проверенные ответы/,
-    /Карта Корпуса и кабинеты/,
+    /Мой тьютор Контакт наставника/,
+    /Полезные ссылки Сервисы и сообщества/,
+    /Важные кабинеты Дирекция и профком/,
+    /О проекте Команда и контакты/,
   ]
   for (const name of quickActions) {
     await expect(page.getByRole('button', { name })).toBeVisible()
@@ -316,14 +350,14 @@ test('quick start stays accessible on an extreme narrow viewport', async ({
   expect(layout.columns.trim().split(/\s+/)).toHaveLength(2)
   expect(new Set(layout.heights).size).toBe(1)
 
-  const schedule = page.getByRole('button', {
-    name: /Расписание Пары и аудитории/,
+  const map = page.getByRole('button', {
+    name: /Важные кабинеты Дирекция и профком/,
   })
-  await schedule.focus()
-  await expect(schedule).toBeFocused()
-  await expect(schedule.locator('..')).toHaveCSS('outline-style', 'solid')
+  await map.focus()
+  await expect(map).toBeFocused()
+  await expect(map).toHaveCSS('outline-style', 'solid')
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#\/schedule$/)
+  await expect(page).toHaveURL(/#\/map$/)
 })
 
 test('assistant handles a typo with a grounded answer', async ({ page }) => {
@@ -338,12 +372,11 @@ test('assistant handles a typo with a grounded answer', async ({ page }) => {
   const userMessage = page.locator('.chat-message--user')
   await expect(userMessage).toBeVisible()
   await expect(userMessage).toContainText('как наити тютора')
-  await expect(page.getByText('Как найти своего тьютора?')).toBeVisible()
   await expect(
-    page.getByRole('button', {
-      name: /Как найти своего тьютора\? Проверено: 29\.07\.2026/,
-    }),
+    page.getByText('Выберите группу — приложение покажет тьютора.'),
   ).toBeVisible()
+  await expect(page.getByText('Источники', { exact: true })).toHaveCount(0)
+  await expect(page.getByText(/Проверено:/)).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Полезно' })).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Не помогло' })).toBeEnabled()
   await expect(
@@ -402,7 +435,7 @@ test('stale schedule and map fallback remain useful', async ({ page }) => {
   ).toBeVisible()
   await expect(page.getByText('Корпус №9', { exact: true })).toBeVisible()
   await expect(
-    page.getByText(/Главный и 9-й корпуса — отдельные корпуса/),
+    page.getByText(/Главный и 9-й корпуса считаются отдельными корпусами/),
   ).toBeVisible()
 
   await expect(page.getByText(/интерактивная карта отключена/i)).toBeVisible()

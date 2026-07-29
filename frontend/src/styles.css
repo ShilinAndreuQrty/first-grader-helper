@@ -113,6 +113,7 @@ html.vkui .vkuiPanel__in {
 .quick-start-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 10px;
 }
 
@@ -452,6 +453,10 @@ html.vkui .vkuiPanel__in {
   .vkuiPanel__in {
     max-width: 840px;
     margin: 0 auto;
+  }
+
+  .vkuiPanelHeader__fixed {
+    width: min(840px, 100vw);
   }
 }
 
