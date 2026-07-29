@@ -243,6 +243,7 @@ async def create_event(
         organizer=payload.organizer,
         external_url=str(payload.external_url) if payload.external_url else None,
         status=payload.status,
+        occurrence_status=payload.occurrence_status,
         is_confirmed=payload.is_confirmed,
     )
     db.add(event)

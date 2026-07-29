@@ -15,6 +15,7 @@ from app.models import (
     Event,
     EventOccurrenceOverride,
     EventSeries,
+    EventSeriesBlackout,
     EventSubscription,
     UserSession,
 )
@@ -70,13 +71,24 @@ async def public_events(
             status=(
                 "completed"
                 if as_utc(event.ends_at) < now and event.status == "published"
-                else "scheduled"
+                else event.occurrence_status
             ),
             is_confirmed=event.is_confirmed,
         )
         for event in events
     ]
     for series in series_rows:
+        blackouts = list(
+            (
+                await db.scalars(
+                    select(EventSeriesBlackout).where(
+                        EventSeriesBlackout.series_id == series.id,
+                        EventSeriesBlackout.ends_on >= range_start.date(),
+                        EventSeriesBlackout.starts_on <= range_end.date(),
+                    )
+                )
+            ).all()
+        )
         overrides = list(
             (
                 await db.scalars(
@@ -92,7 +104,13 @@ async def public_events(
             ).all()
         )
         occurrences.extend(
-            expand_weekly_series(series, overrides, range_start, range_end)
+            expand_weekly_series(
+                series,
+                overrides,
+                range_start,
+                range_end,
+                blackouts,
+            )
         )
     return sorted(occurrences, key=lambda item: item.starts_at)
 
@@ -132,4 +150,3 @@ async def subscribe_to_event(
         db.add(subscription)
     await db.commit()
     return {"id": subscription.id}
-

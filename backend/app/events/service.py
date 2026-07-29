@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.events.schemas import EventOccurrenceRead
-from app.models import EventOccurrenceOverride, EventSeries
+from app.models import EventOccurrenceOverride, EventSeries, EventSeriesBlackout
 
 
 def as_utc(value: datetime) -> datetime:
@@ -18,6 +18,7 @@ def expand_weekly_series(
     overrides: list[EventOccurrenceOverride],
     range_start: datetime,
     range_end: datetime,
+    blackouts: list[EventSeriesBlackout] | None = None,
 ) -> list[EventOccurrenceRead]:
     """Expand the bounded weekly rule; overrides retain the original occurrence ID."""
     timezone = ZoneInfo(series.timezone or "Europe/Moscow")
@@ -34,6 +35,13 @@ def expand_weekly_series(
             break
         original_end = original_start + timedelta(minutes=series.duration_minutes)
         override = by_original.get(original_start)
+        is_blacked_out = any(
+            blackout.starts_on <= cursor <= blackout.ends_on
+            for blackout in blackouts or []
+        )
+        if is_blacked_out and override is None:
+            cursor += timedelta(days=7)
+            continue
         starts_at = (
             as_utc(override.replacement_start)
             if override and override.replacement_start

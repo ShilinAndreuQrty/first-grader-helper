@@ -46,6 +46,7 @@ class EventWrite(BaseModel):
     organizer: str = Field(default="", max_length=200)
     external_url: HttpUrl | None = None
     status: ContentStatus = "draft"
+    occurrence_status: Literal["scheduled", "moved", "cancelled"] = "scheduled"
     is_confirmed: bool = True
 
     @model_validator(mode="after")

@@ -3,7 +3,17 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, date, datetime, time
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -298,6 +308,7 @@ class Event(TimestampMixin, Base):
     organizer: Mapped[str] = mapped_column(String(200), default="")
     external_url: Mapped[str | None] = mapped_column(String(1000))
     status: Mapped[str] = mapped_column(String(24), default="draft", index=True)
+    occurrence_status: Mapped[str] = mapped_column(String(24), default="scheduled")
     is_confirmed: Mapped[bool] = mapped_column(Boolean, default=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     version: Mapped[int] = mapped_column(Integer, default=1)
@@ -324,6 +335,28 @@ class EventOccurrenceOverride(TimestampMixin, Base):
             "series_id",
             "original_start",
             unique=True,
+        ),
+    )
+
+
+class EventSeriesBlackout(TimestampMixin, Base):
+    """A verified pause in a recurring series, such as exams or summer break."""
+
+    __tablename__ = "event_series_blackouts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    series_id: Mapped[str] = mapped_column(
+        ForeignKey("event_series.id", ondelete="CASCADE"),
+        index=True,
+    )
+    starts_on: Mapped[date] = mapped_column()
+    ends_on: Mapped[date] = mapped_column()
+    reason: Mapped[str] = mapped_column(String(300), default="")
+
+    __table_args__ = (
+        CheckConstraint(
+            "ends_on >= starts_on",
+            name="ck_event_series_blackout_dates",
         ),
     )
 

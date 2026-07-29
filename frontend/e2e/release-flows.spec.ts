@@ -131,6 +131,30 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           source_kind: 'official',
           contexts: ['catalog', 'about', 'official_info'],
         },
+        {
+          id: 'resource-2',
+          slug: 'profburo-ipmkn',
+          category: 'Студенческие сообщества',
+          category_slug: 'student',
+          title: 'Профбюро ИПМКН',
+          url: 'https://vk.ru/profburo_ipmkn_tsu',
+          description: 'Новости и объявления профбюро.',
+          icon: 'community',
+          source_kind: 'student',
+          contexts: ['catalog', 'meeting'],
+        },
+        {
+          id: 'resource-3',
+          slug: 'event-community',
+          category: 'Мероприятия',
+          category_slug: 'events',
+          title: 'Мероприятия ТулГУ',
+          url: 'https://vk.ru/tulsu_event',
+          description: 'Анонсы студенческих мероприятий.',
+          icon: 'event',
+          source_kind: 'student',
+          contexts: ['catalog', 'events'],
+        },
       ])
     }
     if (path === '/api/admin/dashboard') {
@@ -246,6 +270,22 @@ test('resource directory has actionable categorized links', async ({ page }) => 
   await expect(
     page.getByRole('button', { name: /Официальный сайт ТулГУ/ }),
   ).toBeEnabled()
+})
+
+test('events use one timeline and keep unknown dates honest', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/#/events')
+
+  await expect(
+    page.getByText('Дата следующего собрания уточняется', { exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText('Ожидает подтверждения')).toBeVisible()
+  await expect(page.getByText('Новых мероприятий пока нет')).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Мероприятия ТулГУ' }),
+  ).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Все' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Собрания' })).toHaveCount(0)
 })
 
 test('stale schedule and map fallback remain useful', async ({ page }) => {

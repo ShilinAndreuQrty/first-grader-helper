@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, time
 
 from app.events.service import expand_weekly_series
-from app.models import EventOccurrenceOverride, EventSeries
+from app.models import EventOccurrenceOverride, EventSeries, EventSeriesBlackout
 
 
 def make_series() -> EventSeries:
@@ -67,3 +67,35 @@ def test_cancel_and_move_are_occurrence_overrides() -> None:
     assert occurrences[1].status == "moved"
     assert occurrences[1].location == "9-й корпус"
     assert occurrences[1].is_confirmed is True
+
+
+def test_blackout_skips_unverified_recurring_occurrences() -> None:
+    series = make_series()
+    blackout = EventSeriesBlackout(
+        series_id=series.id,
+        starts_on=date(2026, 9, 7),
+        ends_on=date(2026, 9, 20),
+        reason="Учебный перерыв",
+    )
+
+    occurrences = expand_weekly_series(
+        series,
+        [],
+        datetime(2026, 9, 1, tzinfo=UTC),
+        datetime(2026, 10, 15, tzinfo=UTC),
+        [blackout],
+    )
+
+    assert [item.starts_at.day for item in occurrences] == [3, 24]
+
+
+def test_series_never_expands_past_verified_end_date() -> None:
+    occurrences = expand_weekly_series(
+        make_series(),
+        [],
+        datetime(2026, 9, 1, tzinfo=UTC),
+        datetime(2027, 1, 1, tzinfo=UTC),
+    )
+
+    assert len(occurrences) == 4
+    assert occurrences[-1].starts_at.date() == date(2026, 9, 24)

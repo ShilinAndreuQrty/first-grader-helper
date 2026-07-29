@@ -242,12 +242,64 @@ html.vkui .vkuiPanel__in {
   gap: 10px;
 }
 
-.event-card .vkuiButton {
-  justify-self: start;
+.event-card--cancelled {
+  opacity: 0.72;
 }
 
-.event-card--cancelled {
-  opacity: 0.7;
+.meeting-spotlight {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0, rgb(126 140 255 / 25%), transparent 45%),
+    linear-gradient(145deg, var(--app-surface), var(--app-surface-raised));
+  border: 1px solid var(--app-border);
+  border-left: 4px solid var(--app-highlight);
+  border-radius: 18px;
+  box-shadow: var(--app-shadow);
+}
+
+.event-status {
+  width: fit-content;
+  padding: 4px 8px;
+  color: var(--app-accent);
+  font-size: 12px;
+  font-weight: 700;
+  background: rgb(53 105 212 / 11%);
+  border-radius: 999px;
+}
+
+.event-status--cancelled {
+  color: var(--vkui--color_text_negative);
+  background: var(--vkui--color_background_negative_tint);
+}
+
+.event-status--moved,
+.event-status--pending {
+  color: var(--vkui--color_text_warning);
+  background: var(--vkui--color_background_warning);
+}
+
+.event-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-description {
+  line-height: 1.45;
+  color: var(--vkui--color_text_secondary);
+}
+
+.event-actions {
+  flex-wrap: wrap;
+}
+
+.event-empty-actions {
+  width: min(100%, 360px);
+  margin: 16px auto 0;
 }
 
 .admin-metric {
