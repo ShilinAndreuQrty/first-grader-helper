@@ -9,6 +9,7 @@ import { RouterProvider } from '@vkontakte/vk-mini-apps-router'
 import { App } from './App'
 import { bootstrapPlatform, persistCsrf } from './platform'
 import { router } from './router'
+import { appColorScheme, applyAppTheme } from './theme'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +22,7 @@ const queryClient = new QueryClient({
 })
 
 const AUTH_BOOTSTRAP_TIMEOUT_MS = 8_000
+applyAppTheme(appColorScheme)
 
 function renderApp() {
   ReactDOM.createRoot(document.getElementById('root')!).render(

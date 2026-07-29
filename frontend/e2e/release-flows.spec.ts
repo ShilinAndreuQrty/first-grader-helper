@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 import { expect, test } from '@playwright/test'
 import type { Page, Route } from '@playwright/test'
 
@@ -159,6 +161,49 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
 
   await expect(page.getByText('220031-22').last()).toBeVisible()
   await expect(page.getByText('Анна Тьютор')).toBeVisible()
+})
+
+test('home keeps a coherent dark surface and 2x2 quick start', async ({
+  page,
+}) => {
+  await mockApi(page)
+  await page.goto('/?vk_color_scheme=client_dark#/')
+
+  await expect(page.locator('.quick-start-card')).toHaveCount(4)
+  const surface = await page.evaluate(() => ({
+    html: getComputedStyle(document.documentElement).backgroundColor,
+    body: getComputedStyle(document.body).backgroundColor,
+    root: getComputedStyle(document.getElementById('root')!).backgroundColor,
+    panel: getComputedStyle(
+      document.querySelector('.vkuiPanel__in')!,
+    ).backgroundColor,
+    columns: getComputedStyle(
+      document.querySelector('.quick-start-grid')!,
+    ).gridTemplateColumns,
+    overflow: document.documentElement.scrollWidth > window.innerWidth,
+  }))
+
+  expect(surface.html).toBe('rgb(25, 25, 26)')
+  expect(surface.body).toBe('rgb(25, 25, 26)')
+  expect(surface.root).toBe('rgb(25, 25, 26)')
+  expect(surface.panel).toBe('rgb(25, 25, 26)')
+  expect(surface.columns.trim().split(/\s+/)).toHaveLength(2)
+  expect(surface.overflow).toBe(false)
+
+  await page.getByRole('button', { name: /Карта Корпуса и кабинеты/ }).click()
+  await expect(page).toHaveURL(/#\/map$/)
+
+  await page.goto('/?vk_color_scheme=light#/')
+  const lightSurface = await page.evaluate(() => ({
+    html: getComputedStyle(document.documentElement).backgroundColor,
+    body: getComputedStyle(document.body).backgroundColor,
+    panel: getComputedStyle(
+      document.querySelector('.vkuiPanel__in')!,
+    ).backgroundColor,
+  }))
+  expect(lightSurface.html).toBe('rgb(243, 245, 248)')
+  expect(lightSurface.body).toBe('rgb(243, 245, 248)')
+  expect(lightSurface.panel).toBe('rgb(243, 245, 248)')
 })
 
 test('assistant handles a typo with a grounded answer', async ({ page }) => {

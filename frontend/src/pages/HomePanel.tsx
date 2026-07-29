@@ -9,7 +9,6 @@ import {
   Banner,
   Button,
   Card,
-  CardGrid,
   Div,
   Group,
   Header,
@@ -66,44 +65,60 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
       </Group>
 
       <Group header={<Header>Быстрый старт</Header>}>
-        <CardGrid size="s">
-          <Card mode="shadow">
+        <Div className="quick-start-grid">
+          <Card mode="shadow" className="quick-start-card quick-start-card--schedule">
             <SimpleCell
-              before={<Icon28EducationOutline />}
+              before={
+                <span className="quick-start-card__icon">
+                  <Icon28EducationOutline />
+                </span>
+              }
               subtitle="Пары и аудитории"
               onClick={() => void navigator.push(PANEL_PATHS.schedule)}
             >
               Расписание
             </SimpleCell>
           </Card>
-          <Card mode="shadow">
+          <Card mode="shadow" className="quick-start-card quick-start-card--events">
             <SimpleCell
-              before={<Icon28CalendarOutline />}
+              before={
+                <span className="quick-start-card__icon">
+                  <Icon28CalendarOutline />
+                </span>
+              }
               subtitle="Что будет рядом"
               onClick={() => void navigator.push(PANEL_PATHS.events)}
             >
               События
             </SimpleCell>
           </Card>
-          <Card mode="shadow">
+          <Card mode="shadow" className="quick-start-card quick-start-card--assistant">
             <SimpleCell
-              before={<Icon28MessageOutline />}
+              before={
+                <span className="quick-start-card__icon">
+                  <Icon28MessageOutline />
+                </span>
+              }
               subtitle="Проверенные ответы"
               onClick={() => void navigator.push(PANEL_PATHS.assistant)}
             >
               Помощник
             </SimpleCell>
           </Card>
-          <Card mode="shadow">
+          <Card mode="shadow" className="quick-start-card quick-start-card--map">
             <SimpleCell
-              before={<Icon28PlaceOutline />}
+              before={
+                <span className="quick-start-card__icon">
+                  <Icon28PlaceOutline />
+                </span>
+              }
               subtitle="Корпуса и кабинеты"
-              onClick={() => void navigator.push(PANEL_PATHS.more)}
+              onClick={() => void navigator.push(PANEL_PATHS.map)}
             >
               Карта
             </SimpleCell>
           </Card>
-        </CardGrid>
+        </Div>
       </Group>
 
       {nextStep && (
@@ -119,7 +134,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
 
       <Group>
         <Banner
-          title="Неофициальный проект"
+          title="Проверяйте важное"
           subtitle="Приложение создано тьюторским сообществом ИПМКН и не заменяет официальные сообщения ТулГУ."
         />
       </Group>

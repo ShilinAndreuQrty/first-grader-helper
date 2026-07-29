@@ -17,6 +17,7 @@ import { MorePanel } from './pages/MorePanel'
 import { OnboardingPanel } from './pages/OnboardingPanel'
 import { SchedulePanel } from './pages/SchedulePanel'
 import { SettingsPanel } from './pages/SettingsPanel'
+import { appColorScheme } from './theme'
 
 const AdminPanel = lazy(() =>
   import('./pages/AdminPanel').then((module) => ({
@@ -49,7 +50,7 @@ export function App() {
   const { panel = 'home' } = useActiveVkuiLocation()
 
   return (
-    <ConfigProvider>
+    <ConfigProvider colorScheme={appColorScheme}>
       <AdaptivityProvider>
         <AppRoot>
           <Epic
