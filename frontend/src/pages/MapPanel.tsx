@@ -184,7 +184,7 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
                 <Text className="muted">{selected.entrance_hint}</Text>
               )}
             </Div>
-            <MapCanvas building={selected} />
+            <MapCanvas key={selected.id} building={selected} />
             <Div>
               <ButtonGroup mode="horizontal" gap="s" stretched>
                 <Button

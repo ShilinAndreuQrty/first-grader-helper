@@ -346,7 +346,7 @@ test('stale schedule and map fallback remain useful', async ({ page }) => {
     page.getByText(/Главный и 9-й корпуса — отдельные корпуса/),
   ).toBeVisible()
 
-  await expect(page.getByText(/ключ 2ГИС не настроен/i)).toBeVisible()
+  await expect(page.getByText(/интерактивная карта отключена/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
 })
 

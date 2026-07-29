@@ -330,12 +330,17 @@ html.vkui .vkuiPanel__in {
   border-radius: 12px;
 }
 
-.map-canvas,
+.map-shell,
 .map-fallback {
+  position: relative;
   min-height: 280px;
   margin: 12px 16px;
   overflow: hidden;
   border-radius: 16px;
+}
+
+.map-canvas {
+  height: clamp(280px, 50vh, 360px);
 }
 
 .map-fallback {
@@ -346,6 +351,22 @@ html.vkui .vkuiPanel__in {
   color: var(--vkui--color_text_secondary);
   text-align: center;
   background: var(--vkui--color_background_secondary);
+  border: 1px dashed var(--vkui--color_separator_primary);
+}
+
+.map-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 24px;
+  color: var(--vkui--color_text_secondary);
+  text-align: center;
+  background: var(--app-surface-raised);
+}
+
+.map-status--error {
   border: 1px dashed var(--vkui--color_separator_primary);
 }
 

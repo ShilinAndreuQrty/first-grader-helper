@@ -56,6 +56,8 @@ services:
     environment:
       VITE_API_BASE_URL: /api
       VITE_APP_NAME: ${APP_NAME:-ИПМКН Старт}
+      VITE_DGIS_ENABLED: ${DGIS_ENABLED:-false}
+      VITE_DGIS_MAPGL_KEY: ${VITE_DGIS_MAPGL_KEY:-}
     command: pnpm dev --host 0.0.0.0
     depends_on:
       api:

@@ -24,6 +24,7 @@ class BuildingSeed(TypedDict):
     complex_slug: str
     dgis_url: str
     dgis_object_id: str
+    dgis_complex_id: str | None
     source_url: str
     latitude: str | None
     longitude: str | None
@@ -45,6 +46,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "main-9",
         "dgis_url": "https://2gis.ru/tula/geo/5067185235966202",
         "dgis_object_id": "5067185235966202",
+        "dgis_complex_id": "5067185235966202",
         "source_url": "https://tulsu.ru/facilities/academic-building/4",
         "latitude": "54.166259",
         "longitude": "37.586635",
@@ -61,6 +63,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067533128372221",
         "dgis_object_id": "5067533128372221",
+        "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/2",
         "latitude": None,
         "longitude": None,
@@ -77,6 +80,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/geo/70030076867233638",
         "dgis_object_id": "70030076867233638",
+        "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/9",
         "latitude": "54.172682",
         "longitude": "37.594327",
@@ -93,6 +97,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/70000001096985234",
         "dgis_object_id": "70000001096985234",
+        "dgis_complex_id": "70000001096985234",
         "source_url": "https://tulsu.ru/facilities/academic-building/10",
         "latitude": None,
         "longitude": None,
@@ -109,6 +114,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067533128372217",
         "dgis_object_id": "5067533128372217",
+        "dgis_complex_id": "5067533128372217",
         "source_url": "https://tulsu.ru/facilities/academic-building/12",
         "latitude": None,
         "longitude": None,
@@ -125,6 +131,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067533128433198",
         "dgis_object_id": "5067533128433198",
+        "dgis_complex_id": "5067533128433198",
         "source_url": "https://tulsu.ru/facilities/academic-building/13",
         "latitude": None,
         "longitude": None,
@@ -141,6 +148,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/70000001067025114",
         "dgis_object_id": "70000001067025114",
+        "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/16",
         "latitude": None,
         "longitude": None,
@@ -160,6 +168,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "main-9",
         "dgis_url": "https://2gis.ru/tula/geo/5067185235966202",
         "dgis_object_id": "5067185235966202",
+        "dgis_complex_id": "5067185235966202",
         "source_url": "https://tulsu.ru/facilities/academic-building/8",
         "latitude": "54.166259",
         "longitude": "37.586635",
@@ -176,6 +185,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067533128372227",
         "dgis_object_id": "5067533128372227",
+        "dgis_complex_id": "5067533128372227",
         "source_url": "https://tulsu.ru/facilities/academic-building/17",
         "latitude": "54.167529",
         "longitude": "37.585494",
@@ -192,6 +202,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067533128433192",
         "dgis_object_id": "5067533128433192",
+        "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/3",
         "latitude": None,
         "longitude": None,
@@ -208,6 +219,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/firm/5067077861790182",
         "dgis_object_id": "5067077861790182",
+        "dgis_complex_id": "5067077861790182",
         "source_url": "https://tulsu.ru/facilities/academic-building/18",
         "latitude": "54.174237",
         "longitude": "37.593557",
@@ -224,6 +236,7 @@ BUILDINGS: list[BuildingSeed] = [
         "complex_slug": "",
         "dgis_url": "https://2gis.ru/tula/geo/5067185235967331",
         "dgis_object_id": "5067185235967331",
+        "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/14",
         "latitude": None,
         "longitude": None,
@@ -260,7 +273,6 @@ async def seed_campus() -> dict[str, int]:
                     if field == "aliases"
                     else value,
                 )
-            building.dgis_complex_id = None
             building.status = "published"
             building.verified_at = CHECKED_AT
             building.deleted_at = None

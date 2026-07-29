@@ -53,7 +53,9 @@ describe('MapPanel', () => {
     expect(
       await screen.findByText('Главный учебный корпус ТулГУ'),
     ).toBeInTheDocument()
-    expect(screen.getByText(/ключ 2ГИС не настроен/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/интерактивная карта отключена/i),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
     vi.restoreAllMocks()
   })

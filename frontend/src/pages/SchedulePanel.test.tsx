@@ -1,4 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  RouterProvider,
+  createHashRouter,
+} from '@vkontakte/vk-mini-apps-router'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -42,11 +46,17 @@ describe('SchedulePanel group search', () => {
       defaultOptions: { queries: { retry: false } },
     })
     const user = userEvent.setup()
+    window.location.hash = '#/schedule'
+    const router = createHashRouter([
+      { path: '/schedule', view: 'main', panel: 'schedule' },
+    ])
 
     render(
-      <QueryClientProvider client={client}>
-        <SchedulePanel />
-      </QueryClientProvider>,
+      <RouterProvider router={router}>
+        <QueryClientProvider client={client}>
+          <SchedulePanel />
+        </QueryClientProvider>
+      </RouterProvider>,
     )
 
     const input = screen.getByPlaceholderText('Например, 220031-22')
