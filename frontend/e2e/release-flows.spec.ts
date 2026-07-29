@@ -284,6 +284,48 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
   expect(lightSurface.panel).toBe('rgb(243, 245, 248)')
 })
 
+test('quick start stays accessible on an extreme narrow viewport', async ({
+  page,
+}) => {
+  await mockApi(page)
+  await page.setViewportSize({ width: 280, height: 700 })
+  await page.goto('/?vk_color_scheme=client_dark#/')
+
+  const quickActions = [
+    /Расписание Пары и аудитории/,
+    /События Что будет рядом/,
+    /Помощник Проверенные ответы/,
+    /Карта Корпуса и кабинеты/,
+  ]
+  for (const name of quickActions) {
+    await expect(page.getByRole('button', { name })).toBeVisible()
+  }
+
+  const layout = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.quick-start-card')]
+    return {
+      overflow: document.documentElement.scrollWidth > window.innerWidth,
+      heights: cards.map((card) => card.getBoundingClientRect().height),
+      columns: getComputedStyle(
+        document.querySelector('.quick-start-grid')!,
+      ).gridTemplateColumns,
+    }
+  })
+
+  expect(layout.overflow).toBe(false)
+  expect(layout.columns.trim().split(/\s+/)).toHaveLength(2)
+  expect(new Set(layout.heights).size).toBe(1)
+
+  const schedule = page.getByRole('button', {
+    name: /Расписание Пары и аудитории/,
+  })
+  await schedule.focus()
+  await expect(schedule).toBeFocused()
+  await expect(schedule.locator('..')).toHaveCSS('outline-style', 'solid')
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/#\/schedule$/)
+})
+
 test('assistant handles a typo with a grounded answer', async ({ page }) => {
   await mockApi(page)
   await page.goto('/#/assistant')
