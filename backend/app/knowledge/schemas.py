@@ -37,13 +37,16 @@ class AssistantSuggestion(BaseModel):
 class AssistantSource(BaseModel):
     title: str
     url: str | None = None
+    verified_at: datetime | None = None
 
 
 class AssistantResponse(BaseModel):
     type: Literal["answer", "suggestions", "clarification", "not_found"]
     answer: FaqRead | None = None
+    message: str | None = None
     faq_ids: list[str]
     suggestions: list[AssistantSuggestion]
     confidence: Literal["high", "medium", "low"]
     sources: list[AssistantSource]
     verified_at: datetime | None = None
+    mode: Literal["retrieval", "grounded_ai"] = "retrieval"

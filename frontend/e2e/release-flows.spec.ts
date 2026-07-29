@@ -119,11 +119,13 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
           verified_at: '2026-07-29T00:00:00Z',
           is_time_sensitive: false,
         },
+        message: 'Выберите группу — приложение покажет тьютора.',
         faq_ids: ['faq'],
         suggestions: [],
         confidence: 'high',
         sources: [],
         verified_at: '2026-07-29T00:00:00Z',
+        mode: 'retrieval',
       })
     }
     if (path === '/api/resources') {
@@ -289,12 +291,27 @@ test('assistant handles a typo with a grounded answer', async ({ page }) => {
   await page
     .getByPlaceholder('Например: как найти своего тьютора?')
     .fill('как наити тютора')
-  await page.getByRole('button', { name: 'Найти ответ' }).click()
+  await page.getByRole('button', { name: 'Отправить' }).click()
 
+  const userMessage = page.locator('.chat-message--user')
+  await expect(userMessage).toBeVisible()
+  await expect(userMessage).toContainText('как наити тютора')
   await expect(page.getByText('Как найти своего тьютора?')).toBeVisible()
   await expect(
-    page.getByRole('button', { name: 'Открыть источник' }),
+    page.getByRole('button', {
+      name: /Как найти своего тьютора\? Проверено: 29\.07\.2026/,
+    }),
   ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Полезно' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Не помогло' })).toBeEnabled()
+  await expect(
+    page.getByRole('button', { name: 'Сообщить об ошибке' }),
+  ).toBeEnabled()
+  await expect(
+    page.getByRole('button', { name: 'Обратиться к тьютору' }),
+  ).toBeEnabled()
+  await page.getByRole('button', { name: 'Очистить историю' }).click()
+  await expect(userMessage).toHaveCount(0)
 })
 
 test('resource directory has actionable categorized links', async ({ page }) => {

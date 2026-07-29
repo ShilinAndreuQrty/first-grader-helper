@@ -39,9 +39,14 @@ class Settings(BaseSettings):
     tulsu_schedule_base_url: str = "https://tulsu.ru"
     tulsu_timeout_seconds: float = 8
     tulsu_cache_ttl_seconds: int = 900
-    assistant_mode: Literal["retrieval", "ai"] = "retrieval"
     ai_assistant_enabled: bool = False
-    ai_api_key: str = Field(default="", repr=False)
+    openrouter_api_key: str = Field(default="", repr=False)
+    openrouter_model: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_timeout_seconds: float = Field(default=8, ge=1, le=30)
+    openrouter_daily_request_limit: int = Field(default=100, ge=0, le=10_000)
+    assistant_top_n: int = Field(default=3, ge=1, le=5)
+    assistant_rate_limit_per_minute: int = Field(default=30, ge=1, le=300)
 
     @property
     def origins(self) -> list[str]:
@@ -65,8 +70,14 @@ class Settings(BaseSettings):
                 raise ValueError("COOKIE_SECURE must be true in production")
             if self.cookie_samesite != "none":
                 raise ValueError("COOKIE_SAMESITE must be none for VK web iframe")
-        if self.ai_assistant_enabled and not self.ai_api_key:
-            raise ValueError("AI_API_KEY is required when AI_ASSISTANT_ENABLED=true")
+        if self.ai_assistant_enabled and not self.openrouter_api_key:
+            raise ValueError(
+                "OPENROUTER_API_KEY is required when AI_ASSISTANT_ENABLED=true"
+            )
+        if self.ai_assistant_enabled and not self.openrouter_model:
+            raise ValueError(
+                "OPENROUTER_MODEL is required when AI_ASSISTANT_ENABLED=true"
+            )
         if self.notifications_enabled and not self.vk_community_token:
             raise ValueError(
                 "VK_COMMUNITY_TOKEN is required when NOTIFICATIONS_ENABLED=true"

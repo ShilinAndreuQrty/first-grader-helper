@@ -29,3 +29,14 @@ def test_production_accepts_secure_cross_site_session_cookie() -> None:
 def test_production_rejects_lax_cookie_for_vk_iframe() -> None:
     with pytest.raises(ValidationError, match="COOKIE_SAMESITE must be none"):
         production_settings(cookie_samesite="lax")
+
+
+def test_enabled_assistant_requires_openrouter_model_and_key() -> None:
+    with pytest.raises(ValidationError, match="OPENROUTER_API_KEY"):
+        Settings(ai_assistant_enabled=True)
+
+    with pytest.raises(ValidationError, match="OPENROUTER_MODEL"):
+        Settings(
+            ai_assistant_enabled=True,
+            openrouter_api_key="test-only-token",
+        )

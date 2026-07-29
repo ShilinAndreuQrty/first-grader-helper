@@ -4,14 +4,16 @@ import json
 from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import Settings, get_settings
 from app.db import get_session
+from app.knowledge.openrouter import OpenRouterFaqSelector
 from app.knowledge.retrieval import (
-    DeterministicRetrievalProvider,
     anonymized_query,
     is_publicly_available,
     public_entry,
@@ -22,11 +24,11 @@ from app.knowledge.schemas import (
     CategoryRead,
     FaqRead,
 )
+from app.knowledge.service import GroundedAssistantService
 from app.models import AssistantQueryLog, FaqCategory, FaqEntry
 from app.rate_limit import InMemoryRateLimiter
 
 router = APIRouter(tags=["knowledge"])
-provider = DeterministicRetrievalProvider()
 limiter = InMemoryRateLimiter()
 
 
@@ -96,28 +98,82 @@ async def assistant_query(
     payload: AssistantQuery,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> AssistantResponse:
     host = request.client.host if request.client else "unknown"
-    limiter.check(f"assistant:{host}", limit=30, window_seconds=60)
+    limiter.check(
+        f"assistant:{host}",
+        limit=settings.assistant_rate_limit_per_minute,
+        window_seconds=60,
+    )
+    now = datetime.now(UTC)
     entries = list(
         (
             await db.scalars(
                 select(FaqEntry)
                 .options(selectinload(FaqEntry.category))
-                .where(FaqEntry.status == "published", FaqEntry.deleted_at.is_(None))
+                .where(*public_filters(now))
             )
         ).all()
     )
-    result = provider.answer(payload.text, entries, payload.selected_faq_id)
-    if result["type"] in {"not_found", "clarification"}:
+
+    selector = None
+    if settings.ai_assistant_enabled and await ai_budget_available(db, settings, now):
+        client = httpx.AsyncClient(
+            base_url=f"{settings.openrouter_base_url.rstrip('/')}/",
+            timeout=settings.openrouter_timeout_seconds,
+            headers={
+                "Authorization": f"Bearer {settings.openrouter_api_key}",
+                "HTTP-Referer": settings.app_public_url,
+                "X-Title": settings.app_name,
+            },
+        )
+        async with client:
+            selector = OpenRouterFaqSelector(client, model=settings.openrouter_model)
+            run = await GroundedAssistantService(
+                selector,
+                top_n=settings.assistant_top_n,
+            ).answer(payload.text, entries, payload.selected_faq_id)
+    else:
+        run = await GroundedAssistantService(
+            top_n=settings.assistant_top_n,
+        ).answer(payload.text, entries, payload.selected_faq_id)
+
+    result = run.result
+    should_log = run.ai_attempted or result["type"] in {
+        "not_found",
+        "clarification",
+    }
+    if should_log:
         query_hash, query_hint = anonymized_query(payload.text)
         db.add(
             AssistantQueryLog(
                 query_hash=query_hash,
                 query_hint=query_hint,
-                result_type=result["type"],
+                result_type=(
+                    f"ai_{run.ai_status}" if run.ai_attempted else result["type"]
+                ),
                 faq_ids_json=json.dumps(result["faq_ids"]),
             )
         )
         await db.commit()
     return AssistantResponse.model_validate(result)
+
+
+async def ai_budget_available(
+    db: AsyncSession,
+    settings: Settings,
+    now: datetime,
+) -> bool:
+    if settings.openrouter_daily_request_limit == 0:
+        return False
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    attempts = await db.scalar(
+        select(func.count())
+        .select_from(AssistantQueryLog)
+        .where(
+            AssistantQueryLog.created_at >= day_start,
+            AssistantQueryLog.result_type.like("ai_%"),
+        )
+    )
+    return int(attempts or 0) < settings.openrouter_daily_request_limit

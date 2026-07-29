@@ -121,17 +121,19 @@ class DeterministicRetrievalProvider:
         return self._not_found()
 
     def _answer(self, entry: FaqEntry) -> dict:
-        source = {"title": entry.question}
+        source = {"title": entry.question, "verified_at": entry.verified_at}
         if entry.source_url:
             source["url"] = entry.source_url
         return {
             "type": "answer",
             "answer": public_entry(entry),
+            "message": entry.answer_markdown,
             "faq_ids": [entry.id],
             "suggestions": [],
             "confidence": "high",
             "sources": [source],
             "verified_at": entry.verified_at,
+            "mode": "retrieval",
         }
 
     def _suggestions(self, ranked: list[RankedFaq], *, response_type: str) -> dict:
@@ -146,22 +148,26 @@ class DeterministicRetrievalProvider:
         return {
             "type": response_type,
             "answer": None,
+            "message": None,
             "faq_ids": [item["faq_id"] for item in suggestions],
             "suggestions": suggestions,
             "confidence": "medium",
             "sources": [],
             "verified_at": None,
+            "mode": "retrieval",
         }
 
     def _not_found(self) -> dict:
         return {
             "type": "not_found",
             "answer": None,
+            "message": None,
             "faq_ids": [],
             "suggestions": [],
             "confidence": "low",
             "sources": [],
             "verified_at": None,
+            "mode": "retrieval",
         }
 
 

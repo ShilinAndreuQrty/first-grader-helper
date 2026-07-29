@@ -25,11 +25,17 @@ export interface AssistantSuggestion {
 export interface AssistantResponse {
   type: 'answer' | 'suggestions' | 'clarification' | 'not_found'
   answer: FaqEntry | null
+  message: string | null
   faq_ids: string[]
   suggestions: AssistantSuggestion[]
   confidence: 'high' | 'medium' | 'low'
-  sources: Array<{ title: string; url: string | null }>
+  sources: Array<{
+    title: string
+    url: string | null
+    verified_at: string | null
+  }>
   verified_at: string | null
+  mode: 'retrieval' | 'grounded_ai'
 }
 
 export function getFaqCategories(): Promise<FaqCategory[]> {

@@ -100,6 +100,8 @@ async def public_config() -> dict[str, str | bool | int | None]:
         "notifications_enabled": settings.notifications_enabled,
         "vk_community_id": settings.vk_community_id,
         "assistant_mode": (
-            "retrieval" if not settings.ai_assistant_enabled else settings.assistant_mode
+            "grounded_openrouter"
+            if settings.ai_assistant_enabled
+            else "retrieval"
         ),
     }

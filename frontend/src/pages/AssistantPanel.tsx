@@ -1,8 +1,10 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
   Button,
+  ButtonGroup,
   Card,
   CardGrid,
   Div,
@@ -27,106 +29,262 @@ import {
   getFaqCategories,
   sendFaqFeedback,
 } from '../api/knowledge'
+import { reportIssue } from '../api/onboarding'
 import { openExternalUrl } from '../platformLinks'
+import { PANEL_PATHS } from '../router'
 
-function AnswerCard({ entry }: { entry: FaqEntry }) {
-  const sourceUrl = entry.source_url
+const HISTORY_KEY = 'ipmkn.assistant-history-v1'
+const FALLBACK_QUESTIONS = [
+  'Кто такой тьютор?',
+  'Кто такой куратор?',
+  'Что такое «Тропа Первака»?',
+  'Что такое профсоюз?',
+]
+
+interface ChatTurn {
+  id: string
+  role: 'user' | 'assistant'
+  text?: string
+  question?: string
+  result?: AssistantResponse
+}
+
+function formatDate(value: string | null): string {
+  return value
+    ? new Date(value).toLocaleDateString('ru-RU')
+    : 'дата не указана'
+}
+
+function readHistory(): ChatTurn[] {
+  try {
+    const parsed = JSON.parse(
+      sessionStorage.getItem(HISTORY_KEY) ?? '[]',
+    ) as unknown
+    return Array.isArray(parsed)
+      ? parsed.filter(isChatTurn).slice(-16)
+      : []
+  } catch {
+    return []
+  }
+}
+
+function isChatTurn(value: unknown): value is ChatTurn {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Record<string, unknown>
+  return (
+    typeof candidate.id === 'string' &&
+    (candidate.role === 'user' || candidate.role === 'assistant') &&
+    (candidate.text === undefined || typeof candidate.text === 'string') &&
+    (candidate.question === undefined ||
+      typeof candidate.question === 'string') &&
+    (candidate.result === undefined ||
+      (typeof candidate.result === 'object' && candidate.result !== null))
+  )
+}
+
+function AnswerText({ text }: { text: string }) {
+  return text.split('\n').map((paragraph, index) =>
+    paragraph ? (
+      <Text key={`${index}-${paragraph}`} className="answer-card__paragraph">
+        {paragraph}
+      </Text>
+    ) : null,
+  )
+}
+
+function Sources({ result }: { result: AssistantResponse }) {
+  const sources =
+    result.sources.length > 0
+      ? result.sources
+      : result.answer
+        ? [
+            {
+              title: result.answer.question,
+              url: result.answer.source_url,
+              verified_at: result.answer.verified_at,
+            },
+          ]
+        : []
+
+  if (sources.length === 0) return null
+  return (
+    <div className="assistant-sources">
+      <Text className="eyebrow">Источники</Text>
+      {sources.map((source) => (
+        <button
+          key={`${source.title}-${source.url ?? ''}`}
+          type="button"
+          className="assistant-source"
+          disabled={!source.url}
+          onClick={() =>
+            source.url ? void openExternalUrl(source.url) : undefined
+          }
+        >
+          <span>{source.title}</span>
+          <small>Проверено: {formatDate(source.verified_at)}</small>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function AnswerActions({
+  result,
+  onTutor,
+}: {
+  result: AssistantResponse
+  onTutor: () => void
+}) {
   const feedback = useMutation({
-    mutationFn: (isHelpful: boolean) => sendFaqFeedback(entry.id, isHelpful),
+    mutationFn: (helpful: boolean) =>
+      Promise.all(
+        result.faq_ids.map((faqId) => sendFaqFeedback(faqId, helpful)),
+      ),
+  })
+  const issue = useMutation({
+    mutationFn: () =>
+      reportIssue(
+        'assistant',
+        `Проверить ответ помощника. FAQ: ${result.faq_ids.join(', ') || 'не найдено'}.`,
+      ),
   })
 
+  return (
+    <>
+      <ButtonGroup className="answer-feedback" mode="horizontal" gap="s">
+        <Button
+          size="s"
+          mode="tertiary"
+          disabled={
+            result.faq_ids.length === 0 ||
+            feedback.isPending ||
+            feedback.isSuccess
+          }
+          onClick={() => feedback.mutate(true)}
+        >
+          Полезно
+        </Button>
+        <Button
+          size="s"
+          mode="tertiary"
+          disabled={
+            result.faq_ids.length === 0 ||
+            feedback.isPending ||
+            feedback.isSuccess
+          }
+          onClick={() => feedback.mutate(false)}
+        >
+          Не помогло
+        </Button>
+        <Button
+          size="s"
+          mode="tertiary"
+          disabled={issue.isPending || issue.isSuccess}
+          onClick={() => issue.mutate()}
+        >
+          Сообщить об ошибке
+        </Button>
+        <Button size="s" mode="tertiary" onClick={onTutor}>
+          Обратиться к тьютору
+        </Button>
+      </ButtonGroup>
+      {(feedback.isSuccess || issue.isSuccess) && (
+        <Text className="muted">
+          {issue.isSuccess ? 'Сообщение отправлено команде.' : 'Спасибо за оценку.'}
+        </Text>
+      )}
+      {(feedback.isError || issue.isError) && (
+        <Text className="muted" role="alert">
+          Не удалось отправить действие. Попробуйте ещё раз.
+        </Text>
+      )}
+    </>
+  )
+}
+
+function AssistantResult({
+  result,
+  onSelect,
+  onTutor,
+}: {
+  result: AssistantResponse
+  onSelect: (id: string) => void
+  onTutor: () => void
+}) {
+  if (result.type === 'answer' && (result.message || result.answer)) {
+    return (
+      <>
+        <AnswerText
+          text={result.message ?? result.answer?.answer_markdown ?? ''}
+        />
+        <Sources result={result} />
+        <AnswerActions result={result} onTutor={onTutor} />
+      </>
+    )
+  }
+  if (result.suggestions.length > 0) {
+    return (
+      <>
+        <Text>Нашлось несколько близких тем. Выберите подходящую:</Text>
+        <div className="assistant-suggestions">
+          {result.suggestions.map((suggestion) => (
+            <Button
+              key={suggestion.faq_id}
+              size="s"
+              mode="secondary"
+              onClick={() => onSelect(suggestion.faq_id)}
+            >
+              {suggestion.question}
+            </Button>
+          ))}
+        </div>
+      </>
+    )
+  }
+  return (
+    <>
+      <Text>
+        В опубликованной базе пока нет достаточно точного ответа. Я не буду
+        додумывать факты — попробуйте уточнить вопрос или напишите тьютору.
+      </Text>
+      <Button size="s" mode="secondary" onClick={onTutor}>
+        Обратиться к тьютору
+      </Button>
+    </>
+  )
+}
+
+function FaqCard({ entry }: { entry: FaqEntry }) {
   return (
     <Card mode="shadow" className="answer-card">
       <Div>
         <Text className="eyebrow">{entry.category}</Text>
         <Title level="3">{entry.question}</Title>
-        {entry.answer_markdown.split('\n').map((paragraph) => (
-          <Text key={paragraph} className="answer-card__paragraph">
-            {paragraph}
-          </Text>
-        ))}
-        {sourceUrl && (
+        <AnswerText text={entry.answer_markdown} />
+        {entry.source_url && (
           <Button
             size="s"
             mode="tertiary"
-            onClick={() => void openExternalUrl(sourceUrl)}
+            onClick={() => void openExternalUrl(entry.source_url!)}
           >
             Открыть источник
           </Button>
         )}
-        {entry.is_time_sensitive && (
-          <Text className="muted">
-            Сведения могут меняться. Проверено:{' '}
-            {entry.verified_at
-              ? new Date(entry.verified_at).toLocaleDateString('ru-RU')
-              : 'дата не указана'}
-          </Text>
-        )}
-        <div className="answer-feedback">
-          {feedback.isSuccess ? (
-            <Text className="muted">Спасибо за оценку</Text>
-          ) : (
-            <>
-              <Button
-                size="s"
-                mode="tertiary"
-                onClick={() => feedback.mutate(true)}
-              >
-                Полезно
-              </Button>
-              <Button
-                size="s"
-                mode="tertiary"
-                onClick={() => feedback.mutate(false)}
-              >
-                Есть ошибка
-              </Button>
-            </>
-          )}
-        </div>
+        <Text className="muted">
+          Проверено: {formatDate(entry.verified_at)}
+        </Text>
       </Div>
     </Card>
   )
 }
 
-function Result({
-  result,
-  onSelect,
-}: {
-  result: AssistantResponse
-  onSelect: (id: string) => void
-}) {
-  if (result.answer) return <AnswerCard entry={result.answer} />
-  if (result.suggestions.length) {
-    return (
-      <Card mode="outline">
-        <SimpleCell multiline subtitle="Выберите наиболее подходящий вариант">
-          Уточните вопрос
-        </SimpleCell>
-        {result.suggestions.map((suggestion) => (
-          <SimpleCell
-            key={suggestion.faq_id}
-            subtitle={suggestion.category}
-            onClick={() => onSelect(suggestion.faq_id)}
-          >
-            {suggestion.question}
-          </SimpleCell>
-        ))}
-      </Card>
-    )
-  }
-  return (
-    <Banner
-      title="Точного ответа пока нет"
-      subtitle="Попробуйте сформулировать короче или обратитесь к тьютору. Запрос сохранён анонимно и поможет дополнить базу."
-    />
-  )
-}
-
 export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
+  const navigator = useRouteNavigator()
   const [text, setText] = useState('')
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<string>()
+  const [turns, setTurns] = useState<ChatTurn[]>(readHistory)
+  const [failedQuestion, setFailedQuestion] = useState('')
   const categories = useQuery({
     queryKey: ['faq-categories'],
     queryFn: getFaqCategories,
@@ -136,28 +294,128 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
     queryFn: () => getFaq(categoryId, search),
   })
   const assistant = useMutation({
-    mutationFn: ({ query, id }: { query: string; id?: string }) =>
-      askAssistant(query, id),
+    mutationFn: ({ query, faqId }: { query: string; faqId?: string }) =>
+      askAssistant(query, faqId),
   })
-
   const visibleFaq = useMemo(() => faq.data?.slice(0, 12) ?? [], [faq.data])
+  const visibleQuestions = visibleFaq
+    .slice(0, 4)
+    .map((entry) => entry.question)
+  const quickQuestions =
+    visibleQuestions.length > 0 ? visibleQuestions : FALLBACK_QUESTIONS
+
+  useEffect(() => {
+    sessionStorage.setItem(HISTORY_KEY, JSON.stringify(turns.slice(-16)))
+  }, [turns])
+
+  const openTutor = () => void navigator.push(PANEL_PATHS.more)
+
+  const sendQuestion = (
+    question: string,
+    options: { addUser?: boolean; faqId?: string } = {},
+  ) => {
+    const normalized = question.trim()
+    if (normalized.length < 2 || assistant.isPending) return
+    setFailedQuestion('')
+    if (options.addUser !== false) {
+      setTurns((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: 'user', text: normalized },
+      ])
+    }
+    setText('')
+    assistant.mutate(
+      { query: normalized, faqId: options.faqId },
+      {
+        onSuccess: (result) =>
+          setTurns((current) => [
+            ...current,
+            {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              question: normalized,
+              result,
+            },
+          ]),
+        onError: () => setFailedQuestion(normalized),
+      },
+    )
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    const query = text.trim()
-    if (query.length >= 2) assistant.mutate({ query })
+    sendQuestion(text)
   }
 
   return (
     <Panel id={id}>
-      <PanelHeader>Помощник</PanelHeader>
+      <PanelHeader>Помощник ИПМКН</PanelHeader>
       <Group>
         <Div className="assistant-intro">
-          <Title level="2">Спросите как есть</Title>
+          <Title level="2">Ответы из проверенной базы</Title>
           <Text>
-            Помощник ищет только по проверенным материалам тьюторского
-            сообщества и показывает источник, когда он указан.
+            Я помогаю с адаптацией, учёбой, тьюторами, профсоюзом, стипендиями и
+            общежитием. Я не знаю всё и не заменяю официальные сообщения ТулГУ.
           </Text>
+        </Div>
+        <Div className="assistant-quick-topics">
+          {quickQuestions.map((question) => (
+            <Button
+              key={question}
+              size="s"
+              mode="secondary"
+              disabled={assistant.isPending}
+              onClick={() => sendQuestion(question)}
+            >
+              {question}
+            </Button>
+          ))}
+        </Div>
+        <Div className="assistant-chat" aria-live="polite">
+          <div className="chat-message chat-message--assistant">
+            Здравствуйте! Задайте вопрос своими словами. Если проверенного ответа
+            нет, я честно предложу обратиться к тьютору.
+          </div>
+          {turns.map((turn) => (
+            <div
+              key={turn.id}
+              className={`chat-message chat-message--${turn.role}`}
+            >
+              {turn.role === 'user' ? (
+                turn.text
+              ) : turn.result ? (
+                <AssistantResult
+                  result={turn.result}
+                  onTutor={openTutor}
+                  onSelect={(faqId) =>
+                    sendQuestion(turn.question ?? '', {
+                      addUser: false,
+                      faqId,
+                    })
+                  }
+                />
+              ) : null}
+            </div>
+          ))}
+          {assistant.isPending && (
+            <div className="chat-message chat-message--assistant" role="status">
+              Ищу подходящие опубликованные материалы…
+            </div>
+          )}
+          {assistant.isError && (
+            <div className="chat-message chat-message--error" role="alert">
+              <Text>Не удалось получить ответ. История осталась на устройстве.</Text>
+              <Button
+                size="s"
+                mode="secondary"
+                onClick={() =>
+                  sendQuestion(failedQuestion, { addUser: false })
+                }
+              >
+                Повторить
+              </Button>
+            </div>
+          )}
         </Div>
         <form onSubmit={submit}>
           <FormItem
@@ -174,7 +432,7 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
               onChange={(event) => setText(event.target.value)}
             />
           </FormItem>
-          <Div>
+          <Div className="assistant-compose-actions">
             <Button
               type="submit"
               size="l"
@@ -182,32 +440,31 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
               loading={assistant.isPending}
               disabled={text.trim().length < 2}
             >
-              Найти ответ
+              Отправить
             </Button>
+            {turns.length > 0 && (
+              <Button
+                type="button"
+                size="l"
+                mode="secondary"
+                onClick={() => {
+                  setTurns([])
+                  setFailedQuestion('')
+                  assistant.reset()
+                  sessionStorage.removeItem(HISTORY_KEY)
+                }}
+              >
+                Очистить историю
+              </Button>
+            )}
           </Div>
         </form>
-        {assistant.isError && (
-          <Banner
-            title="Не удалось связаться с помощником"
-            subtitle="Проверьте подключение и попробуйте ещё раз."
-          />
-        )}
-        {assistant.data && (
-          <Div>
-            <Result
-              result={assistant.data}
-              onSelect={(id) =>
-                assistant.mutate({ query: text.trim(), id })
-              }
-            />
-          </Div>
-        )}
       </Group>
 
-      <Group header={<Header>Каталог ответов</Header>}>
+      <Group header={<Header>Проверенные ответы</Header>}>
         <Search
           value={search}
-          placeholder="Поиск по вопросам"
+          placeholder="Поиск по базе вопросов"
           onChange={(event) => setSearch(event.target.value)}
         />
         {categories.isLoading && <Spinner size="s" />}
@@ -232,13 +489,18 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
         </Div>
         {faq.isError && (
           <Banner
-            title="Каталог недоступен"
-            subtitle="API ещё не запущен или база пока не заполнена."
+            title="База ответов временно недоступна"
+            subtitle="Попробуйте ещё раз позже или обратитесь к тьютору."
           />
+        )}
+        {faq.isSuccess && visibleFaq.length === 0 && (
+          <SimpleCell multiline disabled subtitle="Опубликованных материалов по фильтру нет.">
+            Ничего не найдено
+          </SimpleCell>
         )}
         <CardGrid size="l">
           {visibleFaq.map((entry) => (
-            <AnswerCard key={entry.id} entry={entry} />
+            <FaqCard key={entry.id} entry={entry} />
           ))}
         </CardGrid>
       </Group>
