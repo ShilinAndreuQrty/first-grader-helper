@@ -1,4 +1,8 @@
-import { Icon20PlaceOutline, Icon20Verified } from '@vkontakte/icons'
+import {
+  Icon20HomeOutline,
+  Icon20PinOutline,
+  Icon20PlaceOutline,
+} from '@vkontakte/icons'
 import { useQuery } from '@tanstack/react-query'
 import {
   Banner,
@@ -58,9 +62,23 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
     }
     return result
   }, [buildings.data, schedule.data])
+  const academicBuildings = useMemo(
+    () =>
+      (buildings.data ?? []).filter(
+        (building) => building.kind === 'academic',
+      ),
+    [buildings.data],
+  )
+  const dormitories = useMemo(
+    () =>
+      (buildings.data ?? []).filter(
+        (building) => building.kind === 'dormitory',
+      ),
+    [buildings.data],
+  )
   const sortedBuildings = useMemo(
     () =>
-      [...(buildings.data ?? [])].sort((left, right) => {
+      [...academicBuildings].sort((left, right) => {
         const leftPin = pinnedIds.indexOf(left.id)
         const rightPin = pinnedIds.indexOf(right.id)
         if (leftPin >= 0 || rightPin >= 0) {
@@ -70,106 +88,75 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
         }
         return left.sort_order - right.sort_order
       }),
-    [buildings.data, pinnedIds],
+    [academicBuildings, pinnedIds],
   )
-  const filteredBuildings = useMemo(
+  const filteredLocations = useMemo(
     () =>
-      sortedBuildings.filter((building) =>
+      [...sortedBuildings, ...dormitories].filter((building) =>
         buildingMatchesQuery(building, search),
       ),
-    [search, sortedBuildings],
+    [dormitories, search, sortedBuildings],
+  )
+  const filteredBuildings = filteredLocations.filter(
+    (building) => building.kind === 'academic',
+  )
+  const filteredDormitories = filteredLocations.filter(
+    (building) => building.kind === 'dormitory',
   )
   const targetBuilding = targetRoom
     ? matchBuildingByLocation(targetRoom, buildings.data ?? [])
     : undefined
-  const searchSelection = search.trim() ? filteredBuildings[0] : undefined
+  const searchSelection = search.trim() ? filteredLocations[0] : undefined
   const selected =
-    searchSelection ??
     buildings.data?.find((building) => building.id === selectedId) ??
+    searchSelection ??
     targetBuilding ??
     (!targetRoom ? sortedBuildings[0] : undefined)
   const unknownTarget =
     Boolean(targetRoom) && buildings.isSuccess && !targetBuilding
+  const importantRooms = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        building: (typeof academicBuildings)[number]
+        title: string
+        floor: string
+        roomNumbers: string[]
+      }
+    >()
+    for (const building of academicBuildings) {
+      for (const room of building.rooms) {
+        const key = `${building.id}:${room.title}`
+        const existing = grouped.get(key)
+        if (existing) {
+          existing.roomNumbers.push(room.room_number)
+        } else {
+          grouped.set(key, {
+            building,
+            title: room.title,
+            floor: room.floor,
+            roomNumbers: [room.room_number],
+          })
+        }
+      }
+    }
+    return [...grouped.values()]
+  }, [academicBuildings])
 
   return (
     <Panel id={id}>
       <AppPanelHeader>Корпуса ТулГУ</AppPanelHeader>
       <Group>
-        <Search
-          value={search}
-          placeholder="Корпус, адрес или проверенный кабинет"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {buildings.isFetching && <Spinner size="s" />}
-        {buildings.isError && (
-          <Banner
-            title="Каталог временно недоступен"
-            subtitle="Интерактивная карта не загружается отдельно от каталога."
-            actions={
-              <Button onClick={() => void buildings.refetch()}>Повторить</Button>
-            }
-          />
-        )}
-        {unknownTarget && (
-          <Banner
-            title={`Корпус для «${targetRoom}» не определён`}
-            subtitle="Обозначение не совпало ни с одним проверенным alias. Выберите корпус вручную — приложение не будет угадывать."
-          />
-        )}
-        {buildings.isSuccess && filteredBuildings.length === 0 && (
-          <Banner
-            title="Ничего не найдено"
-            subtitle="Поиск ограничен корпусами ТулГУ и проверенными кабинетами."
-          />
-        )}
-      </Group>
-
-      <Group header={<Header>Все корпуса</Header>}>
-        {filteredBuildings.map((building) => {
-          const isPinned = pinnedIds.includes(building.id)
-          return (
-            <SimpleCell
-              key={building.id}
-              selected={building.id === selected?.id}
-              before={
-                isPinned ? (
-                  <Icon20Verified
-                    className="campus-pin"
-                    aria-label="Есть в расписании группы"
-                  />
-                ) : (
-                  <Icon20PlaceOutline aria-hidden />
-                )
-              }
-              subtitle={
-                isPinned
-                  ? `Есть в расписании выбранной группы · ${building.address}`
-                  : building.address
-              }
-              onClick={() => setSelectedId(building.id)}
-            >
-              {building.short_name}
-            </SimpleCell>
-          )
-        })}
-      </Group>
-
-      {selected && (
-        <>
-          <Group>
+        {selected && (
+          <>
             <Div className="campus-heading">
               <Text className="eyebrow">{selected.short_name}</Text>
               <Title level="2">{selected.name}</Title>
               <Text>{selected.address}</Text>
-              {selected.complex_slug === 'main-9' && (
-                <Text className="campus-complex">
-                  Главный и 9-й корпуса — отдельные корпуса в одном соединённом
-                  здании.
-                </Text>
-              )}
-              {selected.entrance_hint && (
-                <Text className="muted">{selected.entrance_hint}</Text>
-              )}
+              {selected.entrance_hint &&
+                selected.complex_slug !== 'main-9' && (
+                  <Text className="muted">{selected.entrance_hint}</Text>
+                )}
             </Div>
             <MapCanvas key={selected.id} building={selected} />
             <Div>
@@ -189,28 +176,117 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
                 )}
               </ButtonGroup>
             </Div>
-          </Group>
-          <Group header={<Header>Проверенные кабинеты</Header>}>
-            {selected.rooms.length === 0 && (
-              <Banner
-                title="Проверенных кабинетов пока нет"
-                subtitle="Можно открыть объект в 2ГИС или уточнить кабинет у тьютора."
-              />
-            )}
-            {selected.rooms.map((room) => (
-              <SimpleCell
-                key={room.id}
-                subtitle={[room.floor && `${room.floor} этаж`, room.directions]
-                  .filter(Boolean)
-                  .join(' · ')}
-                indicator={room.room_number}
-              >
-                {room.title}
-              </SimpleCell>
-            ))}
-          </Group>
-        </>
-      )}
+          </>
+        )}
+        <Search
+          value={search}
+          placeholder="Корпус, общежитие или кабинет"
+          onChange={(event) => {
+            setSelectedId(undefined)
+            setSearch(event.target.value)
+          }}
+        />
+        {buildings.isFetching && <Spinner size="s" />}
+        {buildings.isError && (
+          <Banner
+            title="Каталог временно недоступен"
+            subtitle="Интерактивная карта не загружается отдельно от каталога."
+            actions={
+              <Button onClick={() => void buildings.refetch()}>Повторить</Button>
+            }
+          />
+        )}
+        {unknownTarget && (
+          <Banner
+            title={`Корпус для «${targetRoom}» не определён`}
+            subtitle="Обозначение не совпало ни с одним проверенным alias. Выберите корпус вручную — приложение не будет угадывать."
+          />
+        )}
+        {buildings.isSuccess && filteredLocations.length === 0 && (
+          <Banner
+            title="Ничего не найдено"
+            subtitle="Поиск ограничен объектами ТулГУ из каталога приложения."
+          />
+        )}
+      </Group>
+
+      <Group>
+        <Div>
+          <Text className="campus-complex">
+            Главный и 9-й корпуса считаются отдельными корпусами, но сейчас
+            соединены в одно здание. Вход в главный корпус осуществляется через
+            9-й.
+          </Text>
+        </Div>
+      </Group>
+
+      <Group header={<Header>Все корпуса</Header>}>
+        {filteredBuildings.map((building) => {
+          const isPinned = pinnedIds.includes(building.id)
+          return (
+            <SimpleCell
+              key={building.id}
+              selected={building.id === selected?.id}
+              before={
+                isPinned ? (
+                  <Icon20PinOutline
+                    className="campus-pin"
+                    aria-label="Есть в расписании группы"
+                  />
+                ) : (
+                  <Icon20PlaceOutline aria-hidden />
+                )
+              }
+              subtitle={
+                isPinned
+                  ? `Есть в расписании выбранной группы · ${building.address}`
+                  : building.address
+              }
+              onClick={() => {
+                setSearch('')
+                setSelectedId(building.id)
+              }}
+            >
+              {building.short_name}
+            </SimpleCell>
+          )
+        })}
+      </Group>
+
+      <Group header={<Header>Общежития</Header>}>
+        {filteredDormitories.map((dormitory) => (
+          <SimpleCell
+            key={dormitory.id}
+            selected={dormitory.id === selected?.id}
+            before={<Icon20HomeOutline aria-hidden />}
+            subtitle={dormitory.address}
+            onClick={() => {
+              setSearch('')
+              setSelectedId(dormitory.id)
+            }}
+          >
+            {dormitory.short_name}
+          </SimpleCell>
+        ))}
+      </Group>
+
+      <Group header={<Header>Часто нужные кабинеты</Header>}>
+        {importantRooms.map(({ building, title, floor, roomNumbers }) => (
+          <SimpleCell
+            key={`${building.id}:${title}`}
+            subtitle={`${building.short_name} · ${floor} этаж`}
+            indicator={roomNumbers
+              .map((roomNumber) => `Гл-${roomNumber}`)
+              .join(' и ')}
+            onClick={() => {
+              setSearch('')
+              setSelectedId(building.id)
+            }}
+          >
+            {title}
+          </SimpleCell>
+        ))}
+      </Group>
     </Panel>
   )
 }

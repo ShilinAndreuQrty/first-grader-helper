@@ -66,6 +66,7 @@ async def buildings(
                 slug=building.slug,
                 name=building.name,
                 short_name=building.short_name,
+                kind=building.kind,
                 building_number=building.building_number,
                 address=building.address,
                 entrance_hint=building.entrance_hint,

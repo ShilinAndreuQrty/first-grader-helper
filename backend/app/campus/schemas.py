@@ -19,6 +19,7 @@ class BuildingRead(BaseModel):
     slug: str
     name: str
     short_name: str
+    kind: str
     building_number: str
     address: str
     entrance_hint: str

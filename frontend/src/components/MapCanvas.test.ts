@@ -6,6 +6,7 @@ const building: CampusBuilding = {
   slug: 'main',
   name: 'Главный корпус ТулГУ',
   short_name: 'Главный корпус',
+  kind: 'academic',
   building_number: 'Главный',
   address: 'Тула, проспект Ленина, 92',
   entrance_hint: '',

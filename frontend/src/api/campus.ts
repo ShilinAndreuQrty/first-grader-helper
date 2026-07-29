@@ -14,6 +14,7 @@ export interface CampusBuilding {
   slug: string
   name: string
   short_name: string
+  kind: 'academic' | 'dormitory'
   building_number: string
   address: string
   entrance_hint: string

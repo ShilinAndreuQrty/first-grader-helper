@@ -80,12 +80,12 @@ function loadFloorsApi(): Promise<FloorsApi> {
 
 function fallbackMessage(mode: MapMode): string {
   if (mode === 'disabled') {
-    return 'Интерактивная карта отключена. Каталог и проверенная ссылка на 2ГИС остаются доступны.'
+    return 'Интерактивная карта отключена. Каталог и прямая ссылка на объект в 2ГИС остаются доступны.'
   }
   if (mode === 'missing-coordinates') {
-    return 'Координаты или этажи пока не подтверждены. Используйте проверенную страницу объекта в 2ГИС.'
+    return 'Для этого объекта нет координат или этажей. Используйте прямую страницу объекта в 2ГИС.'
   }
-  return 'Ключ MapGL не настроен. Используйте проверенную страницу объекта в 2ГИС.'
+  return 'Ключ MapGL не настроен. Используйте прямую страницу объекта в 2ГИС.'
 }
 
 export function MapCanvas({ building }: { building: CampusBuilding }) {

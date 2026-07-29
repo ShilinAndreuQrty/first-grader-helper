@@ -394,6 +394,7 @@ class CampusBuilding(TimestampMixin, Base):
     )
     name: Mapped[str] = mapped_column(String(200))
     short_name: Mapped[str] = mapped_column(String(80), unique=True)
+    kind: Mapped[str] = mapped_column(String(24), default="academic", index=True)
     building_number: Mapped[str] = mapped_column(String(20), default="")
     address: Mapped[str] = mapped_column(String(300))
     entrance_hint: Mapped[str] = mapped_column(String(500), default="")

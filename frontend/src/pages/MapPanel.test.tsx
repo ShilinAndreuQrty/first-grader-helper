@@ -16,6 +16,7 @@ describe('MapPanel', () => {
             slug: 'main',
             name: 'Главный учебный корпус ТулГУ',
             short_name: 'Главный',
+            kind: 'academic',
             building_number: 'Главный',
             address: 'Тула, проспект Ленина, 92',
             entrance_hint: '',
@@ -29,7 +30,32 @@ describe('MapPanel', () => {
             longitude: null,
             sort_order: 0,
             verified_at: null,
-            rooms: [],
+            rooms: [
+              {
+                id: 'room-425',
+                room_number: '425',
+                title: 'Дирекция ИПМКН',
+                floor: '4',
+                directions: '',
+                verified_at: null,
+              },
+              {
+                id: 'room-123',
+                room_number: '123',
+                title: 'Профком',
+                floor: '1',
+                directions: '',
+                verified_at: null,
+              },
+              {
+                id: 'room-125',
+                room_number: '125',
+                title: 'Профком',
+                floor: '1',
+                directions: '',
+                verified_at: null,
+              },
+            ],
           },
         ]),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -56,6 +82,13 @@ describe('MapPanel', () => {
     expect(
       screen.getByText(/интерактивная карта отключена/i),
     ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Главный и 9-й корпуса считаются отдельными корпусами/i,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Дирекция ИПМКН')).toBeInTheDocument()
+    expect(screen.getByText('Гл-123 и Гл-125')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
     vi.restoreAllMocks()
   })

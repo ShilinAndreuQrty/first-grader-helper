@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from sqlalchemy import select
 
@@ -17,6 +17,7 @@ class BuildingSeed(TypedDict):
     slug: str
     name: str
     short_name: str
+    kind: NotRequired[str]
     building_number: str
     address: str
     entrance_hint: str
@@ -244,11 +245,230 @@ BUILDINGS: list[BuildingSeed] = [
     },
 ]
 
+DORMITORIES: list[BuildingSeed] = [
+    {
+        "slug": "dormitory-1",
+        "name": "Общежитие №1 ТулГУ",
+        "short_name": "Общежитие №1",
+        "kind": "dormitory",
+        "building_number": "1",
+        "address": "Тула, улица Смидович, 10а",
+        "entrance_hint": "",
+        "aliases": ["общежитие 1", "общ 1", "общ. 1"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991673",
+        "dgis_object_id": "5067077861991673",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.167264",
+        "longitude": "37.584782",
+        "sort_order": 101,
+    },
+    {
+        "slug": "dormitory-2",
+        "name": "Общежитие №2 ТулГУ",
+        "short_name": "Общежитие №2",
+        "kind": "dormitory",
+        "building_number": "2",
+        "address": "Тула, улица Смидович, 12",
+        "entrance_hint": "",
+        "aliases": ["общежитие 2", "общ 2", "общ. 2"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991674",
+        "dgis_object_id": "5067077861991674",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.166505",
+        "longitude": "37.584374",
+        "sort_order": 102,
+    },
+    {
+        "slug": "dormitory-3",
+        "name": "Общежитие №3 ТулГУ",
+        "short_name": "Общежитие №3",
+        "kind": "dormitory",
+        "building_number": "3",
+        "address": "Тула, улица 9 Мая, 8",
+        "entrance_hint": "",
+        "aliases": ["общежитие 3", "общ 3", "общ. 3"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991675",
+        "dgis_object_id": "5067077861991675",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.165961",
+        "longitude": "37.581956",
+        "sort_order": 103,
+    },
+    {
+        "slug": "dormitory-4-1",
+        "name": "Общежитие №4/1 ТулГУ",
+        "short_name": "Общежитие №4/1",
+        "kind": "dormitory",
+        "building_number": "4/1",
+        "address": "Тула, Оружейная улица, 15, корпус 1",
+        "entrance_hint": "",
+        "aliases": ["общежитие 4/1", "общ 4/1", "общ. 4/1"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991676",
+        "dgis_object_id": "5067077861991676",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.168295",
+        "longitude": "37.582621",
+        "sort_order": 104,
+    },
+    {
+        "slug": "dormitory-4-2",
+        "name": "Общежитие №4/2 ТулГУ",
+        "short_name": "Общежитие №4/2",
+        "kind": "dormitory",
+        "building_number": "4/2",
+        "address": "Тула, Оружейная улица, 15, корпус 2",
+        "entrance_hint": "",
+        "aliases": ["общежитие 4/2", "общ 4/2", "общ. 4/2"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067078861963050",
+        "dgis_object_id": "5067078861963050",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.167782",
+        "longitude": "37.582113",
+        "sort_order": 105,
+    },
+    {
+        "slug": "dormitory-6-1",
+        "name": "Общежитие №6/1 ТулГУ",
+        "short_name": "Общежитие №6/1",
+        "kind": "dormitory",
+        "building_number": "6/1",
+        "address": "Тула, улица Фридриха Энгельса, 159, корпус 1",
+        "entrance_hint": "",
+        "aliases": ["общежитие 6/1", "общ 6/1", "общ. 6/1"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991678",
+        "dgis_object_id": "5067077861991678",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.174110",
+        "longitude": "37.589888",
+        "sort_order": 106,
+    },
+    {
+        "slug": "dormitory-6-2",
+        "name": "Общежитие №6/2 ТулГУ",
+        "short_name": "Общежитие №6/2",
+        "kind": "dormitory",
+        "building_number": "6/2",
+        "address": "Тула, улица Фридриха Энгельса, 159, корпус 2",
+        "entrance_hint": "",
+        "aliases": ["общежитие 6/2", "общ 6/2", "общ. 6/2"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991679",
+        "dgis_object_id": "5067077861991679",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.173927",
+        "longitude": "37.590734",
+        "sort_order": 107,
+    },
+    {
+        "slug": "dormitory-7",
+        "name": "Общежитие №7 ТулГУ",
+        "short_name": "Общежитие №7",
+        "kind": "dormitory",
+        "building_number": "7",
+        "address": "Тула, Оружейная улица, 1б",
+        "entrance_hint": "",
+        "aliases": ["общежитие 7", "общ 7", "общ. 7"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991680",
+        "dgis_object_id": "5067077861991680",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.173137",
+        "longitude": "37.587803",
+        "sort_order": 108,
+    },
+    {
+        "slug": "dormitory-8",
+        "name": "Общежитие №8 ТулГУ",
+        "short_name": "Общежитие №8",
+        "kind": "dormitory",
+        "building_number": "8",
+        "address": "Тула, улица Фридриха Энгельса, 153",
+        "entrance_hint": "",
+        "aliases": ["общежитие 8", "общ 8", "общ. 8"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991681",
+        "dgis_object_id": "5067077861991681",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.174095",
+        "longitude": "37.592245",
+        "sort_order": 109,
+    },
+    {
+        "slug": "dormitory-9",
+        "name": "Общежитие №9 ТулГУ",
+        "short_name": "Общежитие №9",
+        "kind": "dormitory",
+        "building_number": "9",
+        "address": "Тула, улица Фридриха Энгельса, 52",
+        "entrance_hint": "",
+        "aliases": ["общежитие 9", "общ 9", "общ. 9"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861991475",
+        "dgis_object_id": "5067077861991475",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.183876",
+        "longitude": "37.602668",
+        "sort_order": 110,
+    },
+    {
+        "slug": "dormitory-10",
+        "name": "Общежитие №10 ТулГУ",
+        "short_name": "Общежитие №10",
+        "kind": "dormitory",
+        "building_number": "10",
+        "address": "Тула, улица Вересаева, 7",
+        "entrance_hint": "",
+        "aliases": ["общежитие 10", "общ 10", "общ. 10"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861770904",
+        "dgis_object_id": "5067077861770904",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.192069",
+        "longitude": "37.589178",
+        "sort_order": 111,
+    },
+    {
+        "slug": "dormitory-11",
+        "name": "Общежитие №11 ТулГУ",
+        "short_name": "Общежитие №11",
+        "kind": "dormitory",
+        "building_number": "11",
+        "address": "Тула, улица Революции, 47",
+        "entrance_hint": "",
+        "aliases": ["общежитие 11", "общ 11", "общ. 11"],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861770924",
+        "dgis_object_id": "5067077861770924",
+        "dgis_complex_id": None,
+        "source_url": "https://tulsu.ru/facilities/dormitory",
+        "latitude": "54.191841",
+        "longitude": "37.586727",
+        "sort_order": 112,
+    },
+]
+
 
 async def seed_campus() -> dict[str, int]:
     changed = {"buildings": 0, "rooms": 0}
     async with SessionFactory() as db:
-        for data in BUILDINGS:
+        for data in [*BUILDINGS, *DORMITORIES]:
             building = await db.scalar(
                 select(CampusBuilding).where(
                     (CampusBuilding.slug == data["slug"])
@@ -265,6 +485,7 @@ async def seed_campus() -> dict[str, int]:
                 building = CampusBuilding()
                 db.add(building)
                 changed["buildings"] += 1
+            building.kind = data.get("kind", "academic")
             for field, value in data.items():
                 setattr(
                     building,
@@ -279,27 +500,30 @@ async def seed_campus() -> dict[str, int]:
             await db.flush()
 
             if data["slug"] == "main":
-                room = await db.scalar(
-                    select(CampusRoom).where(
-                        CampusRoom.building_id == building.id,
-                        CampusRoom.room_number == "425",
+                for room_number, title, floor in (
+                    ("425", "Дирекция ИПМКН", "4"),
+                    ("123", "Профком", "1"),
+                    ("125", "Профком", "1"),
+                ):
+                    room = await db.scalar(
+                        select(CampusRoom).where(
+                            CampusRoom.building_id == building.id,
+                            CampusRoom.room_number == room_number,
+                        )
                     )
-                )
-                if room is None:
-                    room = CampusRoom(
-                        building_id=building.id,
-                        room_number="425",
-                    )
-                    db.add(room)
-                    changed["rooms"] += 1
-                room.title = "Дирекция ИПМКН"
-                room.floor = "4"
-                room.directions = (
-                    "Кабинет подтверждён официальной страницей ИПМКН."
-                )
-                room.status = "published"
-                room.verified_at = CHECKED_AT
-                room.deleted_at = None
+                    if room is None:
+                        room = CampusRoom(
+                            building_id=building.id,
+                            room_number=room_number,
+                        )
+                        db.add(room)
+                        changed["rooms"] += 1
+                    room.title = title
+                    room.floor = floor
+                    room.directions = ""
+                    room.status = "published"
+                    room.verified_at = CHECKED_AT
+                    room.deleted_at = None
         await db.commit()
     return changed
 

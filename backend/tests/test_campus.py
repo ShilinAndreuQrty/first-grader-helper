@@ -1,5 +1,5 @@
 from app.campus.schemas import BuildingRead
-from app.campus.seed import BUILDINGS
+from app.campus.seed import BUILDINGS, DORMITORIES
 from app.campus.service import alias_matches_location
 
 
@@ -9,6 +9,7 @@ def test_building_catalog_allows_missing_coordinates() -> None:
         slug="main",
         name="Главный учебный корпус ТулГУ",
         short_name="Главный",
+        kind="academic",
         building_number="Главный",
         address="Тула, проспект Ленина, 92",
         entrance_hint="",
@@ -47,3 +48,28 @@ def test_floors_widget_is_enabled_only_for_verified_complexes() -> None:
     assert complexes["building-3"] == "70000001096985234"
     assert complexes["building-2"] is None
     assert complexes["laboratory-6"] is None
+
+
+def test_official_dormitory_catalog_has_direct_2gis_cards() -> None:
+    numbers = [dormitory["building_number"] for dormitory in DORMITORIES]
+
+    assert numbers == [
+        "1",
+        "2",
+        "3",
+        "4/1",
+        "4/2",
+        "6/1",
+        "6/2",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+    ]
+    assert all(dormitory["kind"] == "dormitory" for dormitory in DORMITORIES)
+    assert all("/firm/" in dormitory["dgis_url"] for dormitory in DORMITORIES)
+    assert all(
+        dormitory["latitude"] and dormitory["longitude"]
+        for dormitory in DORMITORIES
+    )

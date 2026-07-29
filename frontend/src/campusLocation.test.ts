@@ -12,6 +12,7 @@ function building(id: string, aliases: string[]): CampusBuilding {
     slug: id,
     name: id,
     short_name: id,
+    kind: 'academic',
     building_number: id,
     address: '',
     entrance_hint: '',
