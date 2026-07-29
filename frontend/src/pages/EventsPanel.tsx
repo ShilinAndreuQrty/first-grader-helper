@@ -16,7 +16,6 @@ import {
   Group,
   Header,
   Panel,
-  PanelHeader,
   Placeholder,
   Spinner,
   Text,
@@ -26,6 +25,7 @@ import { useMemo } from 'react'
 
 import { EventOccurrence, getEvents, subscribeToEvent } from '../api/events'
 import { getResources, ResourceLink } from '../api/students'
+import { AppPanelHeader } from '../components/AppPanelHeader'
 import { openExternalUrl } from '../platformLinks'
 
 const STATUS_LABELS = {
@@ -169,7 +169,7 @@ export function EventsPanel({ id = 'events' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader>События</PanelHeader>
+      <AppPanelHeader>События</AppPanelHeader>
       <Group>
         <Banner
           title="Календарь первокурсника"

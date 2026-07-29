@@ -2,8 +2,8 @@ import {
   Icon20CalendarOutline,
   Icon20EducationOutline,
   Icon20HomeOutline,
-  Icon20MenuOutline,
   Icon20MessageOutline,
+  Icon20PlaceOutline,
 } from '@vkontakte/icons'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import { Tabbar, TabbarItem } from '@vkontakte/vkui'
@@ -15,11 +15,11 @@ interface AppTabbarProps {
 }
 
 const items = [
-  { id: 'home', label: 'Сегодня', icon: <Icon20HomeOutline /> },
-  { id: 'schedule', label: 'Расписание', icon: <Icon20EducationOutline /> },
-  { id: 'events', label: 'События', icon: <Icon20CalendarOutline /> },
+  { id: 'home', label: 'Главная', icon: <Icon20HomeOutline /> },
   { id: 'assistant', label: 'Помощник', icon: <Icon20MessageOutline /> },
-  { id: 'more', label: 'Ещё', icon: <Icon20MenuOutline /> },
+  { id: 'schedule', label: 'Расписание', icon: <Icon20EducationOutline /> },
+  { id: 'map', label: 'Карта', icon: <Icon20PlaceOutline /> },
+  { id: 'events', label: 'События', icon: <Icon20CalendarOutline /> },
 ] as const
 
 export function AppTabbar({ activePanel }: AppTabbarProps) {

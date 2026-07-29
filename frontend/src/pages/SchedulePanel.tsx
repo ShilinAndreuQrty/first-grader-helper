@@ -11,7 +11,6 @@ import {
   Group,
   Header,
   Panel,
-  PanelHeader,
   Placeholder,
   Search,
   SimpleCell,
@@ -29,6 +28,7 @@ import {
 } from '../api/schedule'
 import { getMyGroups } from '../api/students'
 import { setMapTargetRoom } from '../campusLocation'
+import { AppPanelHeader } from '../components/AppPanelHeader'
 import {
   GROUP_CODE_HINT,
   isValidGroupCode,
@@ -69,7 +69,7 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader>Расписание</PanelHeader>
+      <AppPanelHeader backToHome>Расписание</AppPanelHeader>
       <Group header={<Header>Учебная группа</Header>}>
         <Search
           value={search}

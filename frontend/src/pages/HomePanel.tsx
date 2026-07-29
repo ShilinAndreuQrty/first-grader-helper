@@ -1,19 +1,16 @@
 import {
-  Icon28CalendarOutline,
-  Icon28EducationOutline,
-  Icon28MessageOutline,
+  Icon28InfoCircleOutline,
+  Icon28LinkOutline,
   Icon28PlaceOutline,
+  Icon28Users3Outline,
 } from '@vkontakte/icons'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
-  Banner,
   Button,
-  Card,
   Div,
   Group,
   Header,
   Panel,
-  PanelHeader,
   SimpleCell,
   Text,
   Title,
@@ -22,6 +19,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import { getMyGroups } from '../api/students'
 import { getOnboarding } from '../api/onboarding'
+import { setMapTargetRoom } from '../campusLocation'
+import { AppPanelHeader } from '../components/AppPanelHeader'
 import { PANEL_PATHS } from '../router'
 
 export function HomePanel({ id = 'home' }: { id?: string }) {
@@ -38,9 +37,9 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader>ИПМКН Старт</PanelHeader>
+      <AppPanelHeader>ИПМКН Старт</AppPanelHeader>
       <Group>
-        <Div className="hero">
+        <Div className={`hero${primaryGroup ? ' hero--compact' : ''}`}>
           <Text className="eyebrow">ТУЛГУ · ПЕРВЫЙ КУРС</Text>
           <Title level="1">
             {primaryGroup ? `Сегодня у ${primaryGroup.code}` : 'Укажите свою группу'}
@@ -54,74 +53,72 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
             size="l"
             stretched
             onClick={() =>
-              void navigator.push(
-                primaryGroup ? PANEL_PATHS.assistant : PANEL_PATHS.schedule,
-              )
+              void navigator.push(PANEL_PATHS.schedule)
             }
           >
-            {primaryGroup ? 'Задать вопрос' : 'Указать свою группу'}
+            {primaryGroup ? 'Открыть расписание' : 'Указать свою группу'}
           </Button>
         </Div>
       </Group>
 
-      <Group header={<Header>Быстрый старт</Header>}>
-        <Div className="quick-start-grid">
-          <Card mode="shadow" className="quick-start-card quick-start-card--schedule">
-            <SimpleCell
-              before={
-                <span className="quick-start-card__icon">
-                  <Icon28EducationOutline />
-                </span>
-              }
-              subtitle="Пары и аудитории"
-              onClick={() => void navigator.push(PANEL_PATHS.schedule)}
+      {primaryGroup && (
+        <Group header={<Header>Быстрый старт</Header>}>
+          <Div className="quick-start-grid">
+            <button
+              className="quick-start-card quick-start-card--tutor"
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('ipmkn.moreTarget', 'my-tutor')
+                void navigator.push(PANEL_PATHS.more)
+              }}
             >
-              Расписание
-            </SimpleCell>
-          </Card>
-          <Card mode="shadow" className="quick-start-card quick-start-card--events">
-            <SimpleCell
-              before={
-                <span className="quick-start-card__icon">
-                  <Icon28CalendarOutline />
-                </span>
-              }
-              subtitle="Что будет рядом"
-              onClick={() => void navigator.push(PANEL_PATHS.events)}
+              <span className="quick-start-card__icon">
+                <Icon28Users3Outline />
+              </span>
+              <span className="quick-start-card__title">Мой тьютор</span>
+              <span className="quick-start-card__subtitle">Контакт наставника</span>
+            </button>
+            <button
+              className="quick-start-card quick-start-card--links"
+              type="button"
+              onClick={() => void navigator.push(PANEL_PATHS.resources)}
             >
-              События
-            </SimpleCell>
-          </Card>
-          <Card mode="shadow" className="quick-start-card quick-start-card--assistant">
-            <SimpleCell
-              before={
-                <span className="quick-start-card__icon">
-                  <Icon28MessageOutline />
-                </span>
-              }
-              subtitle="Проверенные ответы"
-              onClick={() => void navigator.push(PANEL_PATHS.assistant)}
+              <span className="quick-start-card__icon">
+                <Icon28LinkOutline />
+              </span>
+              <span className="quick-start-card__title">Полезные ссылки</span>
+              <span className="quick-start-card__subtitle">Сервисы и сообщества</span>
+            </button>
+            <button
+              className="quick-start-card quick-start-card--rooms"
+              type="button"
+              onClick={() => {
+                setMapTargetRoom('Гл-425')
+                void navigator.push(PANEL_PATHS.map)
+              }}
             >
-              Помощник
-            </SimpleCell>
-          </Card>
-          <Card mode="shadow" className="quick-start-card quick-start-card--map">
-            <SimpleCell
-              before={
-                <span className="quick-start-card__icon">
-                  <Icon28PlaceOutline />
-                </span>
-              }
-              subtitle="Корпуса и кабинеты"
-              onClick={() => void navigator.push(PANEL_PATHS.map)}
+              <span className="quick-start-card__icon">
+                <Icon28PlaceOutline />
+              </span>
+              <span className="quick-start-card__title">Важные кабинеты</span>
+              <span className="quick-start-card__subtitle">Дирекция и профком</span>
+            </button>
+            <button
+              className="quick-start-card quick-start-card--about"
+              type="button"
+              onClick={() => void navigator.push(PANEL_PATHS.about)}
             >
-              Карта
-            </SimpleCell>
-          </Card>
-        </Div>
-      </Group>
+              <span className="quick-start-card__icon">
+                <Icon28InfoCircleOutline />
+              </span>
+              <span className="quick-start-card__title">О проекте</span>
+              <span className="quick-start-card__subtitle">Команда и контакты</span>
+            </button>
+          </Div>
+        </Group>
+      )}
 
-      {nextStep && (
+      {primaryGroup && nextStep && (
         <Group header={<Header>Маршрут первокурсника</Header>}>
           <SimpleCell
             subtitle={`${completedSteps} из ${onboarding.data?.length ?? 0} · ${nextStep.description}`}
@@ -132,12 +129,9 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
         </Group>
       )}
 
-      <Group>
-        <Banner
-          title="Проверяйте важное"
-          subtitle="Приложение создано тьюторским сообществом ИПМКН и не заменяет официальные сообщения ТулГУ."
-        />
-      </Group>
+      <Div className="home-disclaimer">
+        Приложение создано тьюторским сообществом ИПМКН и не заменяет официальные сообщения ТулГУ.
+      </Div>
     </Panel>
   )
 }

@@ -1,6 +1,5 @@
 import { Icon20PlaceOutline, Icon20Verified } from '@vkontakte/icons'
 import { useQuery } from '@tanstack/react-query'
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
   Button,
@@ -9,8 +8,6 @@ import {
   Group,
   Header,
   Panel,
-  PanelHeader,
-  PanelHeaderBack,
   Search,
   SimpleCell,
   Spinner,
@@ -27,12 +24,11 @@ import {
   consumeMapTargetRoom,
   matchBuildingByLocation,
 } from '../campusLocation'
+import { AppPanelHeader } from '../components/AppPanelHeader'
 import { MapCanvas } from '../components/MapCanvas'
 import { openExternalUrl } from '../platformLinks'
-import { PANEL_PATHS } from '../router'
 
 export function MapPanel({ id = 'map' }: { id?: string }) {
-  const navigator = useRouteNavigator()
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string>()
   const [targetRoom] = useState(consumeMapTargetRoom)
@@ -97,16 +93,7 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader
-        before={
-          <PanelHeaderBack
-            aria-label="Назад"
-            onClick={() => void navigator.push(PANEL_PATHS.more)}
-          />
-        }
-      >
-        Корпуса ТулГУ
-      </PanelHeader>
+      <AppPanelHeader>Корпуса ТулГУ</AppPanelHeader>
       <Group>
         <Search
           value={search}

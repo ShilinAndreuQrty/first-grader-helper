@@ -15,9 +15,11 @@ import {
   Header,
   Panel,
   PanelHeader,
+  PanelHeaderBack,
   SimpleCell,
 } from '@vkontakte/vkui'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
+import { useEffect } from 'react'
 
 import { getCurrentUser } from '../api/auth'
 import {
@@ -66,9 +68,30 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     onSuccess: refreshGroups,
   })
 
+  useEffect(() => {
+    const target = sessionStorage.getItem('ipmkn.moreTarget')
+    if (!target) return
+    sessionStorage.removeItem('ipmkn.moreTarget')
+    requestAnimationFrame(() =>
+      document.getElementById(target)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      }),
+    )
+  }, [])
+
   return (
     <Panel id={id}>
-      <PanelHeader>Ещё</PanelHeader>
+      <PanelHeader
+        before={
+          <PanelHeaderBack
+            aria-label="Назад на главную"
+            onClick={() => void navigator.push(PANEL_PATHS.home)}
+          />
+        }
+      >
+        Ещё
+      </PanelHeader>
       <Group header={<Header>Мои группы</Header>}>
         <SimpleCell
           subtitle="Шесть цифр или шесть цифр и двухзначный суффикс"

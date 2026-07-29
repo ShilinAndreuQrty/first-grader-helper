@@ -82,6 +82,11 @@ html.vkui .vkuiPanel__in {
   box-shadow: 0 16px 44px rgb(53 74 180 / 24%);
 }
 
+.hero--compact {
+  gap: 10px;
+  padding-block: 20px;
+}
+
 .hero .vkuiButton {
   color: #3444a5;
   background: #fff;
@@ -112,42 +117,40 @@ html.vkui .vkuiPanel__in {
 }
 
 .quick-start-card {
+  display: grid;
+  box-sizing: border-box;
   min-width: 0;
-  min-height: 118px;
+  min-height: 126px;
+  align-content: start;
+  gap: 8px;
+  padding: 16px;
+  color: var(--vkui--color_text_primary);
+  font: inherit;
+  text-align: left;
   overflow: hidden;
   background:
     linear-gradient(145deg, color-mix(in srgb, var(--quick-accent) 9%, transparent), transparent 68%),
     var(--app-surface-raised);
   border: 1px solid var(--app-border);
+  border-radius: 14px;
   box-shadow: var(--app-shadow);
+  cursor: pointer;
 }
 
-.quick-start-card .vkuiSimpleCell {
-  box-sizing: border-box;
-  min-width: 0;
-  height: 100%;
-  min-height: 118px;
-  align-items: flex-start;
-  padding: 16px 12px;
+.quick-start-card__title {
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.quick-start-card .vkuiSimpleCell__content {
-  min-width: 0;
+.quick-start-card__subtitle {
+  color: var(--vkui--color_text_secondary);
+  font-size: 13px;
+  line-height: 1.25;
 }
 
-.quick-start-card .vkuiSimpleCell__children {
-  font-weight: 650;
-}
-
-.quick-start-card .vkuiSimpleCell__subtitle {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  white-space: normal;
-}
-
-.quick-start-card:focus-within {
+.quick-start-card:focus-visible {
   outline: 2px solid var(--quick-accent);
   outline-offset: 2px;
 }
@@ -163,20 +166,28 @@ html.vkui .vkuiPanel__in {
   border-radius: 12px;
 }
 
-.quick-start-card--schedule {
+.quick-start-card--tutor {
   --quick-accent: #3569d4;
 }
 
-.quick-start-card--events {
+.quick-start-card--links {
   --quick-accent: #c46b35;
 }
 
-.quick-start-card--assistant {
+.quick-start-card--about {
   --quick-accent: #7356bf;
 }
 
-.quick-start-card--map {
+.quick-start-card--rooms {
   --quick-accent: #168f7a;
+}
+
+.home-disclaimer {
+  padding-block: 10px 16px;
+  color: var(--vkui--color_text_secondary);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .resource-avatar {
@@ -486,8 +497,8 @@ html.vkui .vkuiPanel__in {
     padding-inline: 10px;
   }
 
-  .quick-start-card .vkuiSimpleCell {
-    padding-inline: 9px;
+  .quick-start-card {
+    padding-inline: 11px;
   }
 }
 

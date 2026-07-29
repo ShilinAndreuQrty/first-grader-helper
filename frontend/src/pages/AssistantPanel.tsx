@@ -12,7 +12,6 @@ import {
   Group,
   Header,
   Panel,
-  PanelHeader,
   Search,
   SimpleCell,
   Spinner,
@@ -31,6 +30,7 @@ import {
 } from '../api/knowledge'
 import { reportIssue } from '../api/onboarding'
 import { openExternalUrl } from '../platformLinks'
+import { AppPanelHeader } from '../components/AppPanelHeader'
 import { PANEL_PATHS } from '../router'
 
 const HISTORY_KEY = 'ipmkn.assistant-history-v1'
@@ -349,7 +349,7 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader>Помощник ИПМКН</PanelHeader>
+      <AppPanelHeader>Помощник ИПМКН</AppPanelHeader>
       <Group>
         <Div className="assistant-intro">
           <Title level="2">Ответы из проверенной базы</Title>
