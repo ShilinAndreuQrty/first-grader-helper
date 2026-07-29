@@ -65,7 +65,16 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
     if (path === '/api/schedule/220031-22') {
       return json({
         group_code: '220031-22',
-        lessons: [],
+        lessons: [
+          {
+            date: '2026-09-03',
+            time: '09:40 - 11:10',
+            subject: 'Программирование',
+            lesson_type: 'лек.',
+            room: 'Гл-401',
+            teacher: 'Иванов И.И.',
+          },
+        ],
         fetched_at: '2026-07-29T10:00:00Z',
         is_stale: true,
         source_url: 'https://tulsu.ru/schedule/?search=220031-22',
@@ -173,13 +182,41 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
       return json([
         {
           id: 'main',
+          slug: 'main',
           name: 'Главный учебный корпус ТулГУ',
           short_name: 'Главный',
+          building_number: 'Главный',
           address: 'Тула, проспект Ленина, 92',
           entrance_hint: '',
+          aliases: ['гл', 'главный'],
+          complex_slug: 'main-9',
           dgis_url: 'https://2gis.ru/tula/geo/5067185235966202',
+          dgis_object_id: '5067185235966202',
+          dgis_complex_id: null,
+          source_url: 'https://tulsu.ru/facilities/academic-building/4',
           latitude: null,
           longitude: null,
+          sort_order: 0,
+          verified_at: '2026-07-29T00:00:00Z',
+          rooms: [],
+        },
+        {
+          id: 'building-9',
+          slug: 'building-9',
+          name: 'Учебный корпус №9 ТулГУ',
+          short_name: 'Корпус №9',
+          building_number: '9',
+          address: 'Тула, проспект Ленина, 92',
+          entrance_hint: 'Вход через 9-й корпус.',
+          aliases: ['9', '9к', '9 корпус'],
+          complex_slug: 'main-9',
+          dgis_url: 'https://2gis.ru/tula/geo/5067185235966202',
+          dgis_object_id: '5067185235966202',
+          dgis_complex_id: null,
+          source_url: 'https://tulsu.ru/facilities/academic-building/8',
+          latitude: null,
+          longitude: null,
+          sort_order: 9,
           verified_at: '2026-07-29T00:00:00Z',
           rooms: [],
         },
@@ -299,8 +336,16 @@ test('stale schedule and map fallback remain useful', async ({ page }) => {
   ])
   await page.goto('/#/schedule')
   await expect(page.getByText('Показана сохранённая копия')).toBeVisible()
+  await page.getByRole('button', { name: 'Найти на карте' }).click()
+  await expect(page).toHaveURL(/#\/map$/)
+  await expect(
+    page.getByText('Есть в расписании выбранной группы', { exact: false }),
+  ).toBeVisible()
+  await expect(page.getByText('Корпус №9', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(/Главный и 9-й корпуса — отдельные корпуса/),
+  ).toBeVisible()
 
-  await page.goto('/#/map')
   await expect(page.getByText(/ключ 2ГИС не настроен/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
 })

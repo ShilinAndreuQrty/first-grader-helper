@@ -69,9 +69,12 @@ class ResourceWrite(BaseModel):
 class BuildingWrite(BaseModel):
     name: str = Field(min_length=2, max_length=200)
     short_name: str = Field(min_length=1, max_length=80)
+    building_number: str = Field(default="", max_length=20)
     address: str = Field(min_length=2, max_length=300)
     entrance_hint: str = Field(default="", max_length=500)
+    aliases: list[str] = Field(default_factory=list, max_length=30)
     dgis_url: HttpUrl
+    source_url: HttpUrl | None = None
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     status: ContentStatus = "needs_review"

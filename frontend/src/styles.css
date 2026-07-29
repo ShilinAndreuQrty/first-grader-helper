@@ -319,6 +319,17 @@ html.vkui .vkuiPanel__in {
   gap: 8px;
 }
 
+.campus-pin {
+  color: var(--app-highlight);
+}
+
+.campus-complex {
+  padding: 10px 12px;
+  color: var(--app-accent);
+  background: rgb(53 105 212 / 10%);
+  border-radius: 12px;
+}
+
 .map-canvas,
 .map-fallback {
   min-height: 280px;

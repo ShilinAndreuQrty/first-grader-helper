@@ -1,4 +1,6 @@
+import { Icon20PlaceOutline } from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
   Button,
@@ -26,14 +28,17 @@ import {
   saveGroupByCode,
 } from '../api/schedule'
 import { getMyGroups } from '../api/students'
+import { setMapTargetRoom } from '../campusLocation'
 import {
   GROUP_CODE_HINT,
   isValidGroupCode,
   normalizeGroupCode,
 } from '../groupCode'
 import { openExternalUrl } from '../platformLinks'
+import { PANEL_PATHS } from '../router'
 
 export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
+  const navigator = useRouteNavigator()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedCode, setSelectedCode] = useState('')
@@ -224,6 +229,19 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
                   <Text className="muted">
                     {[lesson.room, lesson.teacher].filter(Boolean).join(' · ')}
                   </Text>
+                  {lesson.room && (
+                    <Button
+                      size="s"
+                      mode="tertiary"
+                      before={<Icon20PlaceOutline />}
+                      onClick={() => {
+                        setMapTargetRoom(lesson.room)
+                        void navigator.push(PANEL_PATHS.map)
+                      }}
+                    >
+                      Найти на карте
+                    </Button>
+                  )}
                 </Div>
               </Card>
             ))}

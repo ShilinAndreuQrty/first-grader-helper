@@ -35,6 +35,7 @@ from app.models import (
     ResourceLink,
     User,
     UserSession,
+    new_id,
     utc_now,
 )
 
@@ -285,12 +286,18 @@ async def create_building(
     _: CsrfSession,
     db: Db,
 ) -> dict[str, str]:
+    building_id = new_id()
     building = CampusBuilding(
+        id=building_id,
+        slug=f"draft-{building_id}",
         name=payload.name,
         short_name=payload.short_name,
+        building_number=payload.building_number,
         address=payload.address,
         entrance_hint=payload.entrance_hint,
+        aliases=json.dumps(payload.aliases, ensure_ascii=False),
         dgis_url=str(payload.dgis_url),
+        source_url=str(payload.source_url) if payload.source_url else "",
         latitude=str(payload.latitude) if payload.latitude is not None else None,
         longitude=str(payload.longitude) if payload.longitude is not None else None,
         status=payload.status,

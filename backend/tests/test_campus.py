@@ -1,19 +1,36 @@
 from app.campus.schemas import BuildingRead
+from app.campus.service import alias_matches_location
 
 
 def test_building_catalog_allows_missing_coordinates() -> None:
     building = BuildingRead(
         id="building",
+        slug="main",
         name="Главный учебный корпус ТулГУ",
         short_name="Главный",
+        building_number="Главный",
         address="Тула, проспект Ленина, 92",
         entrance_hint="",
+        aliases=["гл", "главный"],
+        complex_slug="main-9",
         dgis_url="https://2gis.ru/tula/geo/5067185235966202",
+        dgis_object_id="5067185235966202",
+        dgis_complex_id=None,
+        source_url="https://tulsu.ru/facilities/academic-building/4",
         latitude=None,
         longitude=None,
+        sort_order=0,
         verified_at=None,
         rooms=[],
     )
 
     assert building.latitude is None
     assert building.dgis_url.host == "2gis.ru"
+
+
+def test_schedule_location_aliases_do_not_guess_similar_buildings() -> None:
+    assert alias_matches_location("Гл-401", "гл")
+    assert alias_matches_location("9–311", "9")
+    assert alias_matches_location("10-205", "10")
+    assert not alias_matches_location("10-205", "1")
+    assert not alias_matches_location("неизвестный корпус", "9")

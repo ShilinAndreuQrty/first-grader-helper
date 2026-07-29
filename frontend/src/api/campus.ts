@@ -11,13 +11,21 @@ export interface CampusRoom {
 
 export interface CampusBuilding {
   id: string
+  slug: string
   name: string
   short_name: string
+  building_number: string
   address: string
   entrance_hint: string
+  aliases: string[]
+  complex_slug: string
   dgis_url: string
+  dgis_object_id: string
+  dgis_complex_id: string | null
+  source_url: string | null
   latitude: number | null
   longitude: number | null
+  sort_order: number
   verified_at: string | null
   rooms: CampusRoom[]
 }
@@ -28,4 +36,3 @@ export function getCampusBuildings(query?: string): Promise<CampusBuilding[]> {
     : ''
   return apiRequest(`/campus/buildings${suffix}`)
 }
-
