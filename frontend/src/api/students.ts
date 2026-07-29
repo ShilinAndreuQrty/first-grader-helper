@@ -18,11 +18,15 @@ export interface Tutor {
 
 export interface ResourceLink {
   id: string
+  slug: string
   category: string
+  category_slug: string
   title: string
   url: string
   description: string
   icon: string
+  source_kind: 'official' | 'student'
+  contexts: string[]
 }
 
 export function findGroups(query: string): Promise<StudentGroup[]> {
@@ -54,4 +58,3 @@ export function getTutors(groupId: string): Promise<Tutor[]> {
 export function getResources(): Promise<ResourceLink[]> {
   return apiRequest('/resources')
 }
-

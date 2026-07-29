@@ -44,6 +44,9 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     queryKey: ['resources'],
     queryFn: getResources,
   })
+  const profburo = resources.data?.find(
+    (resource) => resource.slug === 'profburo-ipmkn',
+  )
   const currentUser = useQuery({
     queryKey: ['current-user'],
     queryFn: getCurrentUser,
@@ -104,7 +107,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         ))}
       </Group>
 
-      <Group header={<Header>Мой тьютор</Header>}>
+      <Group id="my-tutor" header={<Header>Мой тьютор</Header>}>
         {!primaryGroup && (
           <Banner
             title="Укажите основную группу"
@@ -117,11 +120,12 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
             subtitle="Сообщите об этом профбюро ИПМКН — соответствие групп обновляется каждый учебный год."
             actions={
               <Button
+                disabled={!profburo}
                 onClick={() =>
-                  void openExternalUrl('https://vk.ru/profburo_ipmkn_tsu')
+                  profburo && void openExternalUrl(profburo.url)
                 }
               >
-                Написать профбюро
+                {profburo ? 'Написать профбюро' : 'Контакт не настроен'}
               </Button>
             }
           />
@@ -148,6 +152,15 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         <SimpleCell
           before={<Icon28Users3Outline />}
           subtitle="Контакты наставника вашей группы"
+          onClick={() => {
+            if (!primaryGroup) {
+              void navigator.push(PANEL_PATHS.schedule)
+              return
+            }
+            document
+              .getElementById('my-tutor')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
         >
           Мой тьютор
         </SimpleCell>
@@ -161,6 +174,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         <SimpleCell
           before={<Icon28BookSpreadOutline />}
           subtitle="Личный кабинет, расписание, документы"
+          onClick={() => void navigator.push(PANEL_PATHS.resources)}
         >
           Полезные ссылки
         </SimpleCell>
@@ -186,24 +200,6 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         </SimpleCell>
       </Group>
 
-      <Group header={<Header>Полезные ссылки</Header>}>
-        {resources.data?.map((resource) => (
-          <SimpleCell
-            key={resource.id}
-            before={<Icon28BookSpreadOutline />}
-            subtitle={resource.category}
-            onClick={() => void openExternalUrl(resource.url)}
-          >
-            {resource.title}
-          </SimpleCell>
-        ))}
-        {resources.isError && (
-          <Banner
-            title="Ссылки временно недоступны"
-            subtitle="Попробуйте открыть раздел позднее."
-          />
-        )}
-      </Group>
       {isEditor && (
         <Group header={<Header>Для команды</Header>}>
           <SimpleCell

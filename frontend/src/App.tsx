@@ -17,6 +17,7 @@ import { MorePanel } from './pages/MorePanel'
 import { OnboardingPanel } from './pages/OnboardingPanel'
 import { SchedulePanel } from './pages/SchedulePanel'
 import { SettingsPanel } from './pages/SettingsPanel'
+import { ResourcesPanel } from './pages/ResourcesPanel'
 import { appColorScheme } from './theme'
 
 const AdminPanel = lazy(() =>
@@ -69,6 +70,7 @@ export function App() {
               <OnboardingPanel id="onboarding" />
               <LegalPanel id="about" kind="about" />
               <LegalPanel id="privacy" kind="privacy" />
+              <ResourcesPanel id="resources" />
             </View>
           </Epic>
         </AppRoot>

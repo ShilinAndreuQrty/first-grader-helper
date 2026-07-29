@@ -117,7 +117,22 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
         verified_at: '2026-07-29T00:00:00Z',
       })
     }
-    if (path === '/api/resources') return json([])
+    if (path === '/api/resources') {
+      return json([
+        {
+          id: 'resource-1',
+          slug: 'tulsu-site',
+          category: 'Важное',
+          category_slug: 'important',
+          title: 'Официальный сайт ТулГУ',
+          url: 'https://tulsu.ru/',
+          description: 'Документы и официальная информация университета.',
+          icon: 'university',
+          source_kind: 'official',
+          contexts: ['catalog', 'about', 'official_info'],
+        },
+      ])
+    }
     if (path === '/api/admin/dashboard') {
       return json({
         needs_review_faq: 50,
@@ -216,7 +231,21 @@ test('assistant handles a typo with a grounded answer', async ({ page }) => {
   await page.getByRole('button', { name: 'Найти ответ' }).click()
 
   await expect(page.getByText('Как найти своего тьютора?')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Открыть источник' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Открыть источник' }),
+  ).toBeVisible()
+})
+
+test('resource directory has actionable categorized links', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/#/more')
+
+  await page.getByRole('button', { name: /Полезные ссылки/ }).click()
+  await expect(page).toHaveURL(/#\/resources$/)
+  await expect(page.getByRole('heading', { name: 'Важное' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: /Официальный сайт ТулГУ/ }),
+  ).toBeEnabled()
 })
 
 test('stale schedule and map fallback remain useful', async ({ page }) => {

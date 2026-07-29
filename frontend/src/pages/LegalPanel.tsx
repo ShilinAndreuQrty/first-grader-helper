@@ -1,15 +1,24 @@
+import {
+  Icon28BugOutline,
+  Icon28LinkOutline,
+} from '@vkontakte/icons'
+import { useQuery } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
+  Banner,
   Div,
   Group,
   Header,
   Panel,
   PanelHeader,
   PanelHeaderBack,
+  SimpleCell,
   Text,
   Title,
 } from '@vkontakte/vkui'
 
+import { getResources } from '../api/students'
+import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
 
 interface LegalPanelProps {
@@ -20,6 +29,15 @@ interface LegalPanelProps {
 export function LegalPanel({ id, kind }: LegalPanelProps) {
   const navigator = useRouteNavigator()
   const privacy = kind === 'privacy'
+  const resources = useQuery({
+    queryKey: ['resources'],
+    queryFn: getResources,
+    enabled: !privacy,
+  })
+  const aboutResources =
+    resources.data?.filter((resource) =>
+      resource.contexts.includes('about'),
+    ) ?? []
 
   return (
     <Panel id={id}>
@@ -82,10 +100,43 @@ export function LegalPanel({ id, kind }: LegalPanelProps) {
           <Div className="legal-copy">
             <Title level="3">Тьюторское сообщество ИПМКН</Title>
             <Text>
-              Ссылки на страницу проекта, сообщения об ошибках и профбюро
-              управляются редакторами и будут показаны здесь из общего каталога.
+              Контакты берутся из общего каталога и обновляются без изменения
+              этого экрана.
             </Text>
           </Div>
+          {aboutResources.map((resource) => (
+            <SimpleCell
+              key={resource.id}
+              before={<Icon28LinkOutline />}
+              subtitle={resource.description}
+              onClick={() => void openExternalUrl(resource.url)}
+            >
+              {resource.title}
+            </SimpleCell>
+          ))}
+          <SimpleCell
+            before={<Icon28BugOutline />}
+            subtitle="Сообщение попадёт в очередь редакторов без контактных данных"
+            onClick={() => void navigator.push(PANEL_PATHS.onboarding)}
+          >
+            Сообщить об ошибке
+          </SimpleCell>
+          {resources.isError && (
+            <Banner
+              title="Контакты временно недоступны"
+              subtitle="Форма сообщения об ошибке продолжает работать."
+            />
+          )}
+          {resources.isSuccess &&
+            !aboutResources.some(
+              (resource) => resource.slug === 'project-community',
+            ) && (
+              <Div>
+                <Text className="muted">
+                  Отдельная страница проекта пока не указана редакторами.
+                </Text>
+              </Div>
+            )}
         </Group>
       )}
       <Group header={<Header>Версия</Header>}>

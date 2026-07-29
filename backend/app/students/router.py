@@ -12,6 +12,7 @@ from app.auth.dependencies import get_current_user, require_csrf
 from app.db import get_session
 from app.models import (
     GroupTutor,
+    ResourceCategory,
     ResourceLink,
     StudentGroup,
     Tutor,
@@ -93,18 +94,27 @@ async def resources(db: Annotated[AsyncSession, Depends(get_session)]) -> list[R
                     ResourceLink.is_active.is_(True),
                     ResourceLink.deleted_at.is_(None),
                 )
-                .order_by(ResourceLink.category_id, ResourceLink.sort_order)
+                .join(ResourceCategory)
+                .order_by(ResourceCategory.sort_order, ResourceLink.sort_order)
             )
         ).all()
     )
     return [
         ResourceRead(
             id=row.id,
+            slug=row.slug,
             category=row.category.title,
+            category_slug=row.category.slug,
             title=row.title,
             url=row.url,
             description=row.description,
             icon=row.icon,
+            source_kind=row.source_kind,
+            contexts=[
+                context.strip()
+                for context in row.contexts.split(",")
+                if context.strip()
+            ],
         )
         for row in rows
     ]
@@ -209,4 +219,3 @@ async def remove_group(
         if next_bookmark:
             next_bookmark.is_primary = True
     await db.commit()
-

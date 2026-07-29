@@ -179,6 +179,29 @@ html.vkui .vkuiPanel__in {
   --quick-accent: #168f7a;
 }
 
+.resource-avatar {
+  color: var(--app-accent-deep);
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface));
+  border: 1px solid color-mix(in srgb, var(--app-accent) 24%, transparent);
+}
+
+.resource-avatar--community,
+.resource-avatar--event {
+  color: #7356bf;
+  background: color-mix(in srgb, #7356bf 16%, var(--app-surface));
+}
+
+.resource-avatar--discount {
+  color: #b85f2f;
+  background: color-mix(in srgb, #c46b35 16%, var(--app-surface));
+}
+
+.resource-avatar--library,
+.resource-avatar--institute {
+  color: var(--app-highlight);
+  background: color-mix(in srgb, var(--app-highlight) 16%, var(--app-surface));
+}
+
 .assistant-intro {
   display: grid;
   gap: 8px;

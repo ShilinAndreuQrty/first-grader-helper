@@ -9,7 +9,6 @@ import {
   FormItem,
   Group,
   Header,
-  Link,
   Panel,
   PanelHeader,
   Search,
@@ -28,8 +27,10 @@ import {
   getFaqCategories,
   sendFaqFeedback,
 } from '../api/knowledge'
+import { openExternalUrl } from '../platformLinks'
 
 function AnswerCard({ entry }: { entry: FaqEntry }) {
+  const sourceUrl = entry.source_url
   const feedback = useMutation({
     mutationFn: (isHelpful: boolean) => sendFaqFeedback(entry.id, isHelpful),
   })
@@ -44,10 +45,14 @@ function AnswerCard({ entry }: { entry: FaqEntry }) {
             {paragraph}
           </Text>
         ))}
-        {entry.source_url && (
-          <Link href={entry.source_url} target="_blank">
+        {sourceUrl && (
+          <Button
+            size="s"
+            mode="tertiary"
+            onClick={() => void openExternalUrl(sourceUrl)}
+          >
             Открыть источник
-          </Link>
+          </Button>
         )}
         {entry.is_time_sensitive && (
           <Text className="muted">

@@ -16,7 +16,7 @@ STEPS = [
     ("find-office", "Найти дирекцию", "Главный корпус, кабинет 425.", "/map"),
     ("learn-union", "Узнать про профсоюз", "Посмотрите проверенные ответы.", "/assistant"),
     ("check-events", "Проверить мероприятия", "Выберите интересное событие.", "/events"),
-    ("save-links", "Сохранить важные ссылки", "Откройте каталог ресурсов.", "/more"),
+    ("save-links", "Сохранить важные ссылки", "Откройте каталог ресурсов.", "/resources"),
 ]
 
 
@@ -28,21 +28,24 @@ async def seed_onboarding() -> int:
                 select(OnboardingStep).where(OnboardingStep.slug == slug)
             )
             if step is None:
-                db.add(
-                    OnboardingStep(
-                        slug=slug,
-                        title=title,
-                        description=description,
-                        action_path=action_path,
-                        sort_order=order,
-                        status="published",
-                    )
+                step = OnboardingStep(
+                    slug=slug,
+                    title=title,
+                    description=description,
+                    action_path=action_path,
+                    sort_order=order,
+                    status="published",
                 )
+                db.add(step)
                 created += 1
+            else:
+                step.title = title
+                step.description = description
+                step.action_path = action_path
+                step.sort_order = order
         await db.commit()
     return created
 
 
 if __name__ == "__main__":
     print({"created": asyncio.run(seed_onboarding())})
-

@@ -250,10 +250,13 @@ class ResourceLink(TimestampMixin, Base):
         ForeignKey("resource_categories.id", ondelete="RESTRICT"),
         index=True,
     )
+    slug: Mapped[str] = mapped_column(String(100), default="", index=True)
     title: Mapped[str] = mapped_column(String(200))
     url: Mapped[str] = mapped_column(String(1000))
     description: Mapped[str] = mapped_column(String(500), default="")
     icon: Mapped[str] = mapped_column(String(80), default="link")
+    source_kind: Mapped[str] = mapped_column(String(24), default="student")
+    contexts: Mapped[str] = mapped_column(String(300), default="catalog")
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

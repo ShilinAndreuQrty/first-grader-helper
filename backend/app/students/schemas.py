@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -28,9 +29,12 @@ class TutorRead(BaseModel):
 
 class ResourceRead(BaseModel):
     id: str
+    slug: str
     category: str
+    category_slug: str
     title: str
     url: HttpUrl
     description: str
     icon: str
-
+    source_kind: Literal["official", "student"]
+    contexts: list[str]

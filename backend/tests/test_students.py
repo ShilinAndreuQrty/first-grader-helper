@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from app.students.importer import parse_tutors_csv
+from app.students.seed import RESOURCE_SEED
 from app.students.service import (
     is_valid_group_code,
     normalize_group_code,
@@ -30,3 +31,19 @@ def test_csv_import_validates_and_normalizes(tmp_path: Path) -> None:
     assert len(result.rows) == 1
     assert result.rows[0].group_code == "220031-22"
     assert len(result.errors) == 1
+
+
+def test_resource_catalog_has_stable_contextual_metadata() -> None:
+    resources = [
+        resource
+        for _, (_, category_resources) in RESOURCE_SEED.items()
+        for resource in category_resources
+    ]
+
+    assert len({resource.slug for resource in resources}) == len(resources)
+    assert len({resource.url for resource in resources}) == len(resources)
+    assert all(resource.description for resource in resources)
+    assert all(resource.source_kind in {"official", "student"} for resource in resources)
+    assert any("events" in resource.contexts for resource in resources)
+    assert any("about" in resource.contexts for resource in resources)
+    assert any("meeting" in resource.contexts for resource in resources)
