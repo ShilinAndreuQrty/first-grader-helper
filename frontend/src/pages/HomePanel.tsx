@@ -36,7 +36,12 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
     onboarding.data?.filter((step) => step.completed).length ?? 0
 
   return (
-    <Panel id={id}>
+    <Panel
+      id={id}
+      className={
+        primaryGroup ? 'home-panel home-panel--personalized' : 'home-panel'
+      }
+    >
       <AppPanelHeader>ИПМКН Старт</AppPanelHeader>
       <Group>
         <Div className={`hero${primaryGroup ? ' hero--compact' : ''}`}>
