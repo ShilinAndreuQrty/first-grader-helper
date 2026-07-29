@@ -260,7 +260,7 @@ async def test_official_tulsu_fallback_returns_one_specific_link() -> None:
     faq = entry("tutor", "Кто такой тьютор?", "Тьютор помогает.")
 
     run = await GroundedAssistantService().answer(
-        "Какие есть общежития?",
+        "Кому предоставляются места в общежитии?",
         [faq],
     )
 
