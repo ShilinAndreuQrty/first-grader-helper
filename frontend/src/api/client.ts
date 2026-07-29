@@ -30,6 +30,8 @@ export async function apiRequest<T>(
   if (!response.ok) {
     throw new ApiError('Сервис временно недоступен', response.status)
   }
+  if (response.status === 204) {
+    return undefined as T
+  }
   return response.json() as Promise<T>
 }
-

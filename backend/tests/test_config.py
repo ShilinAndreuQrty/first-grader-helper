@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+import pytest
+from pydantic import ValidationError
+
+from app.config import Settings
+
+
+def production_settings(**overrides: object) -> Settings:
+    """Build a minimal safe production configuration for focused validation tests."""
+    values: dict[str, object] = {
+        "app_env": "production",
+        "app_secret_key": "a" * 32,
+        "cookie_secure": True,
+        "cookie_samesite": "none",
+        "dev_auth_enabled": False,
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def test_production_accepts_secure_cross_site_session_cookie() -> None:
+    settings = production_settings()
+
+    assert settings.cookie_secure is True
+    assert settings.cookie_samesite == "none"
+
+
+def test_production_rejects_lax_cookie_for_vk_iframe() -> None:
+    with pytest.raises(ValidationError, match="COOKIE_SAMESITE must be none"):
+        production_settings(cookie_samesite="lax")

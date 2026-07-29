@@ -10,8 +10,10 @@ VK -> HTTPS/Caddy -> frontend
                                   \-> worker
 ```
 
-SPA и API работают на одном origin, поэтому HttpOnly cookie не становится
-third-party cookie. Минимум для MVP: 2 vCPU, 2–4 ГБ RAM, 20 ГБ SSD.
+SPA и API работают на одном origin, поэтому не требуют междоменной сессии между собой.
+Но внутри VK web iframe cookie используется в стороннем контексте, поэтому production
+обязан включать `SameSite=None; Secure`. Минимум для MVP: 2 vCPU, 2–4 ГБ RAM,
+20 ГБ SSD.
 
 ## DNS и первый запуск
 
@@ -22,6 +24,7 @@ third-party cookie. Минимум для MVP: 2 vCPU, 2–4 ГБ RAM, 20 ГБ S
 5. Установите `APP_DOMAIN`, `APP_PUBLIC_URL=https://...`,
    `API_PUBLIC_URL=https://.../api`, тот же origin в `ALLOWED_ORIGINS`,
    `APP_ENV=production`, `DEV_AUTH_ENABLED=false`, `COOKIE_SECURE=true`,
+   `COOKIE_SAMESITE=none`,
    сильные `APP_SECRET_KEY` и `POSTGRES_PASSWORD`.
 6. Запустите:
 

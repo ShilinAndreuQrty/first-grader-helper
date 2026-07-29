@@ -45,7 +45,7 @@ def set_session_cookie(response: Response, token: str, settings: Settings) -> No
         max_age=settings.session_ttl_seconds,
         secure=settings.cookie_secure,
         httponly=True,
-        samesite="lax",
+        samesite=settings.cookie_samesite,
         path="/",
     )
 
@@ -120,7 +120,7 @@ async def logout(
         SESSION_COOKIE,
         secure=settings.cookie_secure,
         httponly=True,
-        samesite="lax",
+        samesite=settings.cookie_samesite,
         path="/",
     )
 

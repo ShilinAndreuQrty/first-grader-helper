@@ -33,3 +33,5 @@ jobs:
       - run: pnpm frontend:lint
       - run: pnpm frontend:test
       - run: pnpm frontend:build
+      - run: pnpm --filter frontend exec playwright install --with-deps chromium
+      - run: pnpm frontend:e2e

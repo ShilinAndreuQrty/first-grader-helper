@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     timezone: str = "Europe/Moscow"
     allowed_origins: str = "http://localhost:5173"
     cookie_secure: bool = False
+    cookie_samesite: Literal["lax", "none"] = "lax"
     dev_auth_enabled: bool = True
     session_ttl_seconds: int = 86_400
     vk_launch_max_age_seconds: int = 900
@@ -62,6 +63,8 @@ class Settings(BaseSettings):
                 raise ValueError("APP_SECRET_KEY must be a strong production secret")
             if not self.cookie_secure:
                 raise ValueError("COOKIE_SECURE must be true in production")
+            if self.cookie_samesite != "none":
+                raise ValueError("COOKIE_SAMESITE must be none for VK web iframe")
         if self.ai_assistant_enabled and not self.ai_api_key:
             raise ValueError("AI_API_KEY is required when AI_ASSISTANT_ENABLED=true")
         if self.notifications_enabled and not self.vk_community_token:

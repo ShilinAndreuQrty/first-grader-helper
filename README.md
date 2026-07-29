@@ -90,4 +90,5 @@ cd backend
 - администрирование: `docs/admin-guide.md`;
 - production/HTTPS: `docs/deployment.md`;
 - приватность и релиз: `docs/privacy-checklist.md`,
-  `docs/release-checklist.md`.
+  `docs/release-checklist.md`;
+- security hardening: `docs/security-checklist.md`.
