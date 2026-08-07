@@ -4,6 +4,7 @@ from app.students.importer import parse_tutors_csv
 from app.students.seed import RESOURCE_SEED
 from app.students.service import (
     is_valid_group_code,
+    normalize_bookmark_label,
     normalize_group_code,
     require_valid_group_code,
 )
@@ -15,6 +16,10 @@ def test_group_normalization_handles_spaces_case_and_dashes() -> None:
     assert is_valid_group_code("220031‑22")
     assert not is_valid_group_code("ИВТ-101")
     assert require_valid_group_code(" 220031 — 22 ") == "220031-22"
+
+
+def test_bookmark_label_is_trimmed_without_changing_user_text() -> None:
+    assert normalize_bookmark_label("  Группа   Ксюши 😈  ") == "Группа Ксюши 😈"
 
 
 def test_csv_import_validates_and_normalizes(tmp_path: Path) -> None:

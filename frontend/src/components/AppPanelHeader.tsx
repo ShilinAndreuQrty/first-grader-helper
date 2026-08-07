@@ -5,17 +5,20 @@ import {
   PanelHeaderBack,
   PanelHeaderButton,
 } from '@vkontakte/vkui'
+import type { ReactNode } from 'react'
 
 import { PANEL_PATHS } from '../router'
 
 interface AppPanelHeaderProps {
   children: string
   backToHome?: boolean
+  beforeMenu?: ReactNode
 }
 
 export function AppPanelHeader({
   children,
   backToHome = false,
+  beforeMenu,
 }: AppPanelHeaderProps) {
   const navigator = useRouteNavigator()
 
@@ -30,12 +33,15 @@ export function AppPanelHeader({
         ) : undefined
       }
       after={
-        <PanelHeaderButton
-          aria-label="Открыть раздел «Ещё»"
-          onClick={() => void navigator.push(PANEL_PATHS.more)}
-        >
-          <Icon24MenuOutline />
-        </PanelHeaderButton>
+        <>
+          {beforeMenu}
+          <PanelHeaderButton
+            aria-label="Открыть раздел «Ещё»"
+            onClick={() => void navigator.push(PANEL_PATHS.more)}
+          >
+            <Icon24MenuOutline />
+          </PanelHeaderButton>
+        </>
       }
     >
       {children}

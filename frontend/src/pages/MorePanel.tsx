@@ -10,7 +10,6 @@ import {
   Avatar,
   Banner,
   Button,
-  ButtonGroup,
   Group,
   Header,
   Panel,
@@ -19,22 +18,22 @@ import {
   SimpleCell,
 } from '@vkontakte/vkui'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getCurrentUser } from '../api/auth'
 import {
   getMyGroups,
   getResources,
   getTutors,
-  removeGroup,
   saveGroup,
 } from '../api/students'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
 
 export function MorePanel({ id = 'more' }: { id?: string }) {
-  const queryClient = useQueryClient()
   const navigator = useRouteNavigator()
+  const queryClient = useQueryClient()
+  const [choosingPrimary, setChoosingPrimary] = useState(false)
   const saved = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const primaryGroup = saved.data?.find((group) => group.is_primary)
   const tutors = useQuery({
@@ -57,17 +56,13 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
   const isEditor = currentUser.data?.roles.some((role) =>
     ['superadmin', 'content_editor', 'events_editor'].includes(role),
   )
-  const refreshGroups = () =>
-    queryClient.invalidateQueries({ queryKey: ['my-groups'] })
   const makePrimary = useMutation({
     mutationFn: (groupId: string) => saveGroup(groupId, true),
-    onSuccess: refreshGroups,
+    onSuccess: () => {
+      setChoosingPrimary(false)
+      void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
+    },
   })
-  const deleteGroup = useMutation({
-    mutationFn: removeGroup,
-    onSuccess: refreshGroups,
-  })
-
   useEffect(() => {
     const target = sessionStorage.getItem('ipmkn.moreTarget')
     if (!target) return
@@ -85,8 +80,8 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
       <PanelHeader
         before={
           <PanelHeaderBack
-            aria-label="Назад на главную"
-            onClick={() => void navigator.push(PANEL_PATHS.home)}
+            aria-label="Назад"
+            onClick={() => void navigator.back()}
           />
         }
       >
@@ -114,42 +109,57 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           </SimpleCell>
         )}
       </Group>
-      <Group header={<Header>Мои группы</Header>}>
-        <SimpleCell
-          subtitle="Шесть цифр или шесть цифр и двухзначный суффикс"
-          onClick={() => void navigator.push(PANEL_PATHS.schedule)}
-        >
-          Найти и сохранить группу
-        </SimpleCell>
-        {saved.data?.map((group) => (
+      <Group header={<Header>Моя группа</Header>}>
+        {primaryGroup ? (
           <SimpleCell
-            key={group.id}
-            indicator={group.is_primary ? 'Основная' : undefined}
-            subtitle={group.academic_year || 'Сохранённая группа'}
+            subtitle={primaryGroup.academic_year || 'Основная учебная группа'}
             after={
-              <ButtonGroup mode="horizontal" gap="s">
-                {!group.is_primary && (
-                  <Button
-                    size="s"
-                    mode="secondary"
-                    onClick={() => makePrimary.mutate(group.id)}
-                  >
-                    Выбрать
-                  </Button>
-                )}
-                <Button
-                  size="s"
-                  mode="tertiary"
-                  onClick={() => deleteGroup.mutate(group.id)}
-                >
-                  Удалить
-                </Button>
-              </ButtonGroup>
+              <Button
+                size="s"
+                mode="secondary"
+                onClick={() => setChoosingPrimary((value) => !value)}
+              >
+                Изменить
+              </Button>
             }
           >
-            {group.code}
+            {primaryGroup.code}
           </SimpleCell>
-        ))}
+        ) : (
+          <SimpleCell
+            subtitle="Выберите группу, чтобы видеть расписание и тьютора"
+            onClick={() => void navigator.push(PANEL_PATHS.schedule)}
+          >
+            Выбрать основную группу
+          </SimpleCell>
+        )}
+        {choosingPrimary &&
+          saved.data
+            ?.filter((group) => !group.is_primary)
+            .map((group) => (
+              <SimpleCell
+                key={group.id}
+                subtitle={group.label || 'Сохранена в расписании'}
+                after={
+                  <Button
+                    size="s"
+                    loading={makePrimary.isPending}
+                    onClick={() => makePrimary.mutate(group.id)}
+                  >
+                    Сделать основной
+                  </Button>
+                }
+              >
+                {group.code}
+              </SimpleCell>
+            ))}
+        {choosingPrimary &&
+          saved.data?.every((group) => group.is_primary) && (
+            <Banner
+              title="Других групп пока нет"
+              subtitle="Добавьте их через меню над расписанием."
+            />
+          )}
       </Group>
 
       <Group id="my-tutor" header={<Header>Мой тьютор</Header>}>
@@ -232,7 +242,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         </SimpleCell>
         <SimpleCell
           before={<Icon28SettingsOutline />}
-          subtitle="Группы, напоминания и приватность"
+          subtitle="Основная группа, напоминания и приватность"
           onClick={() => void navigator.push(PANEL_PATHS.settings)}
         >
           Настройки

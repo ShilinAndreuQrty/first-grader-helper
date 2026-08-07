@@ -56,3 +56,4 @@ class CalendarPeriod(BaseModel):
 class GroupCodeCreate(BaseModel):
     code: str = Field(min_length=1, max_length=80)
     is_primary: bool = True
+    label: str | None = Field(default=None, max_length=60)

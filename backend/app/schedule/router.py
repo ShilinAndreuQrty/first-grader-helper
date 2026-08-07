@@ -21,7 +21,7 @@ from app.schedule.schemas import (
 )
 from app.schedule.service import get_group_schedule, get_group_suggestions
 from app.students.schemas import GroupRead
-from app.students.service import require_valid_group_code
+from app.students.service import normalize_bookmark_label, require_valid_group_code
 
 router = APIRouter(prefix="/api", tags=["schedule"])
 limiter = InMemoryRateLimiter()
@@ -127,11 +127,14 @@ async def save_discovered_group(
     )
     if bookmark:
         bookmark.is_primary = payload.is_primary or bookmark.is_primary
+        if payload.label is not None:
+            bookmark.label = normalize_bookmark_label(payload.label)
     else:
         bookmark = UserGroupBookmark(
             user_id=user_session.user_id,
             group_id=group.id,
             is_primary=payload.is_primary,
+            label=normalize_bookmark_label(payload.label or ""),
         )
         db.add(bookmark)
     await db.commit()
@@ -140,6 +143,7 @@ async def save_discovered_group(
         code=group.code,
         academic_year=group.academic_year,
         is_primary=bookmark.is_primary,
+        label=bookmark.label,
     )
 
 

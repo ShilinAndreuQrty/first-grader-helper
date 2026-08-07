@@ -1,4 +1,9 @@
-import { Icon20PlaceOutline } from '@vkontakte/icons'
+import {
+  Icon20PlaceOutline,
+  Icon24ArrowDownOutline,
+  Icon24ArrowUpOutline,
+  Icon24ShareExternalOutline,
+} from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
@@ -10,7 +15,10 @@ import {
   Div,
   Group,
   Header,
+  Input,
+  Link,
   Panel,
+  PanelHeaderButton,
   Placeholder,
   Search,
   SimpleCell,
@@ -18,15 +26,16 @@ import {
   Text,
   Title,
 } from '@vkontakte/vkui'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { ApiError } from '../api/client'
 import {
   findScheduleGroups,
   getSchedule,
+  ScheduleLesson,
   saveGroupByCode,
 } from '../api/schedule'
-import { getMyGroups } from '../api/students'
+import { getMyGroups, removeGroup, saveGroup } from '../api/students'
 import { setMapTargetRoom } from '../campusLocation'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import {
@@ -34,19 +43,45 @@ import {
   isValidGroupCode,
   normalizeGroupCode,
 } from '../groupCode'
+import {
+  formatLessonType,
+  getLessonNumber,
+  getLessonTone,
+} from '../lessonAppearance'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import {
+  getMoscowDate,
+  getScheduleFocusKey,
+  getScheduleLessonKey,
+} from '../scheduleFocus'
+
+function formatScheduleUpdate(value: string): string {
+  return new Date(value).toLocaleString('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
   const navigator = useRouteNavigator()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedCode, setSelectedCode] = useState('')
+  const [editingGroupId, setEditingGroupId] = useState('')
+  const [labelDraft, setLabelDraft] = useState('')
+  const [todayDirection, setTodayDirection] = useState<'up' | 'down' | null>(
+    null,
+  )
   const normalizedSearch = useMemo(() => normalizeGroupCode(search), [search])
   const hasValidSearch = isValidGroupCode(normalizedSearch)
   const saved = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const primary = saved.data?.find((group) => group.is_primary)
   const activeCode = selectedCode || primary?.code || ''
+  const activeGroup = saved.data?.find((group) => group.code === activeCode)
   const suggestions = useQuery({
     queryKey: ['schedule-groups', normalizedSearch],
     queryFn: () => findScheduleGroups(normalizedSearch),
@@ -59,112 +94,296 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
     enabled: Boolean(activeCode),
   })
   const save = useMutation({
-    mutationFn: saveGroupByCode,
+    mutationFn: ({ code, isPrimary }: { code: string; isPrimary: boolean }) =>
+      saveGroupByCode(code, isPrimary),
     onSuccess: (group) => {
       setSelectedCode(group.code)
       setSearch('')
       void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
     },
   })
+  const deleteSaved = useMutation({
+    mutationFn: removeGroup,
+    onSuccess: (_, groupId) => {
+      const removed = saved.data?.find((group) => group.id === groupId)
+      if (removed?.code === selectedCode) setSelectedCode('')
+      void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
+    },
+  })
+  const renameGroup = useMutation({
+    mutationFn: ({ groupId, label }: { groupId: string; label: string }) =>
+      saveGroup(groupId, false, label),
+    onSuccess: () => {
+      setEditingGroupId('')
+      setLabelDraft('')
+      void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
+    },
+  })
+  const today = getMoscowDate()
+  const scheduleDays = useMemo(() => {
+    const days = new Map<
+      string,
+      Array<{ lesson: ScheduleLesson; index: number; key: string }>
+    >()
+    for (const [index, lesson] of (schedule.data?.lessons ?? []).entries()) {
+      const entries = days.get(lesson.date) ?? []
+      entries.push({ lesson, index, key: getScheduleLessonKey(lesson, index) })
+      days.set(lesson.date, entries)
+    }
+    if (schedule.data && !days.has(today)) days.set(today, [])
+    return [...days.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([date, lessons]) => ({ date, lessons }))
+  }, [schedule.data, today])
+  const focusKey = useMemo(
+    () => getScheduleFocusKey(schedule.data?.lessons ?? []),
+    [schedule.data?.lessons],
+  )
+  const autoScrollKey = schedule.data
+    ? `${schedule.data.group_code}:${schedule.data.fetched_at}:${focusKey}`
+    : ''
+  const lastAutoScroll = useRef('')
+
+  useEffect(() => {
+    if (!focusKey || !autoScrollKey || lastAutoScroll.current === autoScrollKey) {
+      return
+    }
+    lastAutoScroll.current = autoScrollKey
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('schedule-focus')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [autoScrollKey, focusKey])
+
+  useEffect(() => {
+    const updateDirection = () => {
+      const section = document.getElementById('schedule-today')
+      if (!section) {
+        setTodayDirection(null)
+        return
+      }
+      const bounds = section.getBoundingClientRect()
+      if (bounds.bottom < 120) setTodayDirection('up')
+      else if (bounds.top > window.innerHeight - 100) setTodayDirection('down')
+      else setTodayDirection(null)
+    }
+    const frame = window.requestAnimationFrame(updateDirection)
+    window.addEventListener('scroll', updateDirection, { passive: true })
+    window.addEventListener('resize', updateDirection)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', updateDirection)
+      window.removeEventListener('resize', updateDirection)
+    }
+  }, [activeCode, scheduleDays])
+
+  const scrollToToday = () => {
+    document.getElementById('schedule-today')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+  }
 
   return (
     <Panel id={id}>
-      <AppPanelHeader backToHome>Расписание</AppPanelHeader>
-      <Group header={<Header>Учебная группа</Header>}>
-        <Search
-          value={search}
-          placeholder="Например, 220031-22"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {search.length > 0 && !hasValidSearch && (
-          <Banner
-            title="Проверьте формат номера"
-            subtitle={GROUP_CODE_HINT}
-          />
-        )}
-        {suggestions.isFetching && <Spinner size="s" />}
-        {suggestions.data?.is_stale && (
-          <Banner
-            title="Показан сохранённый результат"
-            subtitle={`ТулГУ сейчас недоступен. Данные обновлены ${new Date(
-              suggestions.data.fetched_at,
-            ).toLocaleString('ru-RU')}.`}
-            actions={
-              <Button onClick={() => void suggestions.refetch()}>
-                Повторить
-              </Button>
-            }
-          />
-        )}
-        {suggestions.data?.groups.slice(0, 10).map((code) => (
-          <SimpleCell
-            key={code}
-            after={
-              <Button
-                size="s"
-                loading={save.isPending}
-                onClick={() => save.mutate(code)}
-              >
-                Выбрать
-              </Button>
-            }
-          >
-            {code}
-          </SimpleCell>
-        ))}
-        {hasValidSearch &&
-          suggestions.isSuccess &&
-          !suggestions.data.is_stale &&
-          suggestions.data.groups.length === 0 && (
-            <Banner
-              title="Группа не найдена"
-              subtitle="ТулГУ ответил успешно, но такого номера в актуальном словаре нет."
-              actions={
-                <Button mode="secondary" onClick={() => void suggestions.refetch()}>
-                  Повторить
-                </Button>
-              }
-            />
-          )}
-        {suggestions.isError && (
-          <Banner
-            title="Поиск групп недоступен"
-            subtitle="ТулГУ временно не отвечает. Это не означает, что группы не существует; сохранённые группы останутся доступны."
-            actions={
-              <Button onClick={() => void suggestions.refetch()}>
-                Повторить
-              </Button>
-            }
-          />
-        )}
-        {save.isError && (
-          <Banner
-            title={
-              save.error instanceof ApiError && save.error.status === 404
-                ? 'Группа не найдена'
-                : 'Не удалось сохранить группу'
-            }
-            subtitle={
-              save.error instanceof ApiError && save.error.status === 404
-                ? 'ТулГУ ответил успешно, но такого номера нет в актуальном словаре.'
-                : 'Проверка ТулГУ временно недоступна. Уже сохранённые группы не изменены.'
-            }
-          />
-        )}
-        <Div>
-          <ButtonGroup mode="horizontal" gap="s" stretched>
+      <AppPanelHeader
+        backToHome
+        beforeMenu={
+          schedule.data ? (
+            <PanelHeaderButton
+              aria-label="Открыть официальное расписание"
+              onClick={() => void openExternalUrl(schedule.data.source_url)}
+            >
+              <Icon24ShareExternalOutline />
+            </PanelHeaderButton>
+          ) : undefined
+        }
+      >
+        Расписание
+      </AppPanelHeader>
+      <div className="schedule-sticky-controls">
+        <details className="schedule-group-picker">
+          <summary className="schedule-group-picker__summary">
+            <span className="schedule-group-picker__summary-copy">
+              <Title level="3">
+                {activeGroup?.label || activeCode || 'Выберите группу'}
+              </Title>
+              <Text className="muted">
+                {activeGroup?.label && `${activeCode} · `}
+                {schedule.data
+                  ? `Обновлено ${formatScheduleUpdate(schedule.data.fetched_at)}`
+                  : 'Выбор расписания'}
+              </Text>
+            </span>
+            <span className="schedule-group-picker__chevron" aria-hidden />
+          </summary>
+
+          <div className="schedule-group-picker__menu">
+            <Header>Сохранённые группы</Header>
             {saved.data?.map((group) => (
-              <Button
+              <div
                 key={group.id}
-                mode={activeCode === group.code ? 'primary' : 'secondary'}
-                onClick={() => setSelectedCode(group.code)}
+                className={`schedule-group-option${
+                  activeCode === group.code ? ' schedule-group-option--active' : ''
+                }`}
               >
-                {group.code}
-              </Button>
+                <div className="schedule-group-option__main">
+                  <button
+                    type="button"
+                    className="schedule-group-option__select"
+                    onClick={() => setSelectedCode(group.code)}
+                  >
+                    <span className="schedule-group-option__title">
+                      {group.label || `Группа ${group.code}`}
+                    </span>
+                    <span className="schedule-group-option__meta">
+                      {group.code}
+                    </span>
+                  </button>
+                  <div className="schedule-group-option__actions">
+                    <Button
+                      size="s"
+                      mode="tertiary"
+                      onClick={() => {
+                        setEditingGroupId(group.id)
+                        setLabelDraft(group.label)
+                      }}
+                    >
+                      {group.label ? 'Изменить подпись' : 'Подписать'}
+                    </Button>
+                    {!group.is_primary && (
+                      <Button
+                        size="s"
+                        mode="tertiary"
+                        loading={deleteSaved.isPending}
+                        onClick={() => deleteSaved.mutate(group.id)}
+                      >
+                        Удалить
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {editingGroupId === group.id && (
+                  <form
+                    className="schedule-group-option__editor"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      renameGroup.mutate({ groupId: group.id, label: labelDraft })
+                    }}
+                  >
+                    <Input
+                      aria-label={`Подпись для группы ${group.code}`}
+                      value={labelDraft}
+                      maxLength={60}
+                      placeholder="Например, группа Ксюши"
+                      onChange={(event) => setLabelDraft(event.target.value)}
+                    />
+                    <ButtonGroup mode="horizontal" gap="s">
+                      <Button type="submit" size="s" loading={renameGroup.isPending}>
+                        Сохранить
+                      </Button>
+                      <Button
+                        type="button"
+                        size="s"
+                        mode="tertiary"
+                        onClick={() => setEditingGroupId('')}
+                      >
+                        Отмена
+                      </Button>
+                    </ButtonGroup>
+                  </form>
+                )}
+              </div>
             ))}
-          </ButtonGroup>
-        </Div>
-      </Group>
+
+            <div className="schedule-group-picker__search">
+              <Header>Добавить группу</Header>
+              <Search
+                value={search}
+                placeholder="Например, 220031-22"
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              {search.length > 0 && !hasValidSearch && (
+                <Banner title="Проверьте формат номера" subtitle={GROUP_CODE_HINT} />
+              )}
+              {suggestions.isFetching && <Spinner size="s" />}
+              {suggestions.data?.is_stale && (
+                <Banner
+                  title="Показан сохранённый результат"
+                  subtitle={`ТулГУ сейчас недоступен. Данные обновлены ${new Date(
+                    suggestions.data.fetched_at,
+                  ).toLocaleString('ru-RU')}.`}
+                  actions={
+                    <Button onClick={() => void suggestions.refetch()}>
+                      Повторить
+                    </Button>
+                  }
+                />
+              )}
+              {suggestions.data?.groups.slice(0, 10).map((code) => (
+                <SimpleCell
+                  key={code}
+                  after={
+                    <Button
+                      size="s"
+                      loading={save.isPending}
+                      onClick={() => save.mutate({ code, isPrimary: !primary })}
+                    >
+                      Добавить
+                    </Button>
+                  }
+                >
+                  {code}
+                </SimpleCell>
+              ))}
+              {hasValidSearch &&
+                suggestions.isSuccess &&
+                !suggestions.data.is_stale &&
+                suggestions.data.groups.length === 0 && (
+                  <Banner
+                    title="Группа не найдена"
+                    subtitle="ТулГУ ответил успешно, но такого номера в актуальном словаре нет."
+                    actions={
+                      <Button
+                        mode="secondary"
+                        onClick={() => void suggestions.refetch()}
+                      >
+                        Повторить
+                      </Button>
+                    }
+                  />
+                )}
+              {suggestions.isError && (
+                <Banner
+                  title="Поиск групп недоступен"
+                  subtitle="ТулГУ временно не отвечает. Сохранённые группы останутся доступны."
+                  actions={
+                    <Button onClick={() => void suggestions.refetch()}>
+                      Повторить
+                    </Button>
+                  }
+                />
+              )}
+              {save.isError && (
+                <Banner
+                  title={
+                    save.error instanceof ApiError && save.error.status === 404
+                      ? 'Группа не найдена'
+                      : 'Не удалось сохранить группу'
+                  }
+                  subtitle="Уже сохранённые группы не изменены."
+                />
+              )}
+              {renameGroup.isError && (
+                <Banner title="Не удалось сохранить подпись" />
+              )}
+            </div>
+          </div>
+        </details>
+      </div>
       {!activeCode && (
         <Group>
           <Banner
@@ -194,69 +413,123 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
         </Group>
       )}
       {schedule.data && (
-        <Group
-          header={
-            <Header
-              subtitle={`Обновлено ${new Date(
-                schedule.data.fetched_at,
-              ).toLocaleString('ru-RU')}`}
-            >
-              {schedule.data.group_code}
-            </Header>
-          }
-        >
+        <Group>
           {schedule.data.lessons.length === 0 && (
             <Placeholder>На опубликованный период занятий нет.</Placeholder>
           )}
-          <CardGrid size="l">
-            {schedule.data.lessons.map((lesson, index) => (
-              <Card
-                key={`${lesson.date}-${lesson.time}-${lesson.subject}-${index}`}
-                mode="outline"
+          <div className="schedule-days">
+            {scheduleDays.map(({ date, lessons }) => (
+              <section
+                id={date === today ? 'schedule-today' : undefined}
+                key={date}
+                className={`schedule-day${date === today ? ' schedule-day--today' : ''}`}
               >
-                <Div className="lesson-card">
-                  <Text className="eyebrow">
-                    {new Date(`${lesson.date}T12:00:00`).toLocaleDateString(
-                      'ru-RU',
-                      { weekday: 'long', day: 'numeric', month: 'long' },
-                    )}
-                  </Text>
-                  <Title level="3">{lesson.subject}</Title>
-                  <Text>
-                    {lesson.time}
-                    {lesson.lesson_type && ` · ${lesson.lesson_type}`}
-                  </Text>
-                  <Text className="muted">
-                    {[lesson.room, lesson.teacher].filter(Boolean).join(' · ')}
-                  </Text>
-                  {lesson.room && (
-                    <Button
-                      size="s"
-                      mode="tertiary"
-                      before={<Icon20PlaceOutline />}
-                      onClick={() => {
-                        setMapTargetRoom(lesson.room)
-                        void navigator.push(PANEL_PATHS.map)
-                      }}
-                    >
-                      Найти на карте
-                    </Button>
-                  )}
-                </Div>
-              </Card>
+                <div className="schedule-day__divider">
+                  <Title level="3">
+                    {new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                    })}
+                  </Title>
+                </div>
+                {date === today && lessons.length === 0 && (
+                  <Text className="schedule-day__empty-text">Занятий нет</Text>
+                )}
+                <CardGrid size="l">
+                  {lessons.map(({ lesson, key }) => {
+                    const hasMapLocation =
+                      Boolean(lesson.room) &&
+                      !/^без аудитории$/i.test(lesson.room.trim())
+                    const lessonTone = getLessonTone(
+                      lesson.lesson_type,
+                      lesson.subject,
+                    )
+                    const lessonNumber = getLessonNumber(lesson.time)
+                    const cardClasses = [
+                      `lesson-card--${lessonTone}`,
+                      key === focusKey ? 'lesson-card--focus' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                    return (
+                      <Card
+                        id={key === focusKey ? 'schedule-focus' : undefined}
+                        key={`${lesson.subject}-${key}`}
+                        className={cardClasses}
+                        mode="outline"
+                      >
+                        <Div className="lesson-card">
+                          <div className="lesson-card__content">
+                            <Title level="3">{lesson.subject}</Title>
+                            <Text className="lesson-time">
+                              {lesson.time}
+                              {lesson.lesson_type && (
+                                <>
+                                  {' · '}
+                                  <span className="lesson-type">
+                                    {formatLessonType(lesson.lesson_type)}
+                                  </span>
+                                </>
+                              )}
+                            </Text>
+                            <Text className="lesson-meta">
+                              {hasMapLocation ? (
+                                <Link
+                                  href="#/map"
+                                  className="lesson-location-link"
+                                  onClick={(event) => {
+                                    event.preventDefault()
+                                    setMapTargetRoom(lesson.room)
+                                    void navigator.push(PANEL_PATHS.map)
+                                  }}
+                                >
+                                  <Icon20PlaceOutline aria-hidden />
+                                  {lesson.room}
+                                </Link>
+                              ) : (
+                                lesson.room && (
+                                  <span className="lesson-room">{lesson.room}</span>
+                                )
+                              )}
+                              {lesson.teacher && (
+                                <span className="lesson-teacher">
+                                  {lesson.teacher}
+                                </span>
+                              )}
+                            </Text>
+                          </div>
+                          {lessonNumber && (
+                            <div
+                              className="lesson-card__number"
+                              aria-label={`${lessonNumber}-я пара`}
+                            >
+                              {lessonNumber}
+                            </div>
+                          )}
+                        </Div>
+                      </Card>
+                    )
+                  })}
+                </CardGrid>
+              </section>
             ))}
-          </CardGrid>
-          <Div>
-            <Button
-              mode="secondary"
-              onClick={() =>
-                void openExternalUrl(schedule.data.source_url)
-              }
-            >
-              Открыть официальный источник
-            </Button>
-          </Div>
+          </div>
         </Group>
+      )}
+      {todayDirection && (
+        <button
+          type="button"
+          className="schedule-today-fab"
+          aria-label="Перейти к сегодняшнему дню"
+          onClick={scrollToToday}
+        >
+          {todayDirection === 'up' ? (
+            <Icon24ArrowUpOutline />
+          ) : (
+            <Icon24ArrowDownOutline />
+          )}
+        </button>
       )}
     </Panel>
   )

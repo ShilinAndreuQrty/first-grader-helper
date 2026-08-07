@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { CampusBuilding } from '../api/campus'
 import { MapMode, resolveMapMode } from '../mapMode'
 
-const DGIS_ENABLED = import.meta.env.VITE_DGIS_ENABLED === 'true'
+// Indoor plans do not require a MapGL key, so they stay available in local/dev
+// mode unless the integration is explicitly disabled.
+const DGIS_ENABLED = import.meta.env.VITE_DGIS_ENABLED !== 'false'
 const MAP_KEY = import.meta.env.VITE_DGIS_MAPGL_KEY
 const FLOORS_LOADER_URL = 'https://floors-widget.api.2gis.ru/loader.js'
 const FLOORS_INIT_TIMEOUT_MS = 10_000

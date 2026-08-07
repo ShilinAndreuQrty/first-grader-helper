@@ -11,11 +11,13 @@ class GroupRead(BaseModel):
     code: str
     academic_year: str
     is_primary: bool = False
+    label: str = ""
 
 
 class BookmarkCreate(BaseModel):
     group_id: str = Field(min_length=36, max_length=36)
     is_primary: bool = False
+    label: str | None = Field(default=None, max_length=60)
 
 
 class TutorRead(BaseModel):

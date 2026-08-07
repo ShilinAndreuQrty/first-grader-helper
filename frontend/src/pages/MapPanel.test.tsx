@@ -80,7 +80,7 @@ describe('MapPanel', () => {
       await screen.findByText('Главный учебный корпус ТулГУ'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/интерактивная карта отключена/i),
+      screen.getByText(/нет координат или этажей/i),
     ).toBeInTheDocument()
     expect(
       screen.getByText(

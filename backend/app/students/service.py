@@ -24,3 +24,8 @@ def require_valid_group_code(value: str) -> str:
     if GROUP_CODE_RE.fullmatch(normalized) is None:
         raise ValueError("Group code must contain six digits and optional two-digit suffix")
     return normalized
+
+
+def normalize_bookmark_label(value: str) -> str:
+    """Keep personal labels compact and safe for single-line UI."""
+    return SPACE_RE.sub(" ", unicodedata.normalize("NFKC", value).strip())

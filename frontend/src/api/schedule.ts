@@ -28,10 +28,18 @@ export function findScheduleGroups(query: string): Promise<GroupSuggestions> {
   return apiRequest(`/schedule/groups?query=${encodeURIComponent(query)}`)
 }
 
-export function saveGroupByCode(code: string): Promise<StudentGroup> {
+export function saveGroupByCode(
+  code: string,
+  isPrimary: boolean,
+  label?: string,
+): Promise<StudentGroup> {
   return apiRequest('/me/groups/by-code', {
     method: 'POST',
-    body: JSON.stringify({ code, is_primary: true }),
+    body: JSON.stringify({
+      code,
+      is_primary: isPrimary,
+      ...(label === undefined ? {} : { label }),
+    }),
   })
 }
 

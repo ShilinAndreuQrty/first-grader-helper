@@ -5,6 +5,7 @@ export interface StudentGroup {
   code: string
   academic_year: string
   is_primary: boolean
+  label: string
 }
 
 export interface Tutor {
@@ -40,10 +41,15 @@ export function getMyGroups(): Promise<StudentGroup[]> {
 export function saveGroup(
   groupId: string,
   isPrimary = false,
+  label?: string,
 ): Promise<StudentGroup> {
   return apiRequest('/me/groups', {
     method: 'POST',
-    body: JSON.stringify({ group_id: groupId, is_primary: isPrimary }),
+    body: JSON.stringify({
+      group_id: groupId,
+      is_primary: isPrimary,
+      ...(label === undefined ? {} : { label }),
+    }),
   })
 }
 

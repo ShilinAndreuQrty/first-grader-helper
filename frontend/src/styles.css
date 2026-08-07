@@ -368,7 +368,315 @@ html.vkui .vkuiPanel__in {
 
 .lesson-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(44px, 10vw, 68px);
+  gap: 12px;
+}
+
+.lesson-card__content {
+  display: grid;
+  min-width: 0;
+  align-content: center;
   gap: 8px;
+}
+
+.lesson-card__number {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  align-self: stretch;
+  color: var(--vkui--color_text_tertiary);
+  font-size: clamp(38px, 7vw, 58px);
+  font-weight: 700;
+  line-height: 1;
+  border-inline-start: 1px solid var(--vkui--color_separator_primary);
+  opacity: 0.42;
+}
+
+.schedule-sticky-controls {
+  position: sticky;
+  inset-block-start: calc(var(--vkui--size_panel_header_height--regular, 48px) - 8px);
+  z-index: 20;
+  background: var(--app-surface-raised);
+  border-bottom: 1px solid var(--app-border);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 9%);
+}
+
+.schedule-group-picker {
+  position: relative;
+}
+
+.schedule-group-picker__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  padding: 7px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.schedule-group-picker__summary::-webkit-details-marker {
+  display: none;
+}
+
+.schedule-group-picker__summary-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding-inline-end: 72px;
+}
+
+.schedule-group-picker__chevron {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-right: 2px solid var(--vkui--color_icon_secondary);
+  border-bottom: 2px solid var(--vkui--color_icon_secondary);
+  transform: rotate(45deg) translateY(-3px);
+  transition: transform 160ms ease;
+}
+
+.schedule-group-picker[open] .schedule-group-picker__chevron {
+  transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.schedule-group-picker__menu {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline: 8px;
+  z-index: 22;
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 130px);
+  padding: 4px 12px 16px;
+  overflow-y: auto;
+  background: var(--app-surface-raised);
+  border: 1px solid var(--app-border);
+  border-radius: 0 0 14px 14px;
+  box-shadow: var(--app-shadow);
+}
+
+.schedule-group-option {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+.schedule-group-option--active {
+  background: rgb(53 105 212 / 9%);
+  border-color: rgb(53 105 212 / 24%);
+}
+
+.schedule-group-option__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.schedule-group-option__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.schedule-group-option__select {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.schedule-group-option__title {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-group-option__meta {
+  color: var(--vkui--color_text_secondary);
+  font-size: 13px;
+}
+
+.schedule-group-option__editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-group-picker__search {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
+}
+
+.schedule-days {
+  display: grid;
+  gap: 24px;
+  padding-block: 4px 12px;
+}
+
+.schedule-day {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--app-border);
+}
+
+.schedule-day:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.schedule-day__divider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 16px;
+}
+
+.schedule-day__divider .vkuiTitle::first-letter {
+  text-transform: uppercase;
+}
+
+.schedule-day--today {
+  padding-block: 14px;
+  background: rgb(53 105 212 / 5%);
+  border-block: 2px solid rgb(53 105 212 / 30%);
+}
+
+.lesson-card--focus {
+  box-shadow: 0 0 0 2px rgb(53 105 212 / 12%);
+}
+
+.lesson-card--exam {
+  --lesson-tone: #ca202e;
+}
+
+.lesson-card--lecture {
+  --lesson-tone: #148175;
+}
+
+.lesson-card--practical {
+  --lesson-tone: #2fab1b;
+}
+
+.lesson-card--laboratory {
+  --lesson-tone: #cf6b21;
+}
+
+.lesson-card--special {
+  --lesson-tone: #8b5cf6;
+}
+
+.lesson-card--makeup {
+  --lesson-tone: #3378c5;
+}
+
+.lesson-card--exam,
+.lesson-card--lecture,
+.lesson-card--practical,
+.lesson-card--laboratory,
+.lesson-card--special,
+.lesson-card--makeup {
+  border-inline-start: 4px solid var(--lesson-tone);
+}
+
+.lesson-card--exam .lesson-type,
+.lesson-card--lecture .lesson-type,
+.lesson-card--practical .lesson-type,
+.lesson-card--laboratory .lesson-type,
+.lesson-card--special .lesson-type,
+.lesson-card--makeup .lesson-type {
+  color: var(--lesson-tone);
+  font-weight: 700;
+}
+
+.lesson-card--exam .lesson-type {
+  color: var(--vkui--color_text_primary);
+}
+
+.lesson-card--exam .lesson-location-link {
+  color: var(--vkui--color_text_primary);
+}
+
+.schedule-day__empty-text {
+  margin: 0 16px 4px;
+  color: var(--vkui--color_text_secondary);
+  text-align: center;
+}
+
+.schedule-today-fab {
+  position: fixed;
+  inset-inline-end: max(18px, calc((100vw - 840px) / 2 + 18px));
+  inset-block-end: calc(72px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--vkui--color_icon_contrast);
+  background: var(--app-accent);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  cursor: pointer;
+  place-items: center;
+}
+
+.lesson-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 20px;
+  line-height: 20px;
+}
+
+.lesson-location-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lesson-tone, var(--app-highlight));
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.lesson-location-link .vkuiIcon {
+  flex: none;
+}
+
+.lesson-teacher,
+.lesson-room {
+  color: var(--vkui--color_text_secondary);
+  line-height: 20px;
+}
+
+.lesson-location-link + .lesson-teacher::before,
+.lesson-room + .lesson-teacher::before {
+  margin-inline-end: 8px;
+  color: var(--vkui--color_text_tertiary);
+  content: '·';
+}
+
+.lesson-location-link:hover {
+  text-decoration: underline;
 }
 
 .campus-heading {
@@ -468,6 +776,21 @@ html.vkui .vkuiPanel__in {
 
   .quick-start-card {
     padding-inline: 11px;
+  }
+}
+
+@media (max-width: 520px) {
+  .schedule-group-option__main {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .schedule-group-option__actions {
+    justify-content: flex-start;
+  }
+
+  .schedule-group-option__editor {
+    grid-template-columns: 1fr;
   }
 }
 

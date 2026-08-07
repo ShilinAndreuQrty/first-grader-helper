@@ -241,6 +241,7 @@ class UserGroupBookmark(Base):
         primary_key=True,
     )
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    label: Mapped[str] = mapped_column(String(60), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     group: Mapped[StudentGroup] = relationship(lazy="selectin")
 

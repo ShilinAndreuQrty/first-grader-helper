@@ -21,7 +21,7 @@ from app.models import (
     UserSession,
 )
 from app.students.schemas import BookmarkCreate, GroupRead, ResourceRead, TutorRead
-from app.students.service import normalize_group_code
+from app.students.service import normalize_bookmark_label, normalize_group_code
 
 router = APIRouter(tags=["students"])
 
@@ -141,6 +141,7 @@ async def my_groups(
             code=row.group.code,
             academic_year=row.group.academic_year,
             is_primary=row.is_primary,
+            label=row.label,
         )
         for row in bookmarks
     ]
@@ -173,12 +174,15 @@ async def save_group(
         )
     if existing:
         existing.is_primary = make_primary or existing.is_primary
+        if payload.label is not None:
+            existing.label = normalize_bookmark_label(payload.label)
     else:
         db.add(
             UserGroupBookmark(
                 user_id=session.user_id,
                 group_id=group.id,
                 is_primary=make_primary,
+                label=normalize_bookmark_label(payload.label or ""),
             )
         )
     await db.commit()
@@ -187,6 +191,11 @@ async def save_group(
         code=group.code,
         academic_year=group.academic_year,
         is_primary=make_primary,
+        label=(
+            normalize_bookmark_label(payload.label)
+            if payload.label is not None
+            else existing.label if existing else ""
+        ),
     )
 
 
