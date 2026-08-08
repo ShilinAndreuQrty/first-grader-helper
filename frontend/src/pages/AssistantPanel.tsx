@@ -28,7 +28,6 @@ import {
   getFaqCategories,
   sendFaqFeedback,
 } from '../api/knowledge'
-import { reportIssue } from '../api/onboarding'
 import { openExternalUrl } from '../platformLinks'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import { PANEL_PATHS } from '../router'
@@ -113,14 +112,6 @@ function AnswerActions({
         result.faq_ids.map((faqId) => sendFaqFeedback(faqId, helpful)),
       ),
   })
-  const issue = useMutation({
-    mutationFn: () =>
-      reportIssue(
-        'assistant',
-        'Ответ помощника требует проверки.',
-      ),
-  })
-
   return (
     <>
       <ButtonGroup className="answer-feedback" mode="horizontal" gap="s">
@@ -148,24 +139,12 @@ function AnswerActions({
         >
           Не помогло
         </Button>
-        <Button
-          size="s"
-          mode="tertiary"
-          disabled={issue.isPending || issue.isSuccess}
-          onClick={() => issue.mutate()}
-        >
-          Сообщить об ошибке
-        </Button>
         <Button size="s" mode="tertiary" onClick={onTutor}>
           Обратиться к тьютору
         </Button>
       </ButtonGroup>
-      {(feedback.isSuccess || issue.isSuccess) && (
-        <Text className="muted">
-          {issue.isSuccess ? 'Сообщение отправлено команде.' : 'Спасибо за оценку.'}
-        </Text>
-      )}
-      {(feedback.isError || issue.isError) && (
+      {feedback.isSuccess && <Text className="muted">Спасибо за оценку.</Text>}
+      {feedback.isError && (
         <Text className="muted" role="alert">
           Не удалось отправить действие. Попробуйте ещё раз.
         </Text>

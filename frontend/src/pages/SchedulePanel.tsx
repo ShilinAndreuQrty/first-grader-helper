@@ -21,16 +21,13 @@ import {
   PanelHeaderButton,
   Placeholder,
   Search,
-  SimpleCell,
   Spinner,
   Text,
   Title,
 } from '@vkontakte/vkui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { ApiError } from '../api/client'
 import {
-  findScheduleGroups,
   getSchedule,
   ScheduleLesson,
   saveGroupByCode,
@@ -82,12 +79,6 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
   const primary = saved.data?.find((group) => group.is_primary)
   const activeCode = selectedCode || primary?.code || ''
   const activeGroup = saved.data?.find((group) => group.code === activeCode)
-  const suggestions = useQuery({
-    queryKey: ['schedule-groups', normalizedSearch],
-    queryFn: () => findScheduleGroups(normalizedSearch),
-    enabled: hasValidSearch,
-    retry: false,
-  })
   const schedule = useQuery({
     queryKey: ['schedule', activeCode],
     queryFn: () => getSchedule(activeCode),
@@ -309,71 +300,24 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
               {search.length > 0 && !hasValidSearch && (
                 <Banner title="Проверьте формат номера" subtitle={GROUP_CODE_HINT} />
               )}
-              {suggestions.isFetching && <Spinner size="s" />}
-              {suggestions.data?.is_stale && (
-                <Banner
-                  title="Показан сохранённый результат"
-                  subtitle={`ТулГУ сейчас недоступен. Данные обновлены ${new Date(
-                    suggestions.data.fetched_at,
-                  ).toLocaleString('ru-RU')}.`}
-                  actions={
-                    <Button onClick={() => void suggestions.refetch()}>
-                      Повторить
-                    </Button>
-                  }
-                />
-              )}
-              {suggestions.data?.groups.slice(0, 10).map((code) => (
-                <SimpleCell
-                  key={code}
-                  after={
-                    <Button
-                      size="s"
-                      loading={save.isPending}
-                      onClick={() => save.mutate({ code, isPrimary: !primary })}
-                    >
-                      Добавить
-                    </Button>
+              {hasValidSearch && (
+                <Button
+                  size="l"
+                  stretched
+                  loading={save.isPending}
+                  onClick={() =>
+                    save.mutate({
+                      code: normalizedSearch,
+                      isPrimary: !primary,
+                    })
                   }
                 >
-                  {code}
-                </SimpleCell>
-              ))}
-              {hasValidSearch &&
-                suggestions.isSuccess &&
-                !suggestions.data.is_stale &&
-                suggestions.data.groups.length === 0 && (
-                  <Banner
-                    title="Группа не найдена"
-                    subtitle="ТулГУ ответил успешно, но такого номера в актуальном словаре нет."
-                    actions={
-                      <Button
-                        mode="secondary"
-                        onClick={() => void suggestions.refetch()}
-                      >
-                        Повторить
-                      </Button>
-                    }
-                  />
-                )}
-              {suggestions.isError && (
-                <Banner
-                  title="Поиск групп недоступен"
-                  subtitle="ТулГУ временно не отвечает. Сохранённые группы останутся доступны."
-                  actions={
-                    <Button onClick={() => void suggestions.refetch()}>
-                      Повторить
-                    </Button>
-                  }
-                />
+                  Добавить группу {normalizedSearch}
+                </Button>
               )}
               {save.isError && (
                 <Banner
-                  title={
-                    save.error instanceof ApiError && save.error.status === 404
-                      ? 'Группа не найдена'
-                      : 'Не удалось сохранить группу'
-                  }
+                  title="Не удалось сохранить группу"
                   subtitle="Уже сохранённые группы не изменены."
                 />
               )}

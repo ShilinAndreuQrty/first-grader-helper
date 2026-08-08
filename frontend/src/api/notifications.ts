@@ -19,6 +19,13 @@ export interface NotificationPreferences {
   community_messages_enabled: boolean
 }
 
+export interface InAppReminder {
+  id: string
+  title: string
+  body: string
+  delivered_at: string
+}
+
 export function getPublicConfig(): Promise<PublicConfig> {
   return apiRequest('/config')
 }
@@ -34,5 +41,9 @@ export function updateNotificationPreferences(
     method: 'PUT',
     body: JSON.stringify(preferences),
   })
+}
+
+export function getInAppReminders(): Promise<InAppReminder[]> {
+  return apiRequest('/me/reminders')
 }
 

@@ -1,141 +1,349 @@
 import {
-  Icon28InfoCircleOutline,
+  Icon20ChevronRight,
+  Icon20ClockOutline,
   Icon28LinkOutline,
+  Icon28MessageOutline,
   Icon28PlaceOutline,
+  Icon28UserCardOutline,
   Icon28Users3Outline,
 } from '@vkontakte/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
-import {
-  Button,
-  Div,
-  Group,
-  Header,
-  Panel,
-  SimpleCell,
-  Text,
-  Title,
-} from '@vkontakte/vkui'
-import { useQuery } from '@tanstack/react-query'
+import { Button, Div, Input, Panel, Text, Title } from '@vkontakte/vkui'
+import { useEffect, useState } from 'react'
 
-import { getMyGroups } from '../api/students'
 import { getOnboarding } from '../api/onboarding'
-import { setMapTargetRoom } from '../campusLocation'
+import { ApiError } from '../api/client'
+import { getSchedule, saveGroupByCode, ScheduleLesson } from '../api/schedule'
+import { getMyGroups } from '../api/students'
 import { AppPanelHeader } from '../components/AppPanelHeader'
+import { isValidGroupCode, normalizeGroupCode } from '../groupCode'
+import { formatLessonType } from '../lessonAppearance'
+import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { getLessonTiming, getMoscowDate } from '../scheduleFocus'
+
+const MOSCOW_TIME_ZONE = 'Europe/Moscow'
+
+function getMoscowMinutes(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: MOSCOW_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now)
+  const value = (type: 'hour' | 'minute') =>
+    Number(parts.find((part) => part.type === type)?.value ?? 0)
+  return value('hour') * 60 + value('minute')
+}
+
+function getLessonEndMinutes(time: string): number {
+  const matches = [...time.matchAll(/(\d{1,2}):(\d{2})/g)]
+  const end = matches.at(-1)
+  return end ? Number(end[1]) * 60 + Number(end[2]) : Number.POSITIVE_INFINITY
+}
+
+function formatRemaining(minutes: number): string {
+  if (minutes < 60) return `Осталось ${minutes} мин`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return `Осталось ${hours} ч${rest ? ` ${rest} мин` : ''}`
+}
+
+function getUpcomingLesson(
+  lessons: ScheduleLesson[],
+  now = new Date(),
+): ScheduleLesson | undefined {
+  const today = getMoscowDate(now)
+  const minutes = getMoscowMinutes(now)
+  return lessons.find(
+    (lesson) =>
+      lesson.date > today ||
+      (lesson.date === today && getLessonEndMinutes(lesson.time) >= minutes),
+  )
+}
+
+function getGreeting(now = new Date()): string {
+  const hour = Math.floor(getMoscowMinutes(now) / 60)
+  if (hour < 6) return 'Доброй ночи!'
+  if (hour < 12) return 'Доброе утро!'
+  if (hour < 18) return 'Добрый день!'
+  return 'Добрый вечер!'
+}
+
+function formatHomeDate(value: string): string {
+  return new Date(`${value}T12:00:00`).toLocaleDateString('ru-RU', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+}
 
 export function HomePanel({ id = 'home' }: { id?: string }) {
   const navigator = useRouteNavigator()
+  const queryClient = useQueryClient()
+  const [now, setNow] = useState(() => new Date())
+  const [groupCode, setGroupCode] = useState('')
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const groups = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const onboarding = useQuery({
     queryKey: ['onboarding'],
     queryFn: getOnboarding,
   })
   const primaryGroup = groups.data?.find((group) => group.is_primary)
+  const normalizedGroupCode = normalizeGroupCode(groupCode)
+  const savePrimaryGroup = useMutation({
+    mutationFn: () => saveGroupByCode(normalizedGroupCode, true),
+    onSuccess: () => {
+      setGroupCode('')
+      void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
+      void queryClient.invalidateQueries({ queryKey: ['onboarding'] })
+    },
+  })
+  const schedule = useQuery({
+    queryKey: ['schedule', primaryGroup?.code],
+    queryFn: () => getSchedule(primaryGroup!.code),
+    enabled: Boolean(primaryGroup),
+  })
   const nextStep = onboarding.data?.find((step) => !step.completed)
   const completedSteps =
     onboarding.data?.filter((step) => step.completed).length ?? 0
+  const totalSteps = onboarding.data?.length ?? 0
+  const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
+  const today = getMoscowDate(now)
+  const upcomingLesson = getUpcomingLesson(schedule.data?.lessons ?? [], now)
+  const upcomingIsToday = upcomingLesson?.date === today
+  const todayLessonCount =
+    schedule.data?.lessons.filter((lesson) => lesson.date === today).length ?? 0
+  const currentMinutes = getMoscowMinutes(now)
+  const lessonTiming = upcomingIsToday && upcomingLesson
+    ? getLessonTiming(upcomingLesson.time, currentMinutes)
+    : { isInProgress: false, progress: 0, remainingMinutes: 0 }
 
   return (
-    <Panel
-      id={id}
-      className={
-        primaryGroup ? 'home-panel home-panel--personalized' : 'home-panel'
-      }
-    >
-      <AppPanelHeader>ИПМКН Старт</AppPanelHeader>
-      <Group>
-        <Div className={`hero${primaryGroup ? ' hero--compact' : ''}`}>
-          <Text className="eyebrow">ТУЛГУ · ПЕРВЫЙ КУРС</Text>
-          <Title level="1">
-            {primaryGroup ? `Сегодня у ${primaryGroup.code}` : 'Укажите свою группу'}
-          </Title>
-          <Text className="hero__text">
-            {primaryGroup
-              ? 'Ближайшая пара появится здесь после обновления расписания.'
-              : 'Это откроет расписание, контакт тьютора и персональные напоминания.'}
-          </Text>
-          <Button
-            size="l"
-            stretched
-            onClick={() =>
-              void navigator.push(PANEL_PATHS.schedule)
-            }
-          >
-            {primaryGroup ? 'Открыть расписание' : 'Указать свою группу'}
-          </Button>
-        </Div>
-      </Group>
+    <Panel id={id} className="home-panel">
+      <AppPanelHeader>Главная</AppPanelHeader>
+      <Div className="home-dashboard">
+        <div
+          className={`home-spotlight${primaryGroup ? ' home-spotlight--linked' : ''}`}
+          onClick={primaryGroup
+            ? () => void navigator.push(PANEL_PATHS.schedule)
+            : undefined}
+          onKeyDown={primaryGroup
+            ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  void navigator.push(PANEL_PATHS.schedule)
+                }
+              }
+            : undefined}
+          role={primaryGroup ? 'button' : undefined}
+          tabIndex={primaryGroup ? 0 : undefined}
+        >
+          <span className="home-spotlight__mark" aria-hidden>ИПМКН</span>
+          <div className="home-spotlight__welcome">
+            <Text className="home-spotlight__date">{formatHomeDate(today)}</Text>
+            <Title level="1">{getGreeting(now)}</Title>
+            {!primaryGroup && (
+              <Text className="home-spotlight__lead">
+                Добавьте группу — и здесь появится ваше расписание.
+              </Text>
+            )}
+          </div>
 
-      {primaryGroup && (
-        <Group header={<Header>Быстрый старт</Header>}>
-          <Div className="quick-start-grid">
+          <div className="home-spotlight__schedule">
+            {!primaryGroup ? (
+              <div className="home-spotlight__setup">
+                <span className="home-spotlight__lesson">
+                  <strong>Выбрать свою группу</strong>
+                  <small>Один раз — и расписание всегда будет под рукой.</small>
+                </span>
+                <form
+                  className="home-group-picker"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    if (isValidGroupCode(normalizedGroupCode)) {
+                      savePrimaryGroup.mutate()
+                    }
+                  }}
+                >
+                  <Input
+                    aria-label="Номер своей группы"
+                    value={groupCode}
+                    placeholder="Например, 221451"
+                    inputMode="numeric"
+                    status={
+                      groupCode && !isValidGroupCode(normalizedGroupCode)
+                        ? 'error'
+                        : 'default'
+                    }
+                    onChange={(event) => setGroupCode(event.target.value)}
+                  />
+                  <Button
+                    type="submit"
+                    size="l"
+                    stretched
+                    loading={savePrimaryGroup.isPending}
+                    disabled={!isValidGroupCode(normalizedGroupCode)}
+                  >
+                    Сохранить группу
+                  </Button>
+                  {savePrimaryGroup.error && (
+                    <Text className="home-group-picker__error">
+                      {savePrimaryGroup.error instanceof ApiError
+                        ? savePrimaryGroup.error.message
+                        : 'Не удалось сохранить группу. Попробуйте ещё раз.'}
+                    </Text>
+                  )}
+                </form>
+              </div>
+            ) : schedule.isLoading ? (
+              <span className="home-spotlight__lesson">
+                <strong>Загружаем занятия…</strong>
+              </span>
+            ) : upcomingLesson ? (
+              <>
+                <span className="home-spotlight__lesson">
+                  <small>
+                    {lessonTiming.isInProgress
+                      ? 'Пара идёт сейчас'
+                      : upcomingIsToday
+                        ? 'Ближайшая пара'
+                        : 'Дальше в расписании'}
+                  </small>
+                  <strong>{upcomingLesson.subject}</strong>
+                  <span className="home-spotlight__meta">
+                    <Icon20ClockOutline aria-hidden />
+                    {[
+                      !upcomingIsToday && formatHomeDate(upcomingLesson.date),
+                      upcomingLesson.time,
+                      formatLessonType(upcomingLesson.lesson_type),
+                      upcomingLesson.room,
+                    ].filter(Boolean).join(' · ')}
+                  </span>
+                </span>
+                {lessonTiming.isInProgress && (
+                  <span className="home-lesson-timer">
+                    <span className="home-lesson-timer__labels">
+                      <strong>{formatRemaining(lessonTiming.remainingMinutes)}</strong>
+                      <small>{Math.round(lessonTiming.progress)}%</small>
+                    </span>
+                    <span className="home-lesson-timer__track" aria-hidden>
+                      <span style={{ width: `${lessonTiming.progress}%` }} />
+                    </span>
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="home-spotlight__lesson">
+                <strong>Сегодня занятий нет</strong>
+                <span className="home-spotlight__meta">
+                  {todayLessonCount > 0
+                    ? 'Все пары на сегодня уже закончились.'
+                    : 'Посмотрите следующие дни в расписании.'}
+                </span>
+              </span>
+            )}
+            {primaryGroup && (
+              <span className="home-spotlight__footer">
+                <span className="home-spotlight__footer-copy">
+                  <strong>Расписание</strong>
+                  <span aria-hidden>·</span>
+                  <span>
+                    {primaryGroup.label || `Группа ${primaryGroup.code}`}
+                  </span>
+                  {primaryGroup.label && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <small>{primaryGroup.code}</small>
+                    </>
+                  )}
+                </span>
+                <span className="home-spotlight__arrow">
+                  <Icon20ChevronRight aria-hidden />
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <section className="home-section" aria-label="Быстрые действия">
+          <div className="home-actions">
             <button
-              className="quick-start-card quick-start-card--tutor"
               type="button"
+              className="home-action home-action--assistant"
+              onClick={() => void navigator.push(PANEL_PATHS.assistant)}
+            >
+              <span className="home-action__icon"><Icon28MessageOutline /></span>
+              <span><strong>Спросить помощника</strong><small>Ответы про учёбу и институт</small></span>
+              <Icon20ChevronRight className="home-action__arrow" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="home-action home-action--map"
+              onClick={() => void navigator.push(PANEL_PATHS.map)}
+            >
+              <span className="home-action__icon"><Icon28PlaceOutline /></span>
+              <span><strong>Найти аудиторию</strong><small>Корпуса и этажи</small></span>
+            </button>
+            <button
+              type="button"
+              className="home-action home-action--tutor"
               onClick={() => {
                 sessionStorage.setItem('ipmkn.moreTarget', 'my-tutor')
                 void navigator.push(PANEL_PATHS.more)
               }}
             >
-              <span className="quick-start-card__icon">
-                <Icon28Users3Outline />
-              </span>
-              <span className="quick-start-card__title">Мой тьютор</span>
-              <span className="quick-start-card__subtitle">Контакт наставника</span>
+              <span className="home-action__icon"><Icon28Users3Outline /></span>
+              <span><strong>Мой тьютор</strong><small>Контакт наставника</small></span>
             </button>
-            <button
-              className="quick-start-card quick-start-card--links"
-              type="button"
-              onClick={() => void navigator.push(PANEL_PATHS.resources)}
-            >
-              <span className="quick-start-card__icon">
-                <Icon28LinkOutline />
-              </span>
-              <span className="quick-start-card__title">Полезные ссылки</span>
-              <span className="quick-start-card__subtitle">Сервисы и сообщества</span>
-            </button>
-            <button
-              className="quick-start-card quick-start-card--rooms"
-              type="button"
-              onClick={() => {
-                setMapTargetRoom('Гл-425')
-                void navigator.push(PANEL_PATHS.map)
-              }}
-            >
-              <span className="quick-start-card__icon">
-                <Icon28PlaceOutline />
-              </span>
-              <span className="quick-start-card__title">Важные кабинеты</span>
-              <span className="quick-start-card__subtitle">Дирекция и профком</span>
-            </button>
-            <button
-              className="quick-start-card quick-start-card--about"
-              type="button"
-              onClick={() => void navigator.push(PANEL_PATHS.about)}
-            >
-              <span className="quick-start-card__icon">
-                <Icon28InfoCircleOutline />
-              </span>
-              <span className="quick-start-card__title">О проекте</span>
-              <span className="quick-start-card__subtitle">Команда и контакты</span>
-            </button>
-          </Div>
-        </Group>
-      )}
+            <div className="home-action-split">
+              <button
+                type="button"
+                className="home-action home-action--links"
+                onClick={() => void navigator.push(PANEL_PATHS.resources)}
+              >
+                <span className="home-action__icon"><Icon28LinkOutline /></span>
+                <span><strong>Полезные ссылки</strong><small>Сервисы и сообщества</small></span>
+              </button>
+              <button
+                type="button"
+                className="home-action home-action--account"
+                onClick={() => void openExternalUrl('https://lk.tsu.tula.ru:3443/lk/')}
+              >
+                <span className="home-action__icon"><Icon28UserCardOutline /></span>
+                <span><strong>Личный кабинет</strong><small>ЛК ТулГУ</small></span>
+              </button>
+            </div>
+          </div>
+        </section>
 
-      {primaryGroup && nextStep && (
-        <Group header={<Header>Маршрут первокурсника</Header>}>
-          <SimpleCell
-            subtitle={`${completedSteps} из ${onboarding.data?.length ?? 0} · ${nextStep.description}`}
+        {primaryGroup && nextStep && (
+          <button
+            type="button"
+            className="home-progress-card"
             onClick={() => void navigator.push(PANEL_PATHS.onboarding)}
           >
-            Следующий шаг: {nextStep.title}
-          </SimpleCell>
-        </Group>
-      )}
+            <span className="home-progress-card__topline">
+              <strong>Маршрут первокурсника</strong>
+              <small>{completedSteps} из {totalSteps}</small>
+            </span>
+            <span className="home-progress-card__track" aria-hidden>
+              <span style={{ width: `${progress}%` }} />
+            </span>
+            <span className="home-progress-card__next">
+              <span><small>Следующий шаг</small><strong>{nextStep.title}</strong></span>
+              <Icon20ChevronRight aria-hidden />
+            </span>
+          </button>
+        )}
 
-      <Div className="home-disclaimer">
-        Приложение создано тьюторским сообществом ИПМКН и не заменяет официальные сообщения ТулГУ.
+        <footer className="home-disclaimer">
+          Приложение создано тьюторским сообществом ИПМКН и не заменяет официальные сообщения ТулГУ.
+        </footer>
       </Div>
     </Panel>
   )

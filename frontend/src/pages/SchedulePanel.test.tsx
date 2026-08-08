@@ -14,7 +14,7 @@ afterEach(() => {
 })
 
 describe('SchedulePanel group search', () => {
-  it('validates locally and does not present an outage as not found', async () => {
+  it('accepts any correctly formatted group without a dictionary lookup', async () => {
     const requests: string[] = []
     vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
       const url =
@@ -32,12 +32,15 @@ describe('SchedulePanel group search', () => {
           }),
         )
       }
-      if (url.includes('/schedule/groups')) {
+      if (url.endsWith('/me/groups/by-code')) {
         return Promise.resolve(
-          new Response(
-            JSON.stringify({ detail: 'Расписание ТулГУ временно недоступно' }),
-            { status: 503, headers: { 'Content-Type': 'application/json' } },
-          ),
+          new Response(JSON.stringify({
+            id: 'group-id',
+            code: '222222',
+            academic_year: '',
+            is_primary: true,
+            label: '',
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
         )
       }
       return Promise.reject(new Error(`Unexpected request: ${url}`))
@@ -67,10 +70,16 @@ describe('SchedulePanel group search', () => {
     ).toBe(false)
 
     await user.clear(input)
-    await user.type(input, '220031-22')
+    await user.type(input, '222222')
+    await user.click(
+      screen.getByRole('button', { name: 'Добавить группу 222222' }),
+    )
 
-    expect(await screen.findByText('Поиск групп недоступен')).toBeInTheDocument()
-    expect(screen.queryByText('Группа не найдена')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Повторить' })).toBeEnabled()
+    expect(
+      requests.some((url) => url.includes('/schedule/groups')),
+    ).toBe(false)
+    expect(
+      requests.some((url) => url.endsWith('/me/groups/by-code')),
+    ).toBe(true)
   })
 })

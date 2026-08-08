@@ -3,12 +3,15 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.schemas import (
+    AdminEventRead,
+    AdminFeedbackRead,
     AdminStudentRead,
     AnnouncementWrite,
     BuildingWrite,
@@ -21,26 +24,32 @@ from app.admin.schemas import (
 )
 from app.auth.dependencies import require_csrf, require_roles
 from app.db import get_session
+from app.events.service import as_utc
 from app.models import (
     Announcement,
-    AssistantQueryLog,
     AuditLog,
     CampusBuilding,
     Event,
-    EventSeries,
+    EventSubscription,
     FaqEntry,
     FaqEntryVersion,
+    FaqFeedback,
     IssueReport,
+    NotificationDelivery,
+    NotificationJob,
+    NotificationPreference,
     OnboardingStep,
     ResourceCategory,
     ResourceLink,
     StudentGroup,
     User,
     UserGroupBookmark,
+    UserOnboardingProgress,
     UserSession,
     new_id,
     utc_now,
 )
+from app.notifications.service import enqueue_once
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 AdminUser = Annotated[
@@ -91,27 +100,27 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
         return int(await db.scalar(statement) or 0)
 
     return DashboardRead(
-        needs_review_faq=await count(
-            select(func.count()).select_from(FaqEntry).where(
-                FaqEntry.status == "needs_review",
-                FaqEntry.deleted_at.is_(None),
-            )
-        ),
         upcoming_events=await count(
             select(func.count()).select_from(Event).where(
                 Event.status == "published",
                 Event.starts_at.between(now, now + timedelta(days=30)),
             )
         ),
-        failed_assistant_queries=await count(
-            select(func.count()).select_from(AssistantQueryLog).where(
-                AssistantQueryLog.result_type.in_(("not_found", "clarification"))
+        active_registrations=await count(
+            select(func.count()).select_from(EventSubscription).where(
+                EventSubscription.is_active.is_(True)
             )
         ),
-        unconfirmed_series=await count(
-            select(func.count()).select_from(EventSeries).where(
-                EventSeries.is_confirmed.is_(False),
-                EventSeries.deleted_at.is_(None),
+        registered_users=await count(
+            select(func.count(func.distinct(EventSubscription.user_id))).where(
+                EventSubscription.is_active.is_(True)
+            )
+        ),
+        cancelled_events=await count(
+            select(func.count()).select_from(Event).where(
+                Event.status == "published",
+                Event.occurrence_status == "cancelled",
+                Event.starts_at >= now - timedelta(days=30),
             )
         ),
         recent_audit=await count(
@@ -119,12 +128,57 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
                 AuditLog.created_at >= now - timedelta(days=7)
             )
         ),
-        open_issue_reports=await count(
-            select(func.count()).select_from(IssueReport).where(
-                IssueReport.status == "new"
-            )
-        ),
     )
+
+
+def event_read(event: Event, registration_count: int) -> AdminEventRead:
+    return AdminEventRead(
+        id=event.id,
+        title=event.title,
+        description=event.description,
+        event_type=event.event_type,
+        starts_at=as_utc(event.starts_at),
+        ends_at=as_utc(event.ends_at),
+        location=event.location,
+        organizer=event.organizer,
+        external_url=event.external_url,
+        status=event.status,
+        occurrence_status=event.occurrence_status,
+        is_confirmed=event.is_confirmed,
+        version=event.version,
+        registration_count=registration_count,
+    )
+
+
+async def notify_event_subscribers(db: AsyncSession, event: Event) -> None:
+    subscribers = list(
+        (
+            await db.scalars(
+                select(EventSubscription).where(
+                    EventSubscription.event_id == event.id,
+                    EventSubscription.is_active.is_(True),
+                )
+            )
+        ).all()
+    )
+    cancelled = event.occurrence_status == "cancelled"
+    local_start = event.starts_at.astimezone(ZoneInfo("Europe/Moscow"))
+    details = local_start.strftime("%d.%m в %H:%M")
+    if event.location:
+        details = f"{details}, {event.location}"
+    for subscription in subscribers:
+        await enqueue_once(
+            db,
+            idempotency_key=(
+                f"event-{'cancelled' if cancelled else 'updated'}:"
+                f"{event.id}:{event.version}:{subscription.user_id}"
+            ),
+            user_id=subscription.user_id,
+            scheduled_for=datetime.now(UTC),
+            title="Мероприятие отменено" if cancelled else "Мероприятие обновлено",
+            body=f"{event.title} — {details}",
+            event_id=event.id,
+        )
 
 
 @router.get("/users", response_model=list[AdminStudentRead])
@@ -171,6 +225,68 @@ async def admin_users(_: SuperadminUser, db: Db) -> list[AdminStudentRead]:
         )
         for user, group_code, last_seen_at in rows
     ]
+
+
+@router.get("/feedback", response_model=list[AdminFeedbackRead])
+async def admin_feedback(_: AdminUser, db: Db) -> list[AdminFeedbackRead]:
+    rows = (
+        await db.execute(
+            select(IssueReport, User)
+            .outerjoin(User, User.id == IssueReport.user_id)
+            .where(IssueReport.context == "project-feedback")
+            .order_by(IssueReport.created_at.desc())
+            .limit(200)
+        )
+    ).all()
+    return [
+        AdminFeedbackRead(
+            id=feedback.id,
+            message=feedback.message,
+            status=feedback.status,
+            created_at=feedback.created_at,
+            user_name=(user.display_name or f"VK ID {user.vk_user_id}") if user else "Пользователь",
+            profile_url=f"https://vk.ru/id{user.vk_user_id}" if user else None,
+        )
+        for feedback, user in rows
+    ]
+
+
+@router.post("/demo/reset-me", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_current_admin_demo_data(
+    actor: AdminUser,
+    _: CsrfSession,
+    db: Db,
+) -> None:
+    notification_job_ids = select(NotificationJob.id).where(
+        NotificationJob.user_id == actor.id
+    )
+    await db.execute(
+        delete(NotificationDelivery).where(
+            NotificationDelivery.job_id.in_(notification_job_ids)
+        )
+    )
+    for model in (
+        NotificationJob,
+        EventSubscription,
+        NotificationPreference,
+        UserOnboardingProgress,
+        UserGroupBookmark,
+        FaqFeedback,
+    ):
+        await db.execute(delete(model).where(model.user_id == actor.id))
+    await db.execute(
+        update(IssueReport)
+        .where(IssueReport.user_id == actor.id)
+        .values(user_id=None)
+    )
+    add_audit(
+        db,
+        actor,
+        "reset_demo_data",
+        actor,
+        details={"preserved": ["account", "roles", "sessions", "events"]},
+    )
+    await db.commit()
 
 
 @router.get("/faq", response_model=list[FaqAdminRead])
@@ -302,6 +418,99 @@ async def create_event(
     add_audit(db, actor, "create", event, after_version=event.version)
     await db.commit()
     return {"id": event.id}
+
+
+@router.get("/events", response_model=list[AdminEventRead])
+async def admin_events(_: EventsUser, db: Db) -> list[AdminEventRead]:
+    registrations = (
+        select(
+            EventSubscription.event_id.label("event_id"),
+            func.count(EventSubscription.id).label("registration_count"),
+        )
+        .where(EventSubscription.is_active.is_(True))
+        .group_by(EventSubscription.event_id)
+        .subquery()
+    )
+    rows = (
+        await db.execute(
+            select(Event, func.coalesce(registrations.c.registration_count, 0))
+            .outerjoin(registrations, registrations.c.event_id == Event.id)
+            .where(Event.deleted_at.is_(None))
+            .order_by(Event.starts_at.desc())
+            .limit(200)
+        )
+    ).all()
+    return [event_read(event, int(count)) for event, count in rows]
+
+
+@router.put("/events/{event_id}", response_model=AdminEventRead)
+async def update_event(
+    event_id: str,
+    payload: EventWrite,
+    actor: EventsUser,
+    _: CsrfSession,
+    db: Db,
+) -> AdminEventRead:
+    event = await db.get(Event, event_id)
+    if event is None or event.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
+
+    previous_version = event.version
+    for field, value in payload.model_dump().items():
+        if field == "external_url":
+            value = str(value) if value else None
+        setattr(event, field, value)
+    event.version += 1
+    add_audit(
+        db,
+        actor,
+        "cancel" if event.occurrence_status == "cancelled" else "update",
+        event,
+        before_version=previous_version,
+        after_version=event.version,
+    )
+    await notify_event_subscribers(db, event)
+    await db.commit()
+    registration_count = int(
+        await db.scalar(
+            select(func.count()).select_from(EventSubscription).where(
+                EventSubscription.event_id == event.id,
+                EventSubscription.is_active.is_(True),
+            )
+        )
+        or 0
+    )
+    return event_read(event, registration_count)
+
+
+@router.delete("/events/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cancelled_event(
+    event_id: str,
+    actor: EventsUser,
+    _: CsrfSession,
+    db: Db,
+) -> None:
+    event = await db.get(Event, event_id)
+    if event is None or event.deleted_at is not None:
+        return
+    if event.occurrence_status != "cancelled":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Only cancelled events can be deleted",
+        )
+    previous_version = event.version
+    event.deleted_at = utc_now()
+    event.status = "archived"
+    event.version += 1
+    add_audit(
+        db,
+        actor,
+        "delete",
+        event,
+        before_version=previous_version,
+        after_version=event.version,
+    )
+    await db.commit()
 
 
 @router.post("/resources", status_code=status.HTTP_201_CREATED)

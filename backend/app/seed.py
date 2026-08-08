@@ -7,7 +7,7 @@ from app.db import SessionFactory
 from app.events.seed import archive_unverified_union_meeting
 from app.knowledge.seed import apply_seed
 from app.onboarding.seed import seed_onboarding
-from app.students.seed import seed_resources
+from app.students.seed import seed_resources, seed_tutors
 
 
 async def seed_all() -> dict[str, object]:
@@ -17,6 +17,7 @@ async def seed_all() -> dict[str, object]:
     return {
         "knowledge": knowledge,
         "resources": await seed_resources(),
+        "tutors": await seed_tutors(),
         "events": {
             "archived_legacy": await archive_unverified_union_meeting(),
         },

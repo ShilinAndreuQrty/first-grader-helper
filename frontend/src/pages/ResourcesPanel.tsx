@@ -2,7 +2,6 @@ import { Icon20ChevronRightOutline } from '@vkontakte/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
-  Avatar,
   Banner,
   Button,
   Group,
@@ -19,6 +18,7 @@ import { useMemo } from 'react'
 import { getResources } from '../api/students'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { VkAvatar } from '../components/VkAvatar'
 
 function resourceInitials(title: string): string {
   return (title.match(/[\p{L}\p{N}]+/gu) ?? [])
@@ -81,8 +81,9 @@ export function ResourcesPanel({ id = 'resources' }: { id?: string }) {
                 key={resource.id}
                 multiline
                 before={
-                  <Avatar
+                  <VkAvatar
                     size={44}
+                    vkUrl={resource.url}
                     initials={resourceInitials(resource.title)}
                     className={`resource-avatar resource-avatar--${resource.icon}`}
                   />

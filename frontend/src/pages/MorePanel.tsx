@@ -1,17 +1,17 @@
 import {
   Icon28BookSpreadOutline,
   Icon28HelpCircleOutline,
-  Icon28PlaceOutline,
+  Icon28PrivacyOutline,
   Icon28SettingsOutline,
-  Icon28Users3Outline,
 } from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Avatar,
   Banner,
   Button,
+  ButtonGroup,
   Group,
   Header,
+  Input,
   Panel,
   PanelHeader,
   PanelHeaderBack,
@@ -21,19 +21,27 @@ import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import { useEffect, useState } from 'react'
 
 import { getCurrentUser } from '../api/auth'
+import { ApiError } from '../api/client'
+import { saveGroupByCode } from '../api/schedule'
 import {
   getMyGroups,
   getResources,
   getTutors,
-  saveGroup,
 } from '../api/students'
+import {
+  GROUP_CODE_HINT,
+  isValidGroupCode,
+  normalizeGroupCode,
+} from '../groupCode'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { VkAvatar } from '../components/VkAvatar'
 
 export function MorePanel({ id = 'more' }: { id?: string }) {
   const navigator = useRouteNavigator()
   const queryClient = useQueryClient()
-  const [choosingPrimary, setChoosingPrimary] = useState(false)
+  const [editingPrimary, setEditingPrimary] = useState(false)
+  const [groupCode, setGroupCode] = useState('')
   const saved = useQuery({ queryKey: ['my-groups'], queryFn: getMyGroups })
   const primaryGroup = saved.data?.find((group) => group.is_primary)
   const tutors = useQuery({
@@ -56,11 +64,14 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
   const isEditor = currentUser.data?.roles.some((role) =>
     ['superadmin', 'content_editor', 'events_editor'].includes(role),
   )
-  const makePrimary = useMutation({
-    mutationFn: (groupId: string) => saveGroup(groupId, true),
+  const normalizedGroupCode = normalizeGroupCode(groupCode)
+  const changePrimary = useMutation({
+    mutationFn: () => saveGroupByCode(normalizedGroupCode, true),
     onSuccess: () => {
-      setChoosingPrimary(false)
+      setEditingPrimary(false)
+      setGroupCode('')
       void queryClient.invalidateQueries({ queryKey: ['my-groups'] })
+      void queryClient.invalidateQueries({ queryKey: ['onboarding'] })
     },
   })
   useEffect(() => {
@@ -91,8 +102,9 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         {currentUser.data && (
           <SimpleCell
             before={
-              <Avatar
+              <VkAvatar
                 size={48}
+                vkUrl={currentUser.data.profile_url}
                 initials={
                   currentUser.data.first_name.slice(0, 1) ||
                   currentUser.data.display_name.slice(0, 1) ||
@@ -117,7 +129,10 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
               <Button
                 size="s"
                 mode="secondary"
-                onClick={() => setChoosingPrimary((value) => !value)}
+                onClick={() => {
+                  setGroupCode(primaryGroup.code)
+                  setEditingPrimary((value) => !value)
+                }}
               >
                 Изменить
               </Button>
@@ -133,33 +148,60 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
             Выбрать основную группу
           </SimpleCell>
         )}
-        {choosingPrimary &&
-          saved.data
-            ?.filter((group) => !group.is_primary)
-            .map((group) => (
-              <SimpleCell
-                key={group.id}
-                subtitle={group.label || 'Сохранена в расписании'}
-                after={
-                  <Button
-                    size="s"
-                    loading={makePrimary.isPending}
-                    onClick={() => makePrimary.mutate(group.id)}
-                  >
-                    Сделать основной
-                  </Button>
-                }
-              >
-                {group.code}
-              </SimpleCell>
-            ))}
-        {choosingPrimary &&
-          saved.data?.every((group) => group.is_primary) && (
-            <Banner
-              title="Других групп пока нет"
-              subtitle="Добавьте их через меню над расписанием."
+        {editingPrimary && (
+          <form
+            className="more-primary-group-editor"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (isValidGroupCode(normalizedGroupCode)) changePrimary.mutate()
+            }}
+          >
+            <Input
+              aria-label="Новый номер своей группы"
+              value={groupCode}
+              placeholder="Например, 222231"
+              inputMode="numeric"
+              status={
+                groupCode && !isValidGroupCode(normalizedGroupCode)
+                  ? 'error'
+                  : 'default'
+              }
+              onChange={(event) => setGroupCode(event.target.value)}
             />
-          )}
+            {groupCode && !isValidGroupCode(normalizedGroupCode) && (
+              <Banner title="Проверьте формат номера" subtitle={GROUP_CODE_HINT} />
+            )}
+            <ButtonGroup mode="horizontal" gap="s" stretched>
+              <Button
+                type="submit"
+                loading={changePrimary.isPending}
+                disabled={!isValidGroupCode(normalizedGroupCode)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                type="button"
+                mode="secondary"
+                onClick={() => {
+                  setEditingPrimary(false)
+                  setGroupCode('')
+                }}
+              >
+                Отмена
+              </Button>
+            </ButtonGroup>
+            {changePrimary.error && (
+              <Banner
+                title="Не удалось изменить группу"
+                subtitle={
+                  changePrimary.error instanceof ApiError
+                    ? changePrimary.error.message
+                    : 'Попробуйте ещё раз.'
+                }
+              />
+            )}
+          </form>
+        )}
       </Group>
 
       <Group id="my-tutor" header={<Header>Мой тьютор</Header>}>
@@ -189,9 +231,10 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           <SimpleCell
             key={tutor.id}
             before={
-              <Avatar
+              <VkAvatar
                 size={48}
-                src={tutor.photo_url ?? undefined}
+                vkUrl={tutor.vk_url}
+                preferredSrc={tutor.photo_url}
                 initials={tutor.full_name.slice(0, 1)}
               />
             }
@@ -203,28 +246,13 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         ))}
       </Group>
 
-      <Group header={<Header>Справочники</Header>}>
+      <Group header={<Header>Приложение</Header>}>
         <SimpleCell
-          before={<Icon28Users3Outline />}
-          subtitle="Контакты наставника вашей группы"
-          onClick={() => {
-            if (!primaryGroup) {
-              void navigator.push(PANEL_PATHS.schedule)
-              return
-            }
-            document
-              .getElementById('my-tutor')
-              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }}
+          before={<Icon28SettingsOutline />}
+          subtitle="Основная группа, напоминания и приватность"
+          onClick={() => void navigator.push(PANEL_PATHS.settings)}
         >
-          Мой тьютор
-        </SimpleCell>
-        <SimpleCell
-          before={<Icon28PlaceOutline />}
-          subtitle="Корпуса, аудитории и маршруты"
-          onClick={() => void navigator.push(PANEL_PATHS.map)}
-        >
-          Карта
+          Настройки
         </SimpleCell>
         <SimpleCell
           before={<Icon28BookSpreadOutline />}
@@ -234,24 +262,18 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           Полезные ссылки
         </SimpleCell>
         <SimpleCell
-          before={<Icon28HelpCircleOutline />}
-          subtitle="О проекте и обратная связь"
-          onClick={() => void navigator.push(PANEL_PATHS.about)}
-        >
-          Помощь
-        </SimpleCell>
-        <SimpleCell
-          before={<Icon28SettingsOutline />}
-          subtitle="Основная группа, напоминания и приватность"
-          onClick={() => void navigator.push(PANEL_PATHS.settings)}
-        >
-          Настройки
-        </SimpleCell>
-        <SimpleCell
+          before={<Icon28PrivacyOutline />}
           subtitle="Какие данные сохраняются"
           onClick={() => void navigator.push(PANEL_PATHS.privacy)}
         >
           Конфиденциальность
+        </SimpleCell>
+        <SimpleCell
+          before={<Icon28HelpCircleOutline />}
+          subtitle="Информация о нас и обратная связь"
+          onClick={() => void navigator.push(PANEL_PATHS.about)}
+        >
+          О проекте
         </SimpleCell>
       </Group>
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 
 from app.db import SessionFactory
-from app.models import ResourceCategory, ResourceLink
+from app.models import GroupTutor, ResourceCategory, ResourceLink, StudentGroup, Tutor
 
 
 @dataclass(frozen=True)
@@ -18,6 +18,24 @@ class ResourceSeed:
     icon: str
     source_kind: str
     contexts: tuple[str, ...] = ("catalog",)
+
+
+@dataclass(frozen=True)
+class TutorSeed:
+    group_code: str
+    full_name: str
+    vk_url: str
+    description: str
+
+
+TUTOR_SEED = (
+    TutorSeed(
+        group_code="221451",
+        full_name="Андрей Шилин",
+        vk_url="https://vk.ru/shilin_qrty",
+        description="Наставник группы 221451",
+    ),
+)
 
 
 RESOURCE_SEED = {
@@ -32,6 +50,14 @@ RESOURCE_SEED = {
                 "university",
                 "official",
                 ("catalog", "about", "official_info"),
+            ),
+            ResourceSeed(
+                "tulsu-personal-account",
+                "Личный кабинет ТулГУ",
+                "https://lk.tsu.tula.ru:3443/lk/",
+                "Расписание, учебные данные и сервисы студента.",
+                "account",
+                "official",
             ),
             ResourceSeed(
                 "tulsu-community",
@@ -195,5 +221,53 @@ async def seed_resources() -> dict[str, int]:
     return {"categories": created_categories, "links": created_links}
 
 
+async def seed_tutors() -> dict[str, int]:
+    counters = {"groups_created": 0, "tutors_created": 0, "links_created": 0}
+    async with SessionFactory() as db:
+        for item in TUTOR_SEED:
+            group = await db.scalar(
+                select(StudentGroup).where(
+                    StudentGroup.normalized_code == item.group_code
+                )
+            )
+            if group is None:
+                group = StudentGroup(
+                    code=item.group_code,
+                    normalized_code=item.group_code,
+                )
+                db.add(group)
+                await db.flush()
+                counters["groups_created"] += 1
+
+            tutor = await db.scalar(
+                select(Tutor).where(Tutor.vk_url == item.vk_url)
+            )
+            if tutor is None:
+                tutor = Tutor(
+                    full_name=item.full_name,
+                    vk_url=item.vk_url,
+                    description=item.description,
+                    status="published",
+                )
+                db.add(tutor)
+                await db.flush()
+                counters["tutors_created"] += 1
+            tutor.full_name = item.full_name
+            tutor.description = item.description
+            tutor.status = "published"
+            tutor.deleted_at = None
+
+            association = await db.get(
+                GroupTutor,
+                {"group_id": group.id, "tutor_id": tutor.id},
+            )
+            if association is None:
+                db.add(GroupTutor(group_id=group.id, tutor_id=tutor.id))
+                counters["links_created"] += 1
+        await db.commit()
+    return counters
+
+
 if __name__ == "__main__":
     print(asyncio.run(seed_resources()))
+    print(asyncio.run(seed_tutors()))

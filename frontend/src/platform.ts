@@ -67,5 +67,6 @@ export async function bootstrapPlatform(
 }
 
 export function persistCsrf(auth: AuthBootstrap): void {
-  sessionStorage.setItem('ipmkn.csrf', auth.csrf_token)
+  localStorage.setItem('ipmkn.csrf', auth.csrf_token)
+  sessionStorage.removeItem('ipmkn.csrf')
 }

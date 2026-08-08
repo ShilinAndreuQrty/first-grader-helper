@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +15,7 @@ from app.auth.dependencies import (
 )
 from app.auth.schemas import AuthResponse, AuthUser, DevAuthRequest, VkAuthRequest
 from app.auth.service import create_session, get_or_create_user, validate_vk_launch_params
+from app.auth.vk_media import resolve_vk_avatar
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.models import User, UserSession, utc_now
@@ -112,6 +113,20 @@ async def dev_auth(
 @router.get("/me", response_model=AuthUser)
 async def me(user: Annotated[User, Depends(get_current_user)]) -> AuthUser:
     return auth_user(user)
+
+
+@router.get("/vk-avatar")
+async def vk_avatar(
+    _: Annotated[User, Depends(get_current_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    url: Annotated[str, Query(min_length=12, max_length=500)],
+) -> dict[str, str | None]:
+    return {
+        "photo_url": await resolve_vk_avatar(
+            url,
+            token=settings.vk_service_token,
+        )
+    }
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

@@ -36,6 +36,26 @@ function lessonEndMinutes(time: string): number {
   return end ? Number(end[1]) * 60 + Number(end[2]) : Number.POSITIVE_INFINITY
 }
 
+export function getLessonTiming(time: string, currentMinutes: number) {
+  const matches = [...time.matchAll(/(\d{1,2}):(\d{2})/g)]
+  if (matches.length < 2) {
+    return { isInProgress: false, progress: 0, remainingMinutes: 0 }
+  }
+  const toMinutes = (match: RegExpMatchArray) =>
+    Number(match[1]) * 60 + Number(match[2])
+  const start = toMinutes(matches[0])
+  const end = toMinutes(matches.at(-1)!)
+  const isInProgress = currentMinutes >= start && currentMinutes < end
+  if (!isInProgress || end <= start) {
+    return { isInProgress: false, progress: 0, remainingMinutes: 0 }
+  }
+  return {
+    isInProgress: true,
+    progress: ((currentMinutes - start) / (end - start)) * 100,
+    remainingMinutes: Math.max(1, end - currentMinutes),
+  }
+}
+
 export function getScheduleLessonKey(
   lesson: ScheduleLesson,
   index: number,

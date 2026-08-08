@@ -1,12 +1,13 @@
 import {
-  Icon28BugOutline,
   Icon28LinkOutline,
 } from '@vkontakte/icons'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
+  Button,
   Div,
+  FormItem,
   Group,
   Header,
   Panel,
@@ -14,9 +15,12 @@ import {
   PanelHeaderBack,
   SimpleCell,
   Text,
+  Textarea,
   Title,
 } from '@vkontakte/vkui'
+import { FormEvent, useState } from 'react'
 
+import { reportIssue } from '../api/onboarding'
 import { getResources } from '../api/students'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
@@ -29,15 +33,24 @@ interface LegalPanelProps {
 export function LegalPanel({ id, kind }: LegalPanelProps) {
   const navigator = useRouteNavigator()
   const privacy = kind === 'privacy'
+  const [feedback, setFeedback] = useState('')
   const resources = useQuery({
     queryKey: ['resources'],
     queryFn: getResources,
     enabled: !privacy,
   })
-  const aboutResources =
-    resources.data?.filter((resource) =>
-      resource.contexts.includes('about'),
-    ) ?? []
+  const profburo = resources.data?.find(
+    (resource) => resource.slug === 'profburo-ipmkn',
+  )
+  const feedbackMutation = useMutation({
+    mutationFn: (message: string) => reportIssue('project-feedback', message),
+    onSuccess: () => setFeedback(''),
+  })
+  const submitFeedback = (event: FormEvent) => {
+    event.preventDefault()
+    const message = feedback.trim()
+    if (message.length >= 5) feedbackMutation.mutate(message)
+  }
 
   return (
     <Panel id={id}>
@@ -102,47 +115,23 @@ export function LegalPanel({ id, kind }: LegalPanelProps) {
         </Div>
       </Group>
       {!privacy && (
-        <Group header={<Header>Ответственная команда и контакт</Header>}>
-          <Div className="legal-copy">
-            <Title level="3">Тьюторское сообщество ИПМКН</Title>
-            <Text>
-              Контакты берутся из общего каталога и обновляются без изменения
-              этого экрана.
-            </Text>
-          </Div>
-          {aboutResources.map((resource) => (
+        <Group header={<Header>Ответственная команда и контакты</Header>}>
+          {profburo && (
             <SimpleCell
-              key={resource.id}
+              key={profburo.id}
               before={<Icon28LinkOutline />}
-              subtitle={resource.description}
-              onClick={() => void openExternalUrl(resource.url)}
+              subtitle={profburo.description}
+              onClick={() => void openExternalUrl(profburo.url)}
             >
-              {resource.title}
+              {profburo.title}
             </SimpleCell>
-          ))}
-          <SimpleCell
-            before={<Icon28BugOutline />}
-            subtitle="Сообщение попадёт в очередь редакторов без контактных данных"
-            onClick={() => void navigator.push(PANEL_PATHS.onboarding)}
-          >
-            Сообщить об ошибке
-          </SimpleCell>
+          )}
           {resources.isError && (
             <Banner
               title="Контакты временно недоступны"
-              subtitle="Форма сообщения об ошибке продолжает работать."
+              subtitle="Попробуйте обновить страницу немного позже."
             />
           )}
-          {resources.isSuccess &&
-            !aboutResources.some(
-              (resource) => resource.slug === 'project-community',
-            ) && (
-              <Div>
-                <Text className="muted">
-                  Отдельная страница проекта пока не указана редакторами.
-                </Text>
-              </Div>
-            )}
         </Group>
       )}
       <Group header={<Header>Версия</Header>}>
@@ -150,6 +139,40 @@ export function LegalPanel({ id, kind }: LegalPanelProps) {
           <Text>Версия разработки 0.1</Text>
         </Div>
       </Group>
+      {!privacy && (
+        <Group header={<Header>Обратная связь</Header>}>
+          <form onSubmit={submitFeedback} className="project-feedback-form">
+            <FormItem
+              top="Расскажите, что можно улучшить"
+              bottom="Сообщение увидит команда проекта. Минимум 5 символов."
+            >
+              <Textarea
+                value={feedback}
+                maxLength={2000}
+                placeholder="Идея, пожелание или найденная проблема"
+                onChange={(event) => setFeedback(event.target.value)}
+              />
+            </FormItem>
+            <Div>
+              <Button
+                type="submit"
+                size="l"
+                stretched
+                loading={feedbackMutation.isPending}
+                disabled={feedback.trim().length < 5 || feedbackMutation.isPending}
+              >
+                Отправить
+              </Button>
+            </Div>
+            {feedbackMutation.isSuccess && (
+              <Banner title="Спасибо!" subtitle="Сообщение отправлено команде проекта." />
+            )}
+            {feedbackMutation.isError && (
+              <Banner title="Не удалось отправить" subtitle="Проверьте соединение и попробуйте ещё раз." />
+            )}
+          </form>
+        </Group>
+      )}
     </Panel>
   )
 }

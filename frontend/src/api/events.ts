@@ -24,6 +24,10 @@ export function getEvents(eventType?: string): Promise<EventOccurrence[]> {
   return apiRequest(`/events${suffix}`)
 }
 
+export function getSubscribedEventIds(): Promise<string[]> {
+  return apiRequest('/me/event-subscriptions')
+}
+
 export function subscribeToEvent(
   event: EventOccurrence,
 ): Promise<{ id: string }> {

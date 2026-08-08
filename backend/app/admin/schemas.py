@@ -9,12 +9,11 @@ ContentStatus = Literal["draft", "needs_review", "published", "archived"]
 
 
 class DashboardRead(BaseModel):
-    needs_review_faq: int
     upcoming_events: int
-    failed_assistant_queries: int
-    unconfirmed_series: int
+    active_registrations: int
+    registered_users: int
+    cancelled_events: int
     recent_audit: int
-    open_issue_reports: int
 
 
 class AdminStudentRead(BaseModel):
@@ -25,6 +24,15 @@ class AdminStudentRead(BaseModel):
     primary_group: str | None
     first_login_at: datetime
     last_activity_at: datetime | None
+
+
+class AdminFeedbackRead(BaseModel):
+    id: str
+    message: str
+    status: str
+    created_at: datetime
+    user_name: str
+    profile_url: str | None
 
 
 class FaqAdminRead(BaseModel):
@@ -64,6 +72,12 @@ class EventWrite(BaseModel):
         if self.ends_at <= self.starts_at:
             raise ValueError("ends_at must be later than starts_at")
         return self
+
+
+class AdminEventRead(EventWrite):
+    id: str
+    version: int
+    registration_count: int
 
 
 class ResourceWrite(BaseModel):

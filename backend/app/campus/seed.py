@@ -42,7 +42,7 @@ BUILDINGS: list[BuildingSeed] = [
         "short_name": "Главный корпус",
         "building_number": "Главный",
         "address": "Тула, проспект Ленина, 92",
-        "entrance_hint": "Главный и 9-й корпуса соединены. Вход в главный корпус — через 9-й.",
+        "entrance_hint": "Главный и 9-й корпуса — одно здание, вход с улицы Смидович.",
         "aliases": ["гл", "гл. к.", "главный", "главный корпус"],
         "complex_slug": "main-9",
         "dgis_url": "https://2gis.ru/tula/geo/5067185235966202",

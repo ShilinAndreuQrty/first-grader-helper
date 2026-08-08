@@ -20,6 +20,7 @@ from app.models import (
     UserGroupBookmark,
     UserSession,
 )
+from app.onboarding.service import complete_onboarding_step
 from app.students.schemas import BookmarkCreate, GroupRead, ResourceRead, TutorRead
 from app.students.service import normalize_bookmark_label, normalize_group_code
 
@@ -184,6 +185,12 @@ async def save_group(
                 is_primary=make_primary,
                 label=normalize_bookmark_label(payload.label or ""),
             )
+        )
+    if make_primary or existing and existing.is_primary:
+        await complete_onboarding_step(
+            db,
+            user_id=session.user_id,
+            slug="choose-group",
         )
     await db.commit()
     return GroupRead(

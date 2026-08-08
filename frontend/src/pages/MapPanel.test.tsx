@@ -84,9 +84,13 @@ describe('MapPanel', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        /Главный и 9-й корпуса считаются отдельными корпусами/i,
+        /Главный и 9-й корпуса — одно здание, вход с улицы Смидович/i,
       ),
     ).toBeInTheDocument()
+    expect(screen.getByText('Все корпуса').closest('details')).not.toHaveAttribute('open')
+    expect(screen.getByText('Общежития').closest('details')).not.toHaveAttribute('open')
+    expect(screen.getByText('Часто нужные кабинеты').closest('details')).not.toHaveAttribute('open')
+    screen.getByText('Часто нужные кабинеты').click()
     expect(screen.getByText('Дирекция ИПМКН')).toBeInTheDocument()
     expect(screen.getByText('Гл-123 и Гл-125')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()

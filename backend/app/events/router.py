@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import require_csrf
+from app.auth.dependencies import get_current_user, require_csrf
 from app.db import get_session
 from app.events.schemas import EventOccurrenceRead, EventSubscriptionCreate
 from app.events.service import as_utc, expand_weekly_series
@@ -17,10 +18,29 @@ from app.models import (
     EventSeries,
     EventSeriesBlackout,
     EventSubscription,
+    User,
     UserSession,
 )
 
 router = APIRouter(tags=["events"])
+
+
+@router.get("/api/me/event-subscriptions", response_model=list[str])
+async def my_event_subscriptions(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_session)],
+) -> list[str]:
+    return list(
+        (
+            await db.scalars(
+                select(EventSubscription.event_id).where(
+                    EventSubscription.user_id == user.id,
+                    EventSubscription.event_id.is_not(None),
+                    EventSubscription.is_active.is_(True),
+                )
+            )
+        ).all()
+    )
 
 
 @router.get("/api/events", response_model=list[EventOccurrenceRead])
@@ -31,9 +51,14 @@ async def public_events(
     event_type: Annotated[str | None, Query(max_length=60)] = None,
 ) -> list[EventOccurrenceRead]:
     now = datetime.now(UTC)
-    range_start = as_utc(date_from or now)
-    range_end = as_utc(date_to or range_start + timedelta(days=60))
-    if range_end <= range_start or range_end - range_start > timedelta(days=120):
+    moscow = ZoneInfo("Europe/Moscow")
+    range_start = (
+        as_utc(date_from)
+        if date_from
+        else datetime.combine(now.astimezone(moscow).date(), time.min, moscow).astimezone(UTC)
+    )
+    range_end = as_utc(date_to or range_start + timedelta(days=365))
+    if range_end <= range_start or range_end - range_start > timedelta(days=370):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid date range")
 
     event_statement = select(Event).where(
@@ -129,6 +154,20 @@ async def subscribe_to_event(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             "Choose exactly one event or series",
         )
+    if payload.event_id:
+        event = await db.get(Event, payload.event_id)
+        if (
+            event is None
+            or event.status != "published"
+            or event.event_type == "union_meeting"
+            or event.occurrence_status == "cancelled"
+            or event.deleted_at is not None
+        ):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
+    if payload.series_id:
+        series = await db.get(EventSeries, payload.series_id)
+        if series is None or series.status != "published" or series.deleted_at is not None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Event series not found")
     existing = await db.scalar(
         select(EventSubscription).where(
             EventSubscription.user_id == user_session.user_id,

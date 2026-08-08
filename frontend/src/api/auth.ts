@@ -13,3 +13,7 @@ export interface CurrentUser {
 export function getCurrentUser(): Promise<CurrentUser> {
   return apiRequest('/auth/me')
 }
+
+export function getVkAvatar(vkUrl: string): Promise<{ photo_url: string | null }> {
+  return apiRequest(`/auth/vk-avatar?url=${encodeURIComponent(vkUrl)}`)
+}

@@ -17,7 +17,11 @@ export async function apiRequest<T>(
   if (init.body) {
     headers.set('Content-Type', 'application/json')
   }
-  const csrf = sessionStorage.getItem('ipmkn.csrf')
+  // Auth cookies are shared between tabs, so the matching CSRF token must be
+  // shared too. Otherwise opening a second tab invalidates writes in the first.
+  const csrf =
+    localStorage.getItem('ipmkn.csrf') ??
+    sessionStorage.getItem('ipmkn.csrf')
   if (csrf && init.method && init.method !== 'GET') {
     headers.set('X-CSRF-Token', csrf)
   }

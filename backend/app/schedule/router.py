@@ -11,6 +11,7 @@ from app.auth.dependencies import require_csrf
 from app.config import Settings, get_settings
 from app.db import get_session
 from app.models import StudentGroup, UserGroupBookmark, UserSession
+from app.onboarding.service import complete_onboarding_step
 from app.rate_limit import InMemoryRateLimiter
 from app.schedule.client import TulsuClient, TulsuUnavailable
 from app.schedule.schemas import (
@@ -81,35 +82,14 @@ async def save_discovered_group(
     payload: GroupCodeCreate,
     user_session: Annotated[UserSession, Depends(require_csrf)],
     db: Annotated[AsyncSession, Depends(get_session)],
-    settings: Annotated[Settings, Depends(get_settings)],
 ) -> GroupRead:
     normalized = valid_group_code(payload.code)
-    async with tulsu_http_client(settings) as http:
-        try:
-            suggestions = await get_group_suggestions(
-                db,
-                TulsuClient(http),
-                normalized,
-                ttl_seconds=settings.tulsu_cache_ttl_seconds,
-            )
-        except TulsuUnavailable as error:
-            raise HTTPException(
-                status.HTTP_503_SERVICE_UNAVAILABLE,
-                "Не удалось проверить группу в ТулГУ",
-            ) from error
-    exact = next(
-        (item for item in suggestions.groups if item == normalized),
-        None,
-    )
-    if exact is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group not found")
-
     group = await db.scalar(
         select(StudentGroup).where(StudentGroup.normalized_code == normalized)
     )
     if group is None:
         group = StudentGroup(
-            code=exact,
+            code=normalized,
             normalized_code=normalized,
             academic_year="",
         )
@@ -137,6 +117,12 @@ async def save_discovered_group(
             label=normalize_bookmark_label(payload.label or ""),
         )
         db.add(bookmark)
+    if bookmark.is_primary:
+        await complete_onboarding_step(
+            db,
+            user_id=user_session.user_id,
+            slug="choose-group",
+        )
     await db.commit()
     return GroupRead(
         id=group.id,

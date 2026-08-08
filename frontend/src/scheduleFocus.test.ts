@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { ScheduleLesson } from './api/schedule'
-import { getScheduleFocusKey } from './scheduleFocus'
+import { getLessonTiming, getScheduleFocusKey } from './scheduleFocus'
 
 function lesson(date: string, time: string): ScheduleLesson {
   return {
@@ -47,5 +47,23 @@ describe('getScheduleFocusKey', () => {
     expect(
       getScheduleFocusKey(lessons, new Date('2026-08-07T09:00:00Z')),
     ).toBe('2026-08-10-11:35 - 13:10-1')
+  })
+})
+
+describe('getLessonTiming', () => {
+  it('calculates progress and time left for the current lesson', () => {
+    const timing = getLessonTiming('09:40 - 11:15', 10 * 60 + 20)
+
+    expect(timing.isInProgress).toBe(true)
+    expect(timing.progress).toBeCloseTo(42.1, 1)
+    expect(timing.remainingMinutes).toBe(55)
+  })
+
+  it('does not show a timer outside the lesson', () => {
+    expect(getLessonTiming('09:40 - 11:15', 9 * 60)).toEqual({
+      isInProgress: false,
+      progress: 0,
+      remainingMinutes: 0,
+    })
   })
 })

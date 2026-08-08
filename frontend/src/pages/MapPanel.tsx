@@ -1,4 +1,5 @@
 import {
+  Icon20ChevronRightOutline,
   Icon20HomeOutline,
   Icon20PinOutline,
   Icon20PlaceOutline,
@@ -35,6 +36,9 @@ import { openExternalUrl } from '../platformLinks'
 export function MapPanel({ id = 'map' }: { id?: string }) {
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string>()
+  const [buildingsOpen, setBuildingsOpen] = useState(false)
+  const [dormitoriesOpen, setDormitoriesOpen] = useState(false)
+  const [roomsOpen, setRoomsOpen] = useState(false)
   const [targetRoom] = useState(consumeMapTargetRoom)
   const buildings = useQuery({
     queryKey: ['campus'],
@@ -103,6 +107,15 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
   const filteredDormitories = filteredLocations.filter(
     (building) => building.kind === 'dormitory',
   )
+  const catalogBuildings = useMemo(() => {
+    let mainComplexShown = false
+    return filteredBuildings.filter((building) => {
+      if (building.complex_slug !== 'main-9') return true
+      if (mainComplexShown) return false
+      mainComplexShown = true
+      return true
+    })
+  }, [filteredBuildings])
   const targetBuilding = targetRoom
     ? matchBuildingByLocation(targetRoom, buildings.data ?? [])
     : undefined
@@ -153,6 +166,11 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
               <Text className="eyebrow">{selected.short_name}</Text>
               <Title level="2">{selected.name}</Title>
               <Text>{selected.address}</Text>
+              {selected.complex_slug === 'main-9' && (
+                <Text className="campus-complex">
+                  Главный и 9-й корпуса — одно здание, вход с улицы Смидович.
+                </Text>
+              )}
               {selected.entrance_hint &&
                 selected.complex_slug !== 'main-9' && (
                   <Text className="muted">{selected.entrance_hint}</Text>
@@ -184,6 +202,11 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
           onChange={(event) => {
             setSelectedId(undefined)
             setSearch(event.target.value)
+            if (event.target.value.trim()) {
+              setBuildingsOpen(true)
+              setDormitoriesOpen(true)
+              setRoomsOpen(true)
+            }
           }}
         />
         {buildings.isFetching && <Spinner size="s" />}
@@ -210,23 +233,31 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
         )}
       </Group>
 
-      <Group>
-        <Div>
-          <Text className="campus-complex">
-            Главный и 9-й корпуса считаются отдельными корпусами, но сейчас
-            соединены в одно здание. Вход в главный корпус осуществляется через
-            9-й.
-          </Text>
-        </Div>
-      </Group>
-
-      <Group header={<Header>Все корпуса</Header>}>
-        {filteredBuildings.map((building) => {
-          const isPinned = pinnedIds.includes(building.id)
+      <details
+        className="campus-catalog"
+        open={buildingsOpen}
+        onToggle={(event) => setBuildingsOpen(event.currentTarget.open)}
+      >
+        <summary className="campus-catalog__summary">
+          <Header>Все корпуса</Header>
+          <Icon20ChevronRightOutline aria-hidden />
+        </summary>
+        <Group>
+        {catalogBuildings.map((building) => {
+          const isMainComplex = building.complex_slug === 'main-9'
+          const isPinned = isMainComplex
+            ? academicBuildings.some(
+                (item) => item.complex_slug === 'main-9' && pinnedIds.includes(item.id),
+              )
+            : pinnedIds.includes(building.id)
           return (
             <SimpleCell
               key={building.id}
-              selected={building.id === selected?.id}
+              selected={
+                isMainComplex
+                  ? selected?.complex_slug === 'main-9'
+                  : building.id === selected?.id
+              }
               before={
                 isPinned ? (
                   <Icon20PinOutline
@@ -247,13 +278,23 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
                 setSelectedId(building.id)
               }}
             >
-              {building.short_name}
+              {isMainComplex ? 'Главный и 9-й корпуса' : building.short_name}
             </SimpleCell>
           )
         })}
-      </Group>
+        </Group>
+      </details>
 
-      <Group header={<Header>Общежития</Header>}>
+      <details
+        className="campus-catalog"
+        open={dormitoriesOpen}
+        onToggle={(event) => setDormitoriesOpen(event.currentTarget.open)}
+      >
+        <summary className="campus-catalog__summary">
+          <Header>Общежития</Header>
+          <Icon20ChevronRightOutline aria-hidden />
+        </summary>
+        <Group>
         {filteredDormitories.map((dormitory) => (
           <SimpleCell
             key={dormitory.id}
@@ -268,9 +309,19 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
             {dormitory.short_name}
           </SimpleCell>
         ))}
-      </Group>
+        </Group>
+      </details>
 
-      <Group header={<Header>Часто нужные кабинеты</Header>}>
+      <details
+        className="campus-catalog"
+        open={roomsOpen}
+        onToggle={(event) => setRoomsOpen(event.currentTarget.open)}
+      >
+        <summary className="campus-catalog__summary">
+          <Header>Часто нужные кабинеты</Header>
+          <Icon20ChevronRightOutline aria-hidden />
+        </summary>
+        <Group>
         {importantRooms.map(({ building, title, floor, roomNumbers }) => (
           <SimpleCell
             key={`${building.id}:${title}`}
@@ -286,7 +337,8 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
             {title}
           </SimpleCell>
         ))}
-      </Group>
+        </Group>
+      </details>
     </Panel>
   )
 }
