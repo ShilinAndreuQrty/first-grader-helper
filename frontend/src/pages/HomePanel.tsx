@@ -3,7 +3,6 @@ import {
   Icon20ClockOutline,
   Icon28LinkOutline,
   Icon28MessageOutline,
-  Icon28PlaceOutline,
   Icon28UserCardOutline,
   Icon28Users3Outline,
 } from '@vkontakte/icons'
@@ -17,6 +16,7 @@ import { ApiError } from '../api/client'
 import { getSchedule, saveGroupByCode, ScheduleLesson } from '../api/schedule'
 import { getMyGroups } from '../api/students'
 import { AppPanelHeader } from '../components/AppPanelHeader'
+import ipmknLogo from '../assets/ipmkn-logo.png'
 import { isValidGroupCode, normalizeGroupCode } from '../groupCode'
 import { formatLessonType } from '../lessonAppearance'
 import { openExternalUrl } from '../platformLinks'
@@ -143,7 +143,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
           role={primaryGroup ? 'button' : undefined}
           tabIndex={primaryGroup ? 0 : undefined}
         >
-          <span className="home-spotlight__mark" aria-hidden>ИПМКН</span>
+          <img className="home-spotlight__logo" src={ipmknLogo} alt="" aria-hidden />
           <div className="home-spotlight__welcome">
             <Text className="home-spotlight__date">{formatHomeDate(today)}</Text>
             <Title level="1">{getGreeting(now)}</Title>
@@ -283,11 +283,11 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
             </button>
             <button
               type="button"
-              className="home-action home-action--map"
-              onClick={() => void navigator.push(PANEL_PATHS.map)}
+              className="home-action home-action--account"
+              onClick={() => void openExternalUrl('https://lk.tsu.tula.ru:3443/lk/')}
             >
-              <span className="home-action__icon"><Icon28PlaceOutline /></span>
-              <span><strong>Найти аудиторию</strong><small>Корпуса и этажи</small></span>
+              <span className="home-action__icon"><Icon28UserCardOutline /></span>
+              <span><strong>Личный кабинет</strong><small>ЛК ТулГУ</small></span>
             </button>
             <button
               type="button"
@@ -300,24 +300,15 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
               <span className="home-action__icon"><Icon28Users3Outline /></span>
               <span><strong>Мой тьютор</strong><small>Контакт наставника</small></span>
             </button>
-            <div className="home-action-split">
-              <button
-                type="button"
-                className="home-action home-action--links"
-                onClick={() => void navigator.push(PANEL_PATHS.resources)}
-              >
-                <span className="home-action__icon"><Icon28LinkOutline /></span>
-                <span><strong>Полезные ссылки</strong><small>Сервисы и сообщества</small></span>
-              </button>
-              <button
-                type="button"
-                className="home-action home-action--account"
-                onClick={() => void openExternalUrl('https://lk.tsu.tula.ru:3443/lk/')}
-              >
-                <span className="home-action__icon"><Icon28UserCardOutline /></span>
-                <span><strong>Личный кабинет</strong><small>ЛК ТулГУ</small></span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="home-action home-action--links home-action--wide"
+              onClick={() => void navigator.push(PANEL_PATHS.resources)}
+            >
+              <span className="home-action__icon"><Icon28LinkOutline /></span>
+              <span><strong>Полезные ссылки</strong><small>Сервисы и сообщества</small></span>
+              <Icon20ChevronRight className="home-action__arrow" aria-hidden />
+            </button>
           </div>
         </section>
 
