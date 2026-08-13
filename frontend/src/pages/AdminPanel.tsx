@@ -39,6 +39,7 @@ import {
 import { ApiError } from '../api/client'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { takeAdminReturnPath } from '../navigation'
 
 const metricLabels: Record<string, string> = {
   upcoming_events: 'событий в ближайшие 30 дней',
@@ -213,7 +214,7 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
   return (
     <Panel id={id}>
       <PanelHeader
-        before={<PanelHeaderBack aria-label="Назад" onClick={() => void navigator.push(PANEL_PATHS.more)} />}
+        before={<PanelHeaderBack aria-label="Назад" onClick={() => void navigator.push(takeAdminReturnPath())} />}
       >
         Управление
       </PanelHeader>

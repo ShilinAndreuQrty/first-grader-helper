@@ -31,6 +31,7 @@ import {
 import { openExternalUrl } from '../platformLinks'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import { PANEL_PATHS } from '../router'
+import { setMoreReturnPath } from '../navigation'
 
 const HISTORY_KEY = 'ipmkn.assistant-history-v1'
 const QUICK_QUESTIONS = [
@@ -251,7 +252,10 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
     sessionStorage.setItem(HISTORY_KEY, JSON.stringify(turns.slice(-16)))
   }, [turns])
 
-  const openTutor = () => void navigator.push(PANEL_PATHS.more)
+  const openTutor = () => {
+    setMoreReturnPath(PANEL_PATHS.assistant)
+    void navigator.push(PANEL_PATHS.more)
+  }
 
   const sendQuestion = (
     question: string,

@@ -8,6 +8,7 @@ import {
 import type { ReactNode } from 'react'
 
 import { PANEL_PATHS } from '../router'
+import { getCurrentRootPath, setMoreReturnPath } from '../navigation'
 
 interface AppPanelHeaderProps {
   children: string
@@ -37,7 +38,10 @@ export function AppPanelHeader({
           {beforeMenu}
           <PanelHeaderButton
             aria-label="Открыть раздел «Ещё»"
-            onClick={() => void navigator.push(PANEL_PATHS.more)}
+            onClick={() => {
+              setMoreReturnPath(getCurrentRootPath())
+              void navigator.push(PANEL_PATHS.more)
+            }}
           >
             <Icon24MenuOutline />
           </PanelHeaderButton>

@@ -15,6 +15,7 @@ import { getInAppReminders } from '../api/notifications'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { setAdminReturnPath } from '../navigation'
 
 const STATUS_LABELS = {
   scheduled: 'Скоро',
@@ -184,7 +185,10 @@ export function EventsPanel({ id = 'events' }: { id?: string }) {
           canManageEvents ? (
             <PanelHeaderButton
               aria-label="Управление событиями"
-              onClick={() => void navigator.push(PANEL_PATHS.admin)}
+              onClick={() => {
+                setAdminReturnPath(PANEL_PATHS.events)
+                void navigator.push(PANEL_PATHS.admin)
+              }}
             >
               <Icon24WriteOutline />
             </PanelHeaderButton>

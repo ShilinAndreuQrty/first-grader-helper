@@ -35,6 +35,7 @@ import {
 } from '../groupCode'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { getMoreReturnPath, setAdminReturnPath } from '../navigation'
 import { VkAvatar } from '../components/VkAvatar'
 
 export function MorePanel({ id = 'more' }: { id?: string }) {
@@ -92,7 +93,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         before={
           <PanelHeaderBack
             aria-label="Назад"
-            onClick={() => void navigator.back()}
+            onClick={() => void navigator.push(getMoreReturnPath())}
           />
         }
       >
@@ -281,7 +282,10 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         <Group header={<Header>Для команды</Header>}>
           <SimpleCell
             subtitle="Контент, события и аудит"
-            onClick={() => void navigator.push(PANEL_PATHS.admin)}
+            onClick={() => {
+              setAdminReturnPath(PANEL_PATHS.more)
+              void navigator.push(PANEL_PATHS.admin)
+            }}
           >
             Админ-панель
           </SimpleCell>

@@ -21,6 +21,7 @@ import { isValidGroupCode, normalizeGroupCode } from '../groupCode'
 import { formatLessonType } from '../lessonAppearance'
 import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
+import { setMoreReturnPath } from '../navigation'
 import { getLessonTiming, getMoscowDate } from '../scheduleFocus'
 
 const MOSCOW_TIME_ZONE = 'Europe/Moscow'
@@ -294,6 +295,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
               className="home-action home-action--tutor"
               onClick={() => {
                 sessionStorage.setItem('ipmkn.moreTarget', 'my-tutor')
+                setMoreReturnPath(PANEL_PATHS.home)
                 void navigator.push(PANEL_PATHS.more)
               }}
             >
