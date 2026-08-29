@@ -5,6 +5,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 export interface AuthBootstrap {
   csrf_token: string
   mode: 'vk' | 'development'
+  app_variant: 'public' | 'admin'
+}
+
+const APP_VARIANT = import.meta.env.VITE_APP_VARIANT === 'admin' ? 'admin' : 'public'
+let platformAvatarUrl: string | null = null
+
+export function getPlatformAvatarUrl(): string | null {
+  return platformAvatarUrl
 }
 
 function isVkLaunch(search: string): boolean {
@@ -40,6 +48,7 @@ export async function bootstrapPlatform(
       | undefined
     try {
       const user = await bridge.send('VKWebAppGetUserInfo')
+      platformAvatarUrl = user.photo_200 || user.photo_100 || null
       profile = {
         id: user.id,
         first_name: user.first_name,
@@ -47,12 +56,14 @@ export async function bootstrapPlatform(
       }
     } catch {
       // A denied profile request must not block signed VK authentication.
+      platformAvatarUrl = null
     }
     return postAuth('/auth/vk', { launch_params: search, profile }, transport)
   }
 
   // Browser mode is intentionally a separate backend endpoint that disappears
   // in production; it never pretends that VK verified the current user.
+  platformAvatarUrl = null
   return postAuth(
     '/auth/dev',
     {
@@ -60,7 +71,8 @@ export async function bootstrapPlatform(
       display_name: 'Локальный разработчик',
       first_name: 'Локальный',
       last_name: 'разработчик',
-      profile: 'superadmin',
+      profile: APP_VARIANT === 'admin' ? 'superadmin' : 'student',
+      app_variant: APP_VARIANT,
     },
     transport,
   )

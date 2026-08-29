@@ -11,9 +11,13 @@ ContentStatus = Literal["draft", "needs_review", "published", "archived"]
 class DashboardRead(BaseModel):
     upcoming_events: int
     active_registrations: int
-    registered_users: int
+    event_participants: int
     cancelled_events: int
-    recent_audit: int
+    total_users: int
+    new_users_7d: int
+    active_users_7d: int
+    feedback_total: int
+    new_feedback: int
 
 
 class AdminStudentRead(BaseModel):
@@ -24,6 +28,7 @@ class AdminStudentRead(BaseModel):
     primary_group: str | None
     first_login_at: datetime
     last_activity_at: datetime | None
+    launch_count: int
 
 
 class AdminFeedbackRead(BaseModel):

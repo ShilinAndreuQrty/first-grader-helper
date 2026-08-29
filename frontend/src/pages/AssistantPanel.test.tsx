@@ -76,6 +76,7 @@ describe('AssistantPanel', () => {
       }
       return Promise.reject(new Error(`Unexpected request: ${url}`))
     })
+    window.location.hash = '#/assistant'
     const router = createHashRouter([
       { path: '/assistant', view: 'main', panel: 'assistant' },
     ])
@@ -83,8 +84,6 @@ describe('AssistantPanel', () => {
       defaultOptions: { queries: { retry: false } },
     })
     const user = userEvent.setup()
-    window.location.hash = '#/assistant'
-
     render(
       <RouterProvider router={router}>
         <QueryClientProvider client={client}>
@@ -93,6 +92,10 @@ describe('AssistantPanel', () => {
       </RouterProvider>,
     )
 
+    expect(
+      screen.queryByText('Тринадцатый опубликованный вопрос?'),
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByText('Проверенные ответы'))
     expect(
       await screen.findByText('Тринадцатый опубликованный вопрос?'),
     ).toBeInTheDocument()
@@ -146,6 +149,7 @@ describe('AssistantPanel', () => {
       }
       return Promise.reject(new Error(`Unexpected request: ${url}`))
     })
+    window.location.hash = '#/assistant'
     const router = createHashRouter([
       { path: '/assistant', view: 'main', panel: 'assistant' },
     ])
@@ -153,8 +157,6 @@ describe('AssistantPanel', () => {
       defaultOptions: { queries: { retry: false } },
     })
     const user = userEvent.setup()
-    window.location.hash = '#/assistant'
-
     render(
       <RouterProvider router={router}>
         <QueryClientProvider client={client}>

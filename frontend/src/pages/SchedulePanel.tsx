@@ -5,7 +5,10 @@ import {
   Icon24ShareExternalOutline,
 } from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
+import {
+  useActiveVkuiLocation,
+  useRouteNavigator,
+} from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
   Button,
@@ -25,7 +28,7 @@ import {
   Text,
   Title,
 } from '@vkontakte/vkui'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
   getSchedule,
@@ -63,8 +66,11 @@ function formatScheduleUpdate(value: string): string {
   })
 }
 
+const OFFICIAL_SCHEDULE_URL = 'https://tulsu.ru/schedule/'
+
 export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
   const navigator = useRouteNavigator()
+  const { panel } = useActiveVkuiLocation()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedCode, setSelectedCode] = useState('')
@@ -79,6 +85,9 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
   const primary = saved.data?.find((group) => group.is_primary)
   const activeCode = selectedCode || primary?.code || ''
   const activeGroup = saved.data?.find((group) => group.code === activeCode)
+  const officialScheduleUrl = activeCode
+    ? `${OFFICIAL_SCHEDULE_URL}?search=${encodeURIComponent(activeCode)}`
+    : OFFICIAL_SCHEDULE_URL
   const schedule = useQuery({
     queryKey: ['schedule', activeCode],
     queryFn: () => getSchedule(activeCode),
@@ -131,23 +140,41 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
     [schedule.data?.lessons],
   )
   const autoScrollKey = schedule.data
-    ? `${schedule.data.group_code}:${schedule.data.fetched_at}:${focusKey}`
+    ? `${schedule.data.group_code}:${schedule.data.fetched_at}:${today}`
     : ''
-  const lastAutoScroll = useRef('')
 
   useEffect(() => {
-    if (!focusKey || !autoScrollKey || lastAutoScroll.current === autoScrollKey) {
-      return
-    }
-    lastAutoScroll.current = autoScrollKey
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById('schedule-focus')?.scrollIntoView({
+    if (panel !== 'schedule' || !autoScrollKey) return
+
+    let hasScrolled = false
+    const scrollToCurrentDay = () => {
+      if (hasScrolled) return
+      const todaySection = document.getElementById('schedule-today')
+      if (!todaySection) return
+      hasScrolled = true
+      const controlsBottom = document
+        .querySelector('.schedule-sticky-controls')
+        ?.getBoundingClientRect().bottom ?? 138
+      window.scrollTo({
+        top:
+          window.scrollY +
+          todaySection.getBoundingClientRect().top -
+          controlsBottom -
+          10,
         behavior: 'smooth',
-        block: 'center',
       })
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [autoScrollKey, focusKey])
+    }
+
+    const view = document.querySelector('.vkuiView__panelActive')
+    const handleTransitionEnd = () => scrollToCurrentDay()
+    view?.addEventListener('transitionend', handleTransitionEnd, { once: true })
+    const fallback = window.setTimeout(scrollToCurrentDay, 400)
+
+    return () => {
+      view?.removeEventListener('transitionend', handleTransitionEnd)
+      window.clearTimeout(fallback)
+    }
+  }, [autoScrollKey, panel])
 
   useEffect(() => {
     const updateDirection = () => {
@@ -183,14 +210,14 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
       <AppPanelHeader
         backToHome
         beforeMenu={
-          schedule.data ? (
-            <PanelHeaderButton
-              aria-label="Открыть официальное расписание"
-              onClick={() => void openExternalUrl(schedule.data.source_url)}
-            >
-              <Icon24ShareExternalOutline />
-            </PanelHeaderButton>
-          ) : undefined
+          <PanelHeaderButton
+            aria-label="Открыть официальное расписание"
+            onClick={() => void openExternalUrl(
+              schedule.data?.source_url || officialScheduleUrl,
+            )}
+          >
+            <Icon24ShareExternalOutline />
+          </PanelHeaderButton>
         }
       >
         Расписание
@@ -327,9 +354,17 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
             </div>
           </div>
         </details>
+        {schedule.data?.is_stale && (
+          <div className="schedule-stale-notice">
+            <Banner
+              title="Показана сохранённая копия"
+              subtitle="Сервис ТулГУ сейчас недоступен. Время последнего обновления указано выше."
+            />
+          </div>
+        )}
       </div>
       {!activeCode && (
-        <Group>
+        <Group className="schedule-empty-state">
           <Banner
             title="Сначала выберите группу"
             subtitle="Начните вводить официальный номер выше. Выбор сохранится в профиле."
@@ -337,21 +372,18 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
         </Group>
       )}
       {schedule.isFetching && <Spinner size="m" />}
-      {schedule.data?.is_stale && (
-        <Group>
-          <Banner
-            title="Показана сохранённая копия"
-            subtitle="Сервис ТулГУ сейчас недоступен. Время последнего обновления указано ниже."
-          />
-        </Group>
-      )}
       {schedule.isError && (
         <Group>
           <Banner
             title="Расписание временно недоступно"
             subtitle="Для этой группы ещё нет сохранённой копии. Попробуйте позднее."
             actions={
-              <Button onClick={() => void schedule.refetch()}>Повторить</Button>
+              <Button
+                loading={schedule.isFetching}
+                onClick={() => void schedule.refetch()}
+              >
+                Повторить
+              </Button>
             }
           />
         </Group>
@@ -459,6 +491,7 @@ export function SchedulePanel({ id = 'schedule' }: { id?: string }) {
               </section>
             ))}
           </div>
+          <div className="schedule-scroll-tail" aria-hidden />
         </Group>
       )}
       {todayDirection && (

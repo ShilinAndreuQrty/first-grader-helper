@@ -9,6 +9,7 @@
   --app-surface-raised: #f8f9fb;
   --app-border: rgb(36 51 82 / 10%);
   --app-shadow: 0 14px 38px rgb(31 45 75 / 10%);
+  --app-content-width: 630px;
 }
 
 :root[data-app-theme="dark"] {
@@ -58,9 +59,18 @@ html.vkui,
 }
 
 html.vkui .vkuiPanel__in {
+  width: 100%;
+  max-width: var(--app-content-width);
   min-height: 100dvh;
+  box-sizing: border-box;
+  margin-inline: auto;
   padding-bottom: calc(68px + env(safe-area-inset-bottom));
   background-color: var(--app-background);
+}
+
+.vkuiTabbar {
+  width: min(100%, var(--app-content-width));
+  margin-inline: auto;
 }
 
 .vkuiGroup {
@@ -553,6 +563,55 @@ html.vkui .vkuiPanel__in {
   flex: 1 1 220px;
 }
 
+.assistant-verified-answers__summary {
+  display: flex;
+  min-height: 64px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.assistant-verified-answers__summary::-webkit-details-marker {
+  display: none;
+}
+
+.assistant-verified-answers__summary > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.assistant-verified-answers__summary strong {
+  font-size: 15px;
+}
+
+.assistant-verified-answers__summary small {
+  color: var(--vkui--color_text_secondary);
+  font-size: 12px;
+}
+
+.assistant-verified-answers__chevron {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-right: 2px solid var(--vkui--color_icon_secondary);
+  border-bottom: 2px solid var(--vkui--color_icon_secondary);
+  transform: rotate(45deg) translateY(-3px);
+  transition: transform 160ms ease;
+}
+
+.assistant-verified-answers[open] .assistant-verified-answers__chevron {
+  transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.assistant-verified-answers__content {
+  padding-bottom: 12px;
+  border-top: 1px solid var(--app-border);
+}
+
 .category-chips {
   display: flex;
   gap: 8px;
@@ -869,40 +928,10 @@ html.vkui .vkuiPanel__in {
   font-size: 11px;
 }
 
-.admin-metric {
-  display: grid;
-  min-height: 84px;
-  align-content: center;
-  gap: 6px;
-}
-
 .lesson-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(44px, 10vw, 68px);
   gap: 12px;
-}
-
-.admin-event-editor .vkuiGroup__inner {
-  border-radius: 0 0 24px 24px;
-}
-
-.admin-form-error,
-.admin-event-cancelled {
-  color: var(--vkui--color_text_negative);
-}
-
-.admin-registration-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 44px;
-  justify-content: flex-end;
-  color: var(--app-accent);
-  font-weight: 700;
-}
-
-.admin-event-actions {
-  margin-top: 6px;
 }
 
 .lesson-card__content {
@@ -929,9 +958,14 @@ html.vkui .vkuiPanel__in {
   position: sticky;
   inset-block-start: calc(var(--vkui--size_panel_header_height--regular, 48px) - 8px);
   z-index: 20;
+  margin-inline: 0;
   background: var(--app-surface-raised);
   border-bottom: 1px solid var(--app-border);
   box-shadow: 0 6px 18px rgb(0 0 0 / 9%);
+}
+
+.schedule-empty-state {
+  margin-inline: 16px;
 }
 
 .schedule-group-picker {
@@ -975,19 +1009,35 @@ html.vkui .vkuiPanel__in {
 }
 
 .schedule-group-picker__menu {
-  position: absolute;
-  inset-block-start: 100%;
-  inset-inline: 8px;
+  position: relative;
   z-index: 22;
   display: grid;
   gap: 8px;
-  max-height: calc(100vh - 130px);
+  max-height: calc(100dvh - 190px);
+  margin-inline: 8px;
   padding: 4px 12px 16px;
   overflow-y: auto;
   background: var(--app-surface-raised);
   border: 1px solid var(--app-border);
   border-radius: 0 0 14px 14px;
   box-shadow: var(--app-shadow);
+}
+
+.schedule-stale-notice {
+  position: relative;
+  z-index: 21;
+  margin: 10px 16px 12px;
+}
+
+.schedule-stale-notice .vkuiBanner__host,
+.schedule-stale-notice .vkuiBanner__bg {
+  background-color: #4a2029 !important;
+  border: 1px solid #d84b61 !important;
+}
+
+.schedule-stale-notice .vkuiBanner__host,
+.schedule-stale-notice .vkuiBanner__host .vkuiBanner__subtitle {
+  color: #ffe8ed;
 }
 
 .schedule-group-option {
@@ -1063,11 +1113,20 @@ html.vkui .vkuiPanel__in {
   padding-block: 4px 12px;
 }
 
+.schedule-scroll-tail {
+  height: max(320px, calc(100dvh - 260px));
+  pointer-events: none;
+}
+
 .schedule-day {
   display: grid;
   gap: 10px;
   padding-top: 14px;
   border-top: 1px solid var(--app-border);
+}
+
+.schedule-day--today {
+  scroll-margin-top: 148px;
 }
 
 .schedule-day:first-child {
@@ -1156,7 +1215,7 @@ html.vkui .vkuiPanel__in {
 
 .schedule-today-fab {
   position: fixed;
-  inset-inline-end: max(18px, calc((100vw - 840px) / 2 + 18px));
+  inset-inline-end: max(18px, calc((100vw - 630px) / 2 + 18px));
   inset-block-end: calc(72px + env(safe-area-inset-bottom));
   z-index: 30;
   display: grid;
@@ -1469,18 +1528,54 @@ html.vkui .vkuiPanel__in {
   min-height: 120px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 630px) {
   .vkuiPanel__in {
-    max-width: 840px;
+    max-width: var(--app-content-width);
     margin: 0 auto;
   }
 
   .vkuiPanelHeader__fixed {
-    width: min(840px, 100vw);
+    width: min(var(--app-content-width), 100vw);
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 480px) {
+  .home-dashboard,
+  .events-page,
+  .onboarding-page {
+    gap: 14px;
+    padding-inline: 12px;
+  }
+
+  .home-spotlight,
+  .meeting-hero,
+  .events-card,
+  .onboarding-hero,
+  .onboarding-step {
+    border-radius: 18px;
+  }
+
+  .home-spotlight__welcome,
+  .home-spotlight__schedule,
+  .meeting-hero,
+  .events-card > .vkuiDiv {
+    padding-inline: 18px;
+  }
+
+  .events-card__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .events-card__schedule {
+    justify-items: start;
+    text-align: start;
+  }
+
+  .events-card__place {
+    justify-content: flex-start;
+  }
+
   .onboarding-hero {
     padding: 18px;
   }

@@ -58,7 +58,11 @@ def auth_client(tmp_path: Path) -> Iterator[TestClient]:
         app_secret_key=TEST_APP_SECRET,
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'auth.sqlite3'}",
         dev_auth_enabled=True,
+        vk_app_id="42",
         vk_app_secret=TEST_SIGNING_KEY,
+        vk_admin_app_id="84",
+        vk_admin_app_secret=f"{TEST_SIGNING_KEY}-admin",
+        bootstrap_admin_vk_ids="123",
     )
     with TestClient(app) as client:
         yield client
@@ -76,11 +80,13 @@ def test_vk_signature_validation_accepts_authentic_params() -> None:
     launch = validate_vk_launch_params(
         signed_query(params, TEST_SIGNING_KEY),
         secret=TEST_SIGNING_KEY,
+        expected_app_id="42",
         max_age_seconds=300,
         now_timestamp=1_100,
     )
 
     assert launch.vk_user_id == 123
+    assert launch.vk_app_id == "42"
     assert build_vk_signature(params, "secret") in signed_query(params, "secret")
 
 
@@ -92,6 +98,7 @@ def test_vk_signature_validation_rejects_tampering() -> None:
         validate_vk_launch_params(
             query,
             secret=TEST_SIGNING_KEY,
+            expected_app_id="42",
             max_age_seconds=300,
             now_timestamp=1_100,
         )
@@ -104,6 +111,7 @@ def test_vk_signature_validation_rejects_expired_launch() -> None:
         validate_vk_launch_params(
             signed_query(params, TEST_SIGNING_KEY),
             secret=TEST_SIGNING_KEY,
+            expected_app_id="42",
             max_age_seconds=60,
             now_timestamp=1_100,
         )
@@ -118,24 +126,42 @@ def test_role_check_and_bootstrap_parser() -> None:
 
 
 def test_dev_auth_creates_cookie_backed_admin_session(auth_client: TestClient) -> None:
+    public_response = auth_client.post(
+        "/api/auth/dev",
+        json={
+            "vk_user_id": 77,
+            "display_name": "Test developer",
+            "profile": "superadmin",
+            "app_variant": "public",
+        },
+    )
+    assert public_response.status_code == 200
+
     response = auth_client.post(
         "/api/auth/dev",
         json={
             "vk_user_id": 77,
             "display_name": "Test developer",
             "profile": "superadmin",
+            "app_variant": "admin",
         },
     )
 
     assert response.status_code == 200
     assert response.json()["user"]["roles"] == ["superadmin"]
+    assert response.json()["app_variant"] == "admin"
     assert response.json()["user"]["profile_url"] == "https://vk.ru/id77"
     assert "ipmkn_session" in auth_client.cookies
     assert auth_client.get("/api/auth/me").status_code == 200
-    assert auth_client.get("/api/admin/dashboard").status_code == 200
+    dashboard = auth_client.get("/api/admin/dashboard")
+    assert dashboard.status_code == 200
+    assert dashboard.json()["total_users"] == 1
+    assert dashboard.json()["new_users_7d"] == 1
+    assert dashboard.json()["active_users_7d"] == 1
     users = auth_client.get("/api/admin/users")
     assert users.status_code == 200
     assert users.json()[0]["vk_user_id"] == 77
+    assert users.json()[0]["launch_count"] == 1
 
 
 def test_student_cannot_open_admin_api(auth_client: TestClient) -> None:
@@ -151,6 +177,77 @@ def test_student_cannot_open_admin_api(auth_client: TestClient) -> None:
     assert response.status_code == 200
     assert auth_client.get("/api/admin/dashboard").status_code == 403
     assert auth_client.get("/api/admin/users").status_code == 403
+
+
+def test_public_app_session_cannot_open_admin_api_even_for_superadmin(
+    auth_client: TestClient,
+) -> None:
+    auth_client.post(
+        "/api/auth/dev",
+        json={
+            "vk_user_id": 83,
+            "display_name": "Admin in admin app",
+            "profile": "superadmin",
+            "app_variant": "admin",
+        },
+    )
+    public_auth = auth_client.post(
+        "/api/auth/dev",
+        json={
+            "vk_user_id": 83,
+            "display_name": "Admin in public app",
+            "profile": "student",
+            "app_variant": "public",
+        },
+    )
+
+    assert public_auth.json()["user"]["roles"] == ["superadmin"]
+    assert auth_client.get("/api/admin/dashboard").status_code == 403
+
+
+def test_signed_vk_sessions_are_bound_to_the_matching_application(
+    auth_client: TestClient,
+) -> None:
+    now = str(int(datetime.now(UTC).timestamp()))
+    public_params = {"vk_app_id": "42", "vk_user_id": "123", "vk_ts": now}
+    public_auth = auth_client.post(
+        "/api/auth/vk",
+        json={"launch_params": signed_query(public_params, TEST_SIGNING_KEY)},
+    )
+
+    assert public_auth.status_code == 200
+    assert public_auth.json()["app_variant"] == "public"
+    assert public_auth.json()["user"]["roles"] == ["superadmin"]
+    assert auth_client.get("/api/admin/dashboard").status_code == 403
+
+    admin_params = {"vk_app_id": "84", "vk_user_id": "123", "vk_ts": now}
+    admin_auth = auth_client.post(
+        "/api/auth/vk",
+        json={
+            "launch_params": signed_query(
+                admin_params,
+                f"{TEST_SIGNING_KEY}-admin",
+            )
+        },
+    )
+
+    assert admin_auth.status_code == 200
+    assert admin_auth.json()["app_variant"] == "admin"
+    assert auth_client.get("/api/admin/dashboard").status_code == 200
+
+
+def test_admin_app_session_still_requires_an_editor_role(auth_client: TestClient) -> None:
+    auth_client.post(
+        "/api/auth/dev",
+        json={
+            "vk_user_id": 84,
+            "display_name": "Student in admin app",
+            "profile": "student",
+            "app_variant": "admin",
+        },
+    )
+
+    assert auth_client.get("/api/admin/dashboard").status_code == 403
 
 
 def test_student_can_save_any_well_formed_group_code(auth_client: TestClient) -> None:
@@ -173,7 +270,12 @@ def test_student_can_save_any_well_formed_group_code(auth_client: TestClient) ->
 def test_admin_can_manage_event_and_see_registration(auth_client: TestClient) -> None:
     admin_auth = auth_client.post(
         "/api/auth/dev",
-        json={"vk_user_id": 79, "display_name": "Events admin", "profile": "superadmin"},
+        json={
+            "vk_user_id": 79,
+            "display_name": "Events admin",
+            "profile": "superadmin",
+            "app_variant": "admin",
+        },
     )
     admin_cookie = auth_client.cookies["ipmkn_session"]
     admin_csrf = admin_auth.json()["csrf_token"]
@@ -233,7 +335,12 @@ def test_admin_can_manage_event_and_see_registration(auth_client: TestClient) ->
 def test_demo_reset_preserves_admin_and_created_events(auth_client: TestClient) -> None:
     auth = auth_client.post(
         "/api/auth/dev",
-        json={"vk_user_id": 81, "display_name": "Demo admin", "profile": "superadmin"},
+        json={
+            "vk_user_id": 81,
+            "display_name": "Demo admin",
+            "profile": "superadmin",
+            "app_variant": "admin",
+        },
     )
     csrf = auth.json()["csrf_token"]
     payload = {

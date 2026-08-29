@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     app_name: str = "ИПМКН Старт"
     app_public_url: str = "http://localhost:5173"
+    admin_app_public_url: str = "http://localhost:5174"
     api_public_url: str = "http://localhost:8000/api"
     app_secret_key: str = "development-only-secret-change-before-production"  # noqa: S105
     database_url: str = "sqlite+aiosqlite:///./ipmkn.sqlite3"
@@ -28,7 +29,9 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = 86_400
     vk_launch_max_age_seconds: int = 900
     vk_app_id: str = ""
-    vk_app_secret: str = ""
+    vk_app_secret: str = Field(default="", repr=False)
+    vk_admin_app_id: str = ""
+    vk_admin_app_secret: str = Field(default="", repr=False)
     vk_service_token: str = Field(default="", repr=False)
     vk_community_id: int | None = None
     vk_community_token: str = Field(default="", repr=False)
@@ -37,7 +40,7 @@ class Settings(BaseSettings):
     notifications_enabled: bool = False
     notification_poll_seconds: float = 5
     tulsu_schedule_base_url: str = "https://tulsu.ru"
-    tulsu_timeout_seconds: float = 8
+    tulsu_timeout_seconds: float = 45
     tulsu_cache_ttl_seconds: int = 900
     ai_assistant_enabled: bool = False
     openrouter_api_key: str = Field(default="", repr=False)
@@ -70,6 +73,16 @@ class Settings(BaseSettings):
                 raise ValueError("COOKIE_SECURE must be true in production")
             if self.cookie_samesite != "none":
                 raise ValueError("COOKIE_SAMESITE must be none for VK web iframe")
+            if not self.vk_app_id or not self.vk_app_secret:
+                raise ValueError(
+                    "VK_APP_ID and VK_APP_SECRET are required in production"
+                )
+            if not self.vk_admin_app_id or not self.vk_admin_app_secret:
+                raise ValueError(
+                    "VK_ADMIN_APP_ID and VK_ADMIN_APP_SECRET are required in production"
+                )
+            if self.vk_app_id == self.vk_admin_app_id:
+                raise ValueError("Public and admin VK app IDs must be different")
         if self.ai_assistant_enabled and not self.openrouter_api_key:
             raise ValueError(
                 "OPENROUTER_API_KEY is required when AI_ASSISTANT_ENABLED=true"

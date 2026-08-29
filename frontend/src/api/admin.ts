@@ -3,9 +3,13 @@ import { apiRequest } from './client'
 export interface AdminDashboard {
   upcoming_events: number
   active_registrations: number
-  registered_users: number
+  event_participants: number
   cancelled_events: number
-  recent_audit: number
+  total_users: number
+  new_users_7d: number
+  active_users_7d: number
+  feedback_total: number
+  new_feedback: number
 }
 
 export interface AdminStudent {
@@ -16,6 +20,7 @@ export interface AdminStudent {
   primary_group: string | null
   first_login_at: string
   last_activity_at: string | null
+  launch_count: number
 }
 
 export interface AdminFeedback {

@@ -22,7 +22,7 @@ from app.admin.schemas import (
     OnboardingStepWrite,
     ResourceWrite,
 )
-from app.auth.dependencies import require_csrf, require_roles
+from app.auth.dependencies import require_admin_app, require_csrf, require_roles
 from app.db import get_session
 from app.events.service import as_utc
 from app.models import (
@@ -51,7 +51,11 @@ from app.models import (
 )
 from app.notifications.service import enqueue_once
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_admin_app)],
+)
 AdminUser = Annotated[
     User,
     Depends(require_roles("superadmin", "content_editor", "events_editor")),
@@ -95,6 +99,7 @@ def add_audit(
 @router.get("/dashboard", response_model=DashboardRead)
 async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
     now = datetime.now(UTC)
+    public_activity = public_user_activity()
 
     async def count(statement: Any) -> int:
         return int(await db.scalar(statement) or 0)
@@ -111,7 +116,7 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
                 EventSubscription.is_active.is_(True)
             )
         ),
-        registered_users=await count(
+        event_participants=await count(
             select(func.count(func.distinct(EventSubscription.user_id))).where(
                 EventSubscription.is_active.is_(True)
             )
@@ -123,11 +128,45 @@ async def dashboard(_: AdminUser, db: Db) -> DashboardRead:
                 Event.starts_at >= now - timedelta(days=30),
             )
         ),
-        recent_audit=await count(
-            select(func.count()).select_from(AuditLog).where(
-                AuditLog.created_at >= now - timedelta(days=7)
+        total_users=await count(
+            select(func.count()).select_from(public_activity)
+        ),
+        new_users_7d=await count(
+            select(func.count()).select_from(public_activity).where(
+                public_activity.c.first_login_at >= now - timedelta(days=7)
             )
         ),
+        active_users_7d=await count(
+            select(func.count()).select_from(public_activity).where(
+                public_activity.c.last_activity_at >= now - timedelta(days=7)
+            )
+        ),
+        feedback_total=await count(
+            select(func.count()).select_from(IssueReport).where(
+                IssueReport.context == "project-feedback"
+            )
+        ),
+        new_feedback=await count(
+            select(func.count()).select_from(IssueReport).where(
+                IssueReport.context == "project-feedback",
+                IssueReport.status == "new",
+            )
+        ),
+    )
+
+
+def public_user_activity():
+    """Aggregate launches of the public app; admin-only sessions are not audience."""
+    return (
+        select(
+            UserSession.user_id.label("user_id"),
+            func.min(UserSession.created_at).label("first_login_at"),
+            func.max(UserSession.last_seen_at).label("last_activity_at"),
+            func.count(UserSession.id).label("launch_count"),
+        )
+        .where(UserSession.app_variant == "public")
+        .group_by(UserSession.user_id)
+        .subquery()
     )
 
 
@@ -192,25 +231,19 @@ async def admin_users(_: SuperadminUser, db: Db) -> list[AdminStudentRead]:
         .where(UserGroupBookmark.is_primary.is_(True))
         .subquery()
     )
-    last_activity = (
-        select(
-            UserSession.user_id.label("user_id"),
-            func.max(UserSession.last_seen_at).label("last_seen_at"),
-        )
-        .group_by(UserSession.user_id)
-        .subquery()
-    )
+    public_activity = public_user_activity()
     rows = (
         await db.execute(
             select(
                 User,
                 primary_group.c.group_code,
-                last_activity.c.last_seen_at,
+                public_activity.c.first_login_at,
+                public_activity.c.last_activity_at,
+                public_activity.c.launch_count,
             )
             .outerjoin(primary_group, primary_group.c.user_id == User.id)
-            .outerjoin(last_activity, last_activity.c.user_id == User.id)
-            .order_by(User.created_at.desc())
-            .limit(500)
+            .join(public_activity, public_activity.c.user_id == User.id)
+            .order_by(public_activity.c.last_activity_at.desc())
         )
     ).all()
     return [
@@ -220,10 +253,11 @@ async def admin_users(_: SuperadminUser, db: Db) -> list[AdminStudentRead]:
             display_name=user.display_name or f"VK ID {user.vk_user_id}",
             profile_url=f"https://vk.ru/id{user.vk_user_id}",
             primary_group=group_code,
-            first_login_at=user.created_at,
-            last_activity_at=last_seen_at,
+            first_login_at=first_login_at,
+            last_activity_at=last_activity_at,
+            launch_count=int(launch_count),
         )
-        for user, group_code, last_seen_at in rows
+        for user, group_code, first_login_at, last_activity_at, launch_count in rows
     ]
 
 

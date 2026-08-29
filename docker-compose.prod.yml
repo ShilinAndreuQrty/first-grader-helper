@@ -46,10 +46,11 @@ services:
         condition: service_healthy
     networks: [internal]
 
-  frontend:
+  frontend-public:
     build:
-      context: ./frontend
-      target: production
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production-public
       args:
         VITE_API_BASE_URL: /api
         VITE_APP_NAME: ${APP_NAME:-ИПМКН Старт}
@@ -58,12 +59,25 @@ services:
     restart: unless-stopped
     networks: [internal]
 
+  frontend-admin:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: production-admin
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_APP_NAME: ${APP_NAME:-ИПМКН Старт} — управление
+        VITE_DGIS_ENABLED: "false"
+    restart: unless-stopped
+    networks: [internal]
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     environment:
       APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
-    depends_on: [api, frontend]
+      ADMIN_APP_DOMAIN: ${ADMIN_APP_DOMAIN:?set ADMIN_APP_DOMAIN}
+    depends_on: [api, frontend-public, frontend-admin]
     ports:
       - "80:80"
       - "443:443"

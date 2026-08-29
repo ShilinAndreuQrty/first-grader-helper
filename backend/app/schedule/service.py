@@ -15,6 +15,8 @@ from app.schedule.schemas import (
     ScheduleRead,
 )
 
+STALE_WARNING_AFTER = timedelta(hours=5)
+
 
 def parse_tulsu_date(value: str):
     for pattern in ("%d.%m.%Y", "%Y-%m-%d"):
@@ -46,6 +48,15 @@ def cache_is_fresh(cache: ExternalScheduleCache, now: datetime) -> bool:
     return expires_at > now
 
 
+def cache_needs_stale_warning(
+    cache: ExternalScheduleCache, now: datetime
+) -> bool:
+    fetched_at = cache.fetched_at
+    if fetched_at.tzinfo is None:
+        fetched_at = fetched_at.replace(tzinfo=UTC)
+    return now - fetched_at > STALE_WARNING_AFTER
+
+
 async def get_group_schedule(
     db: AsyncSession,
     client: TulsuClient,
@@ -68,7 +79,9 @@ async def get_group_schedule(
     except TulsuUnavailable:
         if cache:
             stale = ScheduleRead.model_validate_json(cache.payload_json)
-            return stale.model_copy(update={"is_stale": True})
+            return stale.model_copy(
+                update={"is_stale": cache_needs_stale_warning(cache, now)}
+            )
         raise
 
     result = ScheduleRead(
@@ -117,7 +130,9 @@ async def get_group_suggestions(
     except TulsuUnavailable:
         if cache:
             stale = GroupSuggestionsRead.model_validate_json(cache.payload_json)
-            return stale.model_copy(update={"is_stale": True})
+            return stale.model_copy(
+                update={"is_stale": cache_needs_stale_warning(cache, now)}
+            )
         raise
 
     result = GroupSuggestionsRead(

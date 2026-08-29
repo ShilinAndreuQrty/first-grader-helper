@@ -22,10 +22,18 @@ export default defineConfig({
   ],
   webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER
     ? undefined
-    : {
-        command:
-          'node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173',
-        url: 'http://127.0.0.1:4173',
-        reuseExistingServer: !process.env.CI,
-      },
+    : [
+        {
+          command:
+            'node ./node_modules/vite/bin/vite.js --mode public --host 127.0.0.1 --port 4173',
+          url: 'http://127.0.0.1:4173',
+          reuseExistingServer: !process.env.CI,
+        },
+        {
+          command:
+            'node ./node_modules/vite/bin/vite.js --mode admin --host 127.0.0.1 --port 4174',
+          url: 'http://127.0.0.1:4174',
+          reuseExistingServer: !process.env.CI,
+        },
+      ],
 })

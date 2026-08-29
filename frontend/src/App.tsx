@@ -20,24 +20,11 @@ import { SettingsPanel } from './pages/SettingsPanel'
 import { ResourcesPanel } from './pages/ResourcesPanel'
 import { appColorScheme } from './theme'
 
-const AdminPanel = lazy(() =>
-  import('./pages/AdminPanel').then((module) => ({
-    default: module.AdminPanel,
-  })),
-)
 const MapPanel = lazy(() =>
   import('./pages/MapPanel').then((module) => ({
     default: module.MapPanel,
   })),
 )
-
-function LazyAdminPanel({ id }: { id: string }) {
-  return (
-    <Suspense fallback={<div aria-label="Загрузка админ-панели" />}>
-      <AdminPanel id={id} />
-    </Suspense>
-  )
-}
 
 function LazyMapPanel({ id }: { id: string }) {
   return (
@@ -64,7 +51,6 @@ export function App() {
               <EventsPanel id="events" />
               <AssistantPanel id="assistant" />
               <MorePanel id="more" />
-              <LazyAdminPanel id="admin" />
               <LazyMapPanel id="map" />
               <SettingsPanel id="settings" />
               <OnboardingPanel id="onboarding" />

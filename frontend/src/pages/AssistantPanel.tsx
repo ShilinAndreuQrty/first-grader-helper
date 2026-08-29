@@ -10,7 +10,6 @@ import {
   Div,
   FormItem,
   Group,
-  Header,
   Panel,
   Search,
   SimpleCell,
@@ -234,13 +233,16 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
   const [categoryId, setCategoryId] = useState<string>()
   const [turns, setTurns] = useState<ChatTurn[]>(readHistory)
   const [failedQuestion, setFailedQuestion] = useState('')
+  const [verifiedAnswersOpen, setVerifiedAnswersOpen] = useState(false)
   const categories = useQuery({
     queryKey: ['faq-categories'],
     queryFn: getFaqCategories,
+    enabled: verifiedAnswersOpen,
   })
   const faq = useQuery({
     queryKey: ['faq', categoryId, search],
     queryFn: () => getFaq(categoryId, search),
+    enabled: verifiedAnswersOpen,
   })
   const assistant = useMutation({
     mutationFn: ({ query, faqId }: { query: string; faqId?: string }) =>
@@ -408,48 +410,64 @@ export function AssistantPanel({ id = 'assistant' }: { id?: string }) {
         </form>
       </Group>
 
-      <Group header={<Header>Проверенные ответы</Header>}>
-        <Search
-          value={search}
-          placeholder="Поиск по базе вопросов"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {categories.isLoading && <Spinner size="s" />}
-        <Div className="category-chips">
-          <Button
-            size="s"
-            mode={!categoryId ? 'primary' : 'secondary'}
-            onClick={() => setCategoryId(undefined)}
-          >
-            Все
-          </Button>
-          {categories.data?.map((category) => (
-            <Button
-              key={category.id}
-              size="s"
-              mode={categoryId === category.id ? 'primary' : 'secondary'}
-              onClick={() => setCategoryId(category.id)}
-            >
-              {category.title} · {category.count}
-            </Button>
-          ))}
-        </Div>
-        {faq.isError && (
-          <Banner
-            title="База ответов временно недоступна"
-            subtitle="Попробуйте ещё раз позже или обратитесь к тьютору."
-          />
-        )}
-        {faq.isSuccess && visibleFaq.length === 0 && (
-          <SimpleCell multiline disabled subtitle="Опубликованных материалов по фильтру нет.">
-            Ничего не найдено
-          </SimpleCell>
-        )}
-        <CardGrid size="l">
-          {visibleFaq.map((entry) => (
-            <FaqCard key={entry.id} entry={entry} />
-          ))}
-        </CardGrid>
+      <Group>
+        <details
+          className="assistant-verified-answers"
+          onToggle={(event) =>
+            setVerifiedAnswersOpen(event.currentTarget.open)
+          }
+        >
+          <summary className="assistant-verified-answers__summary">
+            <span>
+              <strong>Проверенные ответы</strong>
+              <small>Поиск по вопросам и база материалов</small>
+            </span>
+            <span className="assistant-verified-answers__chevron" aria-hidden />
+          </summary>
+          <div className="assistant-verified-answers__content">
+            <Search
+              value={search}
+              placeholder="Поиск по базе вопросов"
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            {categories.isLoading && <Spinner size="s" />}
+            <Div className="category-chips">
+              <Button
+                size="s"
+                mode={!categoryId ? 'primary' : 'secondary'}
+                onClick={() => setCategoryId(undefined)}
+              >
+                Все
+              </Button>
+              {categories.data?.map((category) => (
+                <Button
+                  key={category.id}
+                  size="s"
+                  mode={categoryId === category.id ? 'primary' : 'secondary'}
+                  onClick={() => setCategoryId(category.id)}
+                >
+                  {category.title} · {category.count}
+                </Button>
+              ))}
+            </Div>
+            {faq.isError && (
+              <Banner
+                title="База ответов временно недоступна"
+                subtitle="Попробуйте ещё раз позже или обратитесь к тьютору."
+              />
+            )}
+            {faq.isSuccess && visibleFaq.length === 0 && (
+              <SimpleCell multiline disabled subtitle="Опубликованных материалов по фильтру нет.">
+                Ничего не найдено
+              </SimpleCell>
+            )}
+            <CardGrid size="l">
+              {visibleFaq.map((entry) => (
+                <FaqCard key={entry.id} entry={entry} />
+              ))}
+            </CardGrid>
+          </div>
+        </details>
       </Group>
     </Panel>
   )

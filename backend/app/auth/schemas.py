@@ -20,6 +20,7 @@ class DevAuthRequest(BaseModel):
     vk_user_id: int = Field(default=1, ge=1)
     display_name: str = Field(default="Локальный разработчик", max_length=160)
     profile: Literal["student", "superadmin"] = "superadmin"
+    app_variant: Literal["public", "admin"] = "public"
     first_name: str = Field(default="", max_length=80)
     last_name: str = Field(default="", max_length=80)
 
@@ -38,3 +39,4 @@ class AuthResponse(BaseModel):
     user: AuthUser
     csrf_token: str
     mode: Literal["vk", "development"]
+    app_variant: Literal["public", "admin"]

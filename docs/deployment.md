@@ -2,12 +2,13 @@
 
 ## Рекомендуемая схема
 
-Один VPS с Linux, Docker Compose и публичным IPv4:
+Один VPS с Linux, Docker Compose и публичным IPv4 обслуживает два домена:
 
 ```text
-VK -> HTTPS/Caddy -> frontend
-                  -> /api -> FastAPI -> PostgreSQL
-                                  \-> worker
+public VK app -> start.example.ru       -> frontend-public
+admin VK app  -> admin-start.example.ru -> frontend-admin
+                         оба /api       -> FastAPI -> PostgreSQL
+                                                   \-> worker
 ```
 
 SPA и API работают на одном origin, поэтому не требуют междоменной сессии между собой.
@@ -17,15 +18,17 @@ SPA и API работают на одном origin, поэтому не треб
 
 ## DNS и первый запуск
 
-1. Выберите домен, например `start.ipmkn.example.ru`.
-2. Создайте DNS `A` на IPv4 VPS и, только если IPv6 настроен, `AAAA`.
+1. Выберите два домена, например `start.example.ru` и
+   `admin-start.example.ru`.
+2. Для обоих создайте DNS `A` на IPv4 VPS и, только если IPv6 настроен, `AAAA`.
 3. Откройте входящие TCP 80/443 и UDP 443.
 4. Скопируйте репозиторий на сервер, создайте `.env` вне Git.
-5. Установите `APP_DOMAIN`, `APP_PUBLIC_URL=https://...`,
-   `API_PUBLIC_URL=https://.../api`, тот же origin в `ALLOWED_ORIGINS`,
+5. Установите `APP_DOMAIN`, `ADMIN_APP_DOMAIN`, оба публичных URL,
+   `API_PUBLIC_URL=https://.../api`, оба origin в `ALLOWED_ORIGINS`,
    `APP_ENV=production`, `DEV_AUTH_ENABLED=false`, `COOKIE_SECURE=true`,
    `COOKIE_SAMESITE=none`,
-   сильные `APP_SECRET_KEY` и `POSTGRES_PASSWORD`.
+   сильные `APP_SECRET_KEY` и `POSTGRES_PASSWORD`, а также ID и защищённые ключи
+   публичной и служебной карточек VK.
 6. Запустите:
 
    ```bash

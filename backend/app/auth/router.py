@@ -14,7 +14,12 @@ from app.auth.dependencies import (
     require_csrf,
 )
 from app.auth.schemas import AuthResponse, AuthUser, DevAuthRequest, VkAuthRequest
-from app.auth.service import create_session, get_or_create_user, validate_vk_launch_params
+from app.auth.service import (
+    create_session,
+    get_or_create_user,
+    resolve_vk_app,
+    validate_vk_launch_params,
+)
 from app.auth.vk_media import resolve_vk_avatar
 from app.config import Settings, get_settings
 from app.db import get_session
@@ -63,9 +68,11 @@ async def vk_auth(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> AuthResponse:
     limiter.check(client_key(request, "vk-auth"), limit=10, window_seconds=60)
+    app_variant, app_id, app_secret = resolve_vk_app(payload.launch_params, settings)
     verified = validate_vk_launch_params(
         payload.launch_params,
-        secret=settings.vk_app_secret,
+        secret=app_secret,
+        expected_app_id=app_id,
         max_age_seconds=settings.vk_launch_max_age_seconds,
     )
     if payload.profile and payload.profile.id != verified.vk_user_id:
@@ -80,9 +87,19 @@ async def vk_auth(
         last_name=last_name,
         settings=settings,
     )
-    token, csrf_token, _ = await create_session(db, user=user, settings=settings)
+    token, csrf_token, _ = await create_session(
+        db,
+        user=user,
+        settings=settings,
+        app_variant=app_variant,
+    )
     set_session_cookie(response, token, settings)
-    return AuthResponse(user=auth_user(user), csrf_token=csrf_token, mode="vk")
+    return AuthResponse(
+        user=auth_user(user),
+        csrf_token=csrf_token,
+        mode="vk",
+        app_variant=app_variant,
+    )
 
 
 @router.post("/dev", response_model=AuthResponse)
@@ -105,9 +122,19 @@ async def dev_auth(
         settings=settings,
         force_superadmin=payload.profile == "superadmin",
     )
-    token, csrf_token, _ = await create_session(db, user=user, settings=settings)
+    token, csrf_token, _ = await create_session(
+        db,
+        user=user,
+        settings=settings,
+        app_variant=payload.app_variant,
+    )
     set_session_cookie(response, token, settings)
-    return AuthResponse(user=auth_user(user), csrf_token=csrf_token, mode="development")
+    return AuthResponse(
+        user=auth_user(user),
+        csrf_token=csrf_token,
+        mode="development",
+        app_variant=payload.app_variant,
+    )
 
 
 @router.get("/me", response_model=AuthUser)

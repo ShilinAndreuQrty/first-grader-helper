@@ -8,6 +8,7 @@ from app.models import ExternalScheduleCache
 from app.schedule.client import TulsuClient, TulsuUnavailable
 from app.schedule.service import (
     cache_is_fresh,
+    cache_needs_stale_warning,
     get_group_suggestions,
     normalize_lessons,
 )
@@ -78,7 +79,7 @@ async def test_invalid_json_and_timeout_are_safe_failures() -> None:
 
 
 @pytest.mark.asyncio
-async def test_group_search_uses_dated_stale_cache_during_outage() -> None:
+async def test_group_search_uses_recent_cache_silently_during_outage() -> None:
     engine = create_async_engine("sqlite+aiosqlite://")
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     async with engine.begin() as connection:
@@ -122,7 +123,7 @@ async def test_group_search_uses_dated_stale_cache_during_outage() -> None:
     assert fresh.groups == ["220031-22"]
     assert not fresh.is_stale
     assert stale.groups == ["220031-22"]
-    assert stale.is_stale
+    assert not stale.is_stale
     assert stale.fetched_at == fresh.fetched_at
     await engine.dispose()
 
@@ -141,3 +142,22 @@ def test_cache_freshness_supports_sqlite_naive_datetimes() -> None:
     )
     assert cache_is_fresh(fresh, now)
     assert not cache_is_fresh(stale, now)
+
+
+def test_stale_warning_starts_after_five_hours() -> None:
+    now = datetime.now(UTC)
+    recent = ExternalScheduleCache(
+        cache_key="group:recent",
+        payload_json="{}",
+        fetched_at=(now - timedelta(hours=4, minutes=59)).replace(tzinfo=None),
+        expires_at=now,
+    )
+    old = ExternalScheduleCache(
+        cache_key="group:old",
+        payload_json="{}",
+        fetched_at=(now - timedelta(hours=5, seconds=1)).replace(tzinfo=None),
+        expires_at=now,
+    )
+
+    assert not cache_needs_stale_warning(recent, now)
+    assert cache_needs_stale_warning(old, now)

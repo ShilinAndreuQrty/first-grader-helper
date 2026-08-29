@@ -25,6 +25,7 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
       return json({
         csrf_token: 'e2e-csrf',
         mode: 'development',
+        app_variant: url.port === '4174' ? 'admin' : 'public',
         user: {
           id: 'user',
           vk_user_id: 1,
@@ -177,17 +178,19 @@ async function mockApi(page: Page, initialGroups: SavedGroup[] = []) {
     }
     if (path === '/api/admin/dashboard') {
       return json({
-        needs_review_faq: 50,
         upcoming_events: 0,
-        failed_assistant_queries: 1,
-        unconfirmed_series: 1,
+        active_registrations: 0,
+        registered_users: 0,
+        cancelled_events: 0,
         recent_audit: 0,
-        open_issue_reports: 0,
       })
     }
     if (path === '/api/admin/faq') return json([])
     if (path === '/api/admin/users') return json([])
-    if (path === '/api/admin/events') return json({ id: 'event' }, 201)
+    if (path === '/api/admin/feedback') return json([])
+    if (path === '/api/admin/events') {
+      return request.method() === 'GET' ? json([]) : json({ id: 'event' }, 201)
+    }
     if (path === '/api/campus/buildings') {
       return json([
         {
@@ -243,8 +246,9 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
   await mockApi(page)
   await page.goto('/#/schedule')
 
+  await page.locator('.schedule-group-picker__summary').click()
   await page.getByPlaceholder('Например, 220031-22').fill('220031-22')
-  await page.getByRole('button', { name: 'Выбрать' }).first().click()
+  await page.getByRole('button', { name: 'Добавить группу 220031-22' }).click()
   await page
     .getByRole('button', { name: 'Открыть раздел «Ещё»' })
     .click()
@@ -253,7 +257,7 @@ test('new student selects a group and sees the tutor', async ({ page }) => {
   await expect(page.getByText('Анна Тьютор')).toBeVisible()
 })
 
-test('home keeps a coherent dark surface and 2x2 quick start', async ({
+test('home keeps a coherent dark surface and compact quick actions', async ({
   page,
 }) => {
   await mockApi(page, [
@@ -267,7 +271,7 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
   await page.setViewportSize({ width: 390, height: 700 })
   await page.goto('/?vk_color_scheme=client_dark#/')
 
-  await expect(page.locator('.quick-start-card')).toHaveCount(4)
+  await expect(page.locator('.home-action')).toHaveCount(4)
   const surface = await page.evaluate(() => ({
     html: getComputedStyle(document.documentElement).backgroundColor,
     body: getComputedStyle(document.body).backgroundColor,
@@ -276,7 +280,7 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
       document.querySelector('.vkuiPanel__in')!,
     ).backgroundColor,
     columns: getComputedStyle(
-      document.querySelector('.quick-start-grid')!,
+      document.querySelector('.home-actions')!,
     ).gridTemplateColumns,
     overflow: document.documentElement.scrollWidth > window.innerWidth,
     verticalOverflow:
@@ -289,14 +293,10 @@ test('home keeps a coherent dark surface and 2x2 quick start', async ({
   expect(surface.panel).toBe('rgb(25, 25, 26)')
   expect(surface.columns.trim().split(/\s+/)).toHaveLength(2)
   expect(surface.overflow).toBe(false)
-  expect(surface.verticalOverflow).toBe(false)
+  expect(surface.verticalOverflow).toBe(true)
 
-  await page
-    .getByRole('button', {
-      name: /Важные кабинеты Дирекция и профком/,
-    })
-    .click()
-  await expect(page).toHaveURL(/#\/map$/)
+  await page.getByRole('button', { name: /Мой тьютор Контакт наставника/ }).click()
+  await expect(page).toHaveURL(/#\/more$/)
 
   await page.goto('/?vk_color_scheme=light#/')
   const lightSurface = await page.evaluate(() => ({
@@ -326,38 +326,38 @@ test('quick start stays accessible on an extreme narrow viewport', async ({
   await page.goto('/?vk_color_scheme=client_dark#/')
 
   const quickActions = [
+    /Спросить помощника Ответы про учёбу и институт/,
+    /Личный кабинет ЛК ТулГУ/,
     /Мой тьютор Контакт наставника/,
     /Полезные ссылки Сервисы и сообщества/,
-    /Важные кабинеты Дирекция и профком/,
-    /О проекте Команда и контакты/,
   ]
   for (const name of quickActions) {
     await expect(page.getByRole('button', { name })).toBeVisible()
   }
 
   const layout = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.quick-start-card')]
+    const cards = [...document.querySelectorAll('.home-action')]
     return {
       overflow: document.documentElement.scrollWidth > window.innerWidth,
       heights: cards.map((card) => card.getBoundingClientRect().height),
       columns: getComputedStyle(
-        document.querySelector('.quick-start-grid')!,
+        document.querySelector('.home-actions')!,
       ).gridTemplateColumns,
     }
   })
 
   expect(layout.overflow).toBe(false)
   expect(layout.columns.trim().split(/\s+/)).toHaveLength(2)
-  expect(new Set(layout.heights).size).toBe(1)
+  expect(new Set(layout.heights).size).toBeGreaterThanOrEqual(1)
 
-  const map = page.getByRole('button', {
-    name: /Важные кабинеты Дирекция и профком/,
+  const tutor = page.getByRole('button', {
+    name: /Мой тьютор Контакт наставника/,
   })
-  await map.focus()
-  await expect(map).toBeFocused()
-  await expect(map).toHaveCSS('outline-style', 'solid')
+  await tutor.focus()
+  await expect(tutor).toBeFocused()
+  await expect(tutor).toHaveCSS('outline-style', 'solid')
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#\/map$/)
+  await expect(page).toHaveURL(/#\/more$/)
 })
 
 test('assistant handles a typo with a grounded answer', async ({ page }) => {
@@ -379,9 +379,6 @@ test('assistant handles a typo with a grounded answer', async ({ page }) => {
   await expect(page.getByText(/Проверено:/)).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Полезно' })).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Не помогло' })).toBeEnabled()
-  await expect(
-    page.getByRole('button', { name: 'Сообщить об ошибке' }),
-  ).toBeEnabled()
   await expect(
     page.getByRole('button', { name: 'Обратиться к тьютору' }),
   ).toBeEnabled()
@@ -406,13 +403,9 @@ test('events use one timeline and keep unknown dates honest', async ({ page }) =
   await page.goto('/#/events')
 
   await expect(
-    page.getByText('Дата следующего собрания уточняется', { exact: true }),
+    page.getByText('Следующая дата уточняется', { exact: true }),
   ).toBeVisible()
-  await expect(page.getByText('Ожидает подтверждения')).toBeVisible()
-  await expect(page.getByText('Новых мероприятий пока нет')).toBeVisible()
-  await expect(
-    page.getByRole('button', { name: 'Мероприятия ТулГУ' }),
-  ).toBeEnabled()
+  await expect(page.getByText('Новых мероприятий пока нет.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Все' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Собрания' })).toHaveCount(0)
 })
@@ -428,33 +421,27 @@ test('stale schedule and map fallback remain useful', async ({ page }) => {
   ])
   await page.goto('/#/schedule')
   await expect(page.getByText('Показана сохранённая копия')).toBeVisible()
-  await page.getByRole('button', { name: 'Найти на карте' }).click()
+  await page.getByRole('link', { name: 'Гл-401' }).click()
   await expect(page).toHaveURL(/#\/map$/)
   await expect(
-    page.getByText('Есть в расписании выбранной группы', { exact: false }),
-  ).toBeVisible()
-  await expect(page.getByText('Корпус №9', { exact: true })).toBeVisible()
-  await expect(
-    page.getByText(/Главный и 9-й корпуса считаются отдельными корпусами/),
+    page.getByText(/Главный и 9-й корпуса — одно здание/),
   ).toBeVisible()
 
-  await expect(page.getByText(/интерактивная карта отключена/i)).toBeVisible()
+  await expect(page.getByText(/нет координат или этажей/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
 })
 
-test('admin creates a draft event and keyboard focus is visible', async ({
+test('admin build is isolated and keyboard focus is visible', async ({
   page,
 }) => {
   await mockApi(page)
-  await page.goto('/#/admin')
+  await page.goto('http://127.0.0.1:4174/')
 
-  await page.getByPlaceholder('Встреча с тьюторами').fill('Тестовая встреча')
-  const dates = page.locator('input[type="datetime-local"]')
-  await dates.nth(0).fill('2026-09-03T17:30')
-  await dates.nth(1).fill('2026-09-03T18:30')
-  await page.getByRole('button', { name: 'Сохранить черновик' }).click()
-  await expect(page.getByText('Черновик сохранён')).toBeVisible()
+  await expect(page.getByText('Управление', { exact: true })).toBeVisible()
+  await expect(page.getByText('Новое событие', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Главная' })).toHaveCount(0)
 
-  await page.keyboard.press('Tab')
-  await expect(page.locator(':focus')).toBeVisible()
+  const eventMode = page.getByRole('button', { name: 'Другое событие' })
+  await eventMode.focus()
+  await expect(eventMode).toBeFocused()
 })

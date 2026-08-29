@@ -2,20 +2,15 @@ import {
   Icon20CalendarOutline,
   Icon20CheckCircleOutline,
   Icon20PlaceOutline,
-  Icon24WriteOutline,
 } from '@vkontakte/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
-import { Banner, Button, Card, Div, Panel, PanelHeaderButton, Spinner, Text, Title } from '@vkontakte/vkui'
+import { Banner, Button, Card, Div, Panel, Spinner, Text, Title } from '@vkontakte/vkui'
 import { CSSProperties, useMemo, useState } from 'react'
 
 import { EventOccurrence, getEvents, getSubscribedEventIds, subscribeToEvent } from '../api/events'
-import { getCurrentUser } from '../api/auth'
 import { getInAppReminders } from '../api/notifications'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import { openExternalUrl } from '../platformLinks'
-import { PANEL_PATHS } from '../router'
-import { setAdminReturnPath } from '../navigation'
 
 const STATUS_LABELS = {
   scheduled: 'Скоро',
@@ -130,20 +125,11 @@ function EventCard({
 }
 
 export function EventsPanel({ id = 'events' }: { id?: string }) {
-  const navigator = useRouteNavigator()
   const events = useQuery({
     queryKey: ['events'],
     queryFn: () => getEvents(),
     refetchInterval: 60_000,
   })
-  const currentUser = useQuery({
-    queryKey: ['current-user'],
-    queryFn: getCurrentUser,
-    retry: false,
-  })
-  const canManageEvents = currentUser.data?.roles.some((role) =>
-    ['superadmin', 'events_editor'].includes(role),
-  )
   const savedSubscriptions = useQuery({
     queryKey: ['event-subscriptions'],
     queryFn: getSubscribedEventIds,
@@ -180,21 +166,7 @@ export function EventsPanel({ id = 'events' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <AppPanelHeader
-        beforeMenu={
-          canManageEvents ? (
-            <PanelHeaderButton
-              aria-label="Управление событиями"
-              onClick={() => {
-                setAdminReturnPath(PANEL_PATHS.events)
-                void navigator.push(PANEL_PATHS.admin)
-              }}
-            >
-              <Icon24WriteOutline />
-            </PanelHeaderButton>
-          ) : undefined
-        }
-      >
+      <AppPanelHeader>
         События
       </AppPanelHeader>
       <main className="events-page">
@@ -261,7 +233,6 @@ export function EventsPanel({ id = 'events' }: { id?: string }) {
                 <Text className="events-section-label">Мероприятия</Text>
                 <Title level="2">Дальше по календарю</Title>
               </div>
-              <Text>{timeline.length}</Text>
             </div>
             {timeline.length === 0 ? (
               <div className="events-empty">

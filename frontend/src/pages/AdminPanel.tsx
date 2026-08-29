@@ -1,6 +1,9 @@
-import { Icon20CalendarOutline, Icon20UserOutline, Icon20WriteOutline } from '@vkontakte/icons'
+import {
+  Icon20CalendarOutline,
+  Icon20UserOutline,
+  Icon20WriteOutline,
+} from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Banner,
   Button,
@@ -15,14 +18,14 @@ import {
   Input,
   Panel,
   PanelHeader,
-  PanelHeaderBack,
+  Search,
   SimpleCell,
   Spinner,
   Text,
   Textarea,
   Title,
 } from '@vkontakte/vkui'
-import { FormEvent, useState } from 'react'
+import { FormEvent, ReactNode, useMemo, useState } from 'react'
 
 import {
   AdminEvent,
@@ -38,16 +41,6 @@ import {
 } from '../api/admin'
 import { ApiError } from '../api/client'
 import { openExternalUrl } from '../platformLinks'
-import { PANEL_PATHS } from '../router'
-import { takeAdminReturnPath } from '../navigation'
-
-const metricLabels: Record<string, string> = {
-  upcoming_events: 'событий в ближайшие 30 дней',
-  active_registrations: 'активных регистраций',
-  registered_users: 'участников отметили «Я приду»',
-  cancelled_events: 'отменено за последний месяц',
-  recent_audit: 'изменений за 7 дней',
-}
 
 type EventKind = 'meeting' | 'event'
 
@@ -59,6 +52,14 @@ interface EventFormState {
   location: string
   registrationUrl: string
 }
+
+interface Metric {
+  label: string
+  value: number
+  hint?: string
+}
+
+const PUBLIC_APP_URL = 'https://vk.ru/app54697971'
 
 const emptyForm = (): EventFormState => ({
   kind: 'meeting',
@@ -106,7 +107,8 @@ function payloadFromEvent(event: AdminEvent, status = event.occurrence_status): 
   }
 }
 
-function formatEventDate(value: string): string {
+function formatDate(value: string | null): string {
+  if (!value) return 'нет данных'
   return new Intl.DateTimeFormat('ru-RU', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -114,8 +116,68 @@ function formatEventDate(value: string): string {
   }).format(new Date(value))
 }
 
-export function AdminPanel({ id = 'admin' }: { id?: string }) {
-  const navigator = useRouteNavigator()
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'VK'
+}
+
+function Metrics({ items }: { items: Metric[] }) {
+  return (
+    <CardGrid size="s" className="admin-metrics">
+      {items.map((item) => (
+        <Card key={item.label} mode="shadow">
+          <Div className="admin-metric">
+            <Title level="2">{item.value}</Title>
+            <Text>{item.label}</Text>
+            {item.hint && <Text className="muted">{item.hint}</Text>}
+          </Div>
+        </Card>
+      ))}
+    </CardGrid>
+  )
+}
+
+function AccessState({ error, fallback }: { error: unknown; fallback: ReactNode }) {
+  if (error instanceof ApiError && [401, 403].includes(error.status)) {
+    return (
+      <Group>
+        <Banner
+          title="Нет доступа"
+          subtitle="Этот раздел доступен только назначенным администраторам."
+        />
+      </Group>
+    )
+  }
+  return <>{fallback}</>
+}
+
+function AdminPanelHeader({ children }: { children: ReactNode }) {
+  return (
+    <PanelHeader
+      after={
+        <Button
+          Component="a"
+          className="admin-open-public-app"
+          size="s"
+          mode="tertiary"
+          href={PUBLIC_APP_URL}
+          target="_top"
+          aria-label="Открыть публичное приложение"
+        >
+          Открыть приложение
+        </Button>
+      }
+    >
+      {children}
+    </PanelHeader>
+  )
+}
+
+export function AdminEventsPanel({ id = 'events' }: { id?: string }) {
   const queryClient = useQueryClient()
   const [form, setForm] = useState<EventFormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -132,18 +194,6 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
     retry: false,
     enabled: dashboard.isSuccess,
   })
-  const users = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: getAdminStudents,
-    retry: false,
-    enabled: dashboard.isSuccess,
-  })
-  const feedback = useQuery({
-    queryKey: ['admin-feedback'],
-    queryFn: getAdminFeedback,
-    retry: false,
-    enabled: dashboard.isSuccess,
-  })
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] })
@@ -154,7 +204,11 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
     mutationFn: (payload: EventPayload) =>
       editingId ? updateEvent({ id: editingId, payload }) : createEvent(payload),
     onSuccess: () => {
-      setSavedNotice(editingId ? 'Изменения сохранены.' : 'Событие опубликовано и уже доступно во вкладке «События».')
+      setSavedNotice(
+        editingId
+          ? 'Изменения сохранены.'
+          : 'Событие опубликовано и уже доступно пользователям.',
+      )
       setForm(emptyForm())
       setEditingId(null)
       refresh()
@@ -169,19 +223,6 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
     mutationFn: deleteEvent,
     onSuccess: refresh,
   })
-  const resetDemo = useMutation({
-    mutationFn: resetMyDemoData,
-    onSuccess: () => {
-      sessionStorage.removeItem('ipmkn.assistant-history-v1')
-      sessionStorage.removeItem('ipmkn.assistant-session')
-      sessionStorage.removeItem('ipmkn.mapTargetRoom')
-      sessionStorage.removeItem('ipmkn.moreTarget')
-      queryClient.clear()
-      void navigator.push(PANEL_PATHS.home)
-    },
-  })
-  const denied =
-    dashboard.error instanceof ApiError && [401, 403].includes(dashboard.error.status)
 
   const submit = (submitEvent: FormEvent) => {
     submitEvent.preventDefault()
@@ -213,31 +254,55 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
 
   return (
     <Panel id={id}>
-      <PanelHeader
-        before={<PanelHeaderBack aria-label="Назад" onClick={() => void navigator.push(takeAdminReturnPath())} />}
-      >
-        Управление
-      </PanelHeader>
+      <AdminPanelHeader>События</AdminPanelHeader>
       {dashboard.isLoading && <Spinner size="m" />}
-      {denied && (
-        <Group><Banner title="Нет доступа" subtitle="Админ-панель доступна только назначенным редакторам." /></Group>
-      )}
-      {dashboard.isError && !denied && (
-        <Group><Banner title="Панель временно недоступна" subtitle="Попробуйте обновить страницу." /></Group>
+      {dashboard.isError && (
+        <AccessState
+          error={dashboard.error}
+          fallback={<Group><Banner title="Раздел временно недоступен" subtitle="Попробуйте обновить страницу." /></Group>}
+        />
       )}
       {dashboard.data && (
         <>
-          <Group className="admin-event-editor" header={<Header>{editingId ? 'Редактирование' : 'Новое событие'}</Header>}>
+          <Group header={<Header>Статистика событий</Header>}>
+            <Metrics
+              items={[
+                { value: dashboard.data.upcoming_events, label: 'событий в ближайшие 30 дней' },
+                { value: dashboard.data.active_registrations, label: 'отметок «Я приду»' },
+                { value: dashboard.data.event_participants, label: 'уникальных участников' },
+                { value: dashboard.data.cancelled_events, label: 'отменено за 30 дней' },
+              ]}
+            />
+          </Group>
+
+          <Group
+            className="admin-event-editor"
+            header={<Header>{editingId ? 'Редактирование события' : 'Создать событие'}</Header>}
+          >
             <Div>
               <ButtonGroup mode="horizontal" gap="s" stretched>
-                <Button mode={form.kind === 'meeting' ? 'primary' : 'secondary'} onClick={() => setForm((value) => ({ ...value, kind: 'meeting' }))}>Ближайшее собрание</Button>
-                <Button mode={form.kind === 'event' ? 'primary' : 'secondary'} onClick={() => setForm((value) => ({ ...value, kind: 'event' }))}>Другое событие</Button>
+                <Button
+                  mode={form.kind === 'meeting' ? 'primary' : 'secondary'}
+                  onClick={() => setForm((value) => ({ ...value, kind: 'meeting' }))}
+                >
+                  Ближайшее собрание
+                </Button>
+                <Button
+                  mode={form.kind === 'event' ? 'primary' : 'secondary'}
+                  onClick={() => setForm((value) => ({ ...value, kind: 'event' }))}
+                >
+                  Другое событие
+                </Button>
               </ButtonGroup>
             </Div>
             <form onSubmit={submit}>
               {form.kind === 'event' && (
                 <FormItem top="Название">
-                  <Input value={form.title} placeholder="Посвят или встреча клуба" onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))} />
+                  <Input
+                    value={form.title}
+                    placeholder="Посвят или встреча клуба"
+                    onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))}
+                  />
                 </FormItem>
               )}
               <FormItem top="Дата и время начала">
@@ -251,41 +316,61 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
                 />
               </FormItem>
               <FormItem top="Место">
-                <Input value={form.location} placeholder="Главный корпус, 403" onChange={(event) => setForm((value) => ({ ...value, location: event.target.value }))} />
+                <Input
+                  value={form.location}
+                  placeholder="Главный корпус, 403"
+                  onChange={(event) => setForm((value) => ({ ...value, location: event.target.value }))}
+                />
               </FormItem>
               {form.kind === 'event' && (
                 <FormItem top="Ссылка на регистрацию" bottom="После «Я приду» участник перейдёт по этой ссылке.">
-                  <Input value={form.registrationUrl} inputMode="url" placeholder="https://vk.ru/..." onChange={(event) => setForm((value) => ({ ...value, registrationUrl: event.target.value }))} />
+                  <Input
+                    value={form.registrationUrl}
+                    inputMode="url"
+                    placeholder="https://vk.ru/..."
+                    onChange={(event) => setForm((value) => ({ ...value, registrationUrl: event.target.value }))}
+                  />
                 </FormItem>
               )}
               <FormItem top="Описание — необязательно">
-                <Textarea value={form.description} placeholder="Что важно знать участникам" onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} />
+                <Textarea
+                  value={form.description}
+                  placeholder="Что важно знать участникам"
+                  onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))}
+                />
               </FormItem>
               {formError && <Div><Text className="admin-form-error">{formError}</Text></Div>}
-              <Div>
+              <Div className="admin-form-actions">
                 <Button type="submit" size="l" stretched loading={save.isPending} disabled={save.isPending}>
                   {editingId ? 'Сохранить изменения' : 'Опубликовать'}
                 </Button>
-                {editingId && <Button mode="tertiary" stretched onClick={() => { setEditingId(null); setForm(emptyForm()) }}>Отменить редактирование</Button>}
+                {editingId && (
+                  <Button mode="tertiary" stretched onClick={() => { setEditingId(null); setForm(emptyForm()) }}>
+                    Отменить редактирование
+                  </Button>
+                )}
               </Div>
               {save.isError && <Banner title="Не удалось сохранить" subtitle="Проверьте поля и попробуйте ещё раз." />}
               {savedNotice && <Banner title="Готово" subtitle={savedNotice} />}
             </form>
           </Group>
 
-          <Group header={<Header>События и регистрации</Header>}>
+          <Group header={<Header>Опубликованные события</Header>}>
             {events.isLoading && <Spinner size="m" />}
-            {events.isError && <Banner title="Не удалось загрузить список" subtitle="Обновите страницу. Опубликованные события при этом не потеряны." />}
+            {events.isError && <Banner title="Не удалось загрузить список" subtitle="Обновите страницу. События не потеряны." />}
+            {events.data?.length === 0 && <Div><Text className="muted">Событий пока нет.</Text></Div>}
             {events.data?.map((event) => (
               <SimpleCell
                 key={event.id}
                 before={<Icon20CalendarOutline />}
-                subtitle={`${formatEventDate(event.starts_at)} · ${event.location || 'место не указано'}`}
+                subtitle={`${formatDate(event.starts_at)} · ${event.location || 'место не указано'}`}
                 after={<span className="admin-registration-count"><Icon20UserOutline />{event.registration_count}</span>}
               >
                 <div className={event.occurrence_status === 'cancelled' ? 'admin-event-cancelled' : undefined}>{event.title}</div>
                 <ButtonGroup mode="horizontal" gap="s" className="admin-event-actions">
-                  <Button size="s" mode="tertiary" before={<Icon20WriteOutline />} onClick={(clickEvent) => { clickEvent.stopPropagation(); edit(event) }}>Изменить</Button>
+                  <Button size="s" mode="tertiary" before={<Icon20WriteOutline />} onClick={(clickEvent) => { clickEvent.stopPropagation(); edit(event) }}>
+                    Изменить
+                  </Button>
                   <Button
                     size="s"
                     mode="tertiary"
@@ -295,7 +380,7 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
                       changeStatus.mutate({ event, status: event.occurrence_status === 'cancelled' ? 'scheduled' : 'cancelled' })
                     }}
                   >
-                    {event.occurrence_status === 'cancelled' ? 'Вернуть' : 'Отменить событие'}
+                    {event.occurrence_status === 'cancelled' ? 'Вернуть' : 'Отменить'}
                   </Button>
                   {event.occurrence_status === 'cancelled' && (
                     <Button
@@ -315,47 +400,109 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
               </SimpleCell>
             ))}
           </Group>
+        </>
+      )}
+    </Panel>
+  )
+}
 
-          <Group header={<Header>Сводка</Header>}>
-            <CardGrid size="s">
-              {Object.entries(dashboard.data).map(([key, value]) => (
-                <Card key={key} mode="shadow"><Div className="admin-metric"><Title level="2">{value}</Title><Text>{metricLabels[key]}</Text></Div></Card>
-              ))}
-            </CardGrid>
+export function AdminUsersPanel({ id = 'users' }: { id?: string }) {
+  const queryClient = useQueryClient()
+  const [search, setSearch] = useState('')
+  const dashboard = useQuery({
+    queryKey: ['admin-dashboard'],
+    queryFn: getAdminDashboard,
+    retry: false,
+  })
+  const users = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: getAdminStudents,
+    retry: false,
+  })
+  const resetDemo = useMutation({
+    mutationFn: resetMyDemoData,
+    onSuccess: () => {
+      sessionStorage.removeItem('ipmkn.assistant-history-v1')
+      sessionStorage.removeItem('ipmkn.assistant-session')
+      sessionStorage.removeItem('ipmkn.mapTargetRoom')
+      sessionStorage.removeItem('ipmkn.moreTarget')
+      void queryClient.invalidateQueries()
+    },
+  })
+  const filteredUsers = useMemo(() => {
+    const value = search.trim().toLocaleLowerCase('ru-RU')
+    if (!value) return users.data ?? []
+    return (users.data ?? []).filter((user) =>
+      [user.display_name, String(user.vk_user_id), user.primary_group ?? '']
+        .some((field) => field.toLocaleLowerCase('ru-RU').includes(value)),
+    )
+  }, [search, users.data])
+
+  const error = users.error ?? dashboard.error
+
+  return (
+    <Panel id={id}>
+      <AdminPanelHeader>Пользователи</AdminPanelHeader>
+      {(users.isLoading || dashboard.isLoading) && <Spinner size="m" />}
+      {(users.isError || dashboard.isError) && (
+        <AccessState
+          error={error}
+          fallback={<Group><Banner title="Раздел временно недоступен" subtitle="Попробуйте обновить страницу." /></Group>}
+        />
+      )}
+      {users.data && dashboard.data && (
+        <>
+          <Group header={<Header>Аудитория приложения</Header>}>
+            <Metrics
+              items={[
+                { value: dashboard.data.total_users, label: 'зарегистрированных пользователей', hint: 'входили в публичное приложение' },
+                { value: dashboard.data.new_users_7d, label: 'новых за 7 дней' },
+                { value: dashboard.data.active_users_7d, label: 'активных за 7 дней' },
+              ]}
+            />
+            <Div>
+              <Text className="muted">
+                Регистрация происходит автоматически при первом успешном входе через VK. Последняя активность обновляется при использовании приложения.
+              </Text>
+            </Div>
           </Group>
 
-          {feedback.data && (
-            <Group header={<Header>Обратная связь по проекту</Header>}>
-              {feedback.data.length === 0 && (
-                <Div><Text className="muted">Новых сообщений пока нет.</Text></Div>
-              )}
-              {feedback.data.map((item) => (
-                <SimpleCell
-                  key={item.id}
-                  subtitle={`${item.user_name} · ${new Date(item.created_at).toLocaleString('ru-RU')}`}
-                  indicator={item.status === 'new' ? 'Новое' : item.status}
-                  onClick={item.profile_url ? () => void openExternalUrl(item.profile_url!) : undefined}
-                >
-                  {item.message}
-                </SimpleCell>
-              ))}
-            </Group>
-          )}
+          <Group header={<Header>Все пользователи · {users.data.length}</Header>}>
+            <Search
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Имя, VK ID или группа"
+              after={null}
+            />
+            {filteredUsers.length === 0 && (
+              <Div><Text className="muted">По вашему запросу никого не найдено.</Text></Div>
+            )}
+            {filteredUsers.map((user) => (
+              <SimpleCell
+                key={user.id}
+                className="admin-user-row"
+                before={<span className="admin-user-avatar">{initials(user.display_name)}</span>}
+                indicator={user.primary_group ?? 'Без группы'}
+                subtitle={
+                  <span className="admin-user-meta">
+                    <span>VK ID {user.vk_user_id}</span>
+                    <span>Первый вход: {formatDate(user.first_login_at)}</span>
+                    <span>Последняя активность: {formatDate(user.last_activity_at)}</span>
+                    <span>Группа: {user.primary_group ?? 'не указана'}</span>
+                    <span>Запусков: {user.launch_count}</span>
+                  </span>
+                }
+                onClick={() => void openExternalUrl(user.profile_url)}
+              >
+                {user.display_name}
+              </SimpleCell>
+            ))}
+          </Group>
 
-          {users.data && (
-            <Group header={<Header>Пользователи</Header>}>
-              {users.data.map((user) => (
-                <SimpleCell key={user.id} indicator={user.primary_group ?? 'Без группы'} subtitle={`Активность: ${user.last_activity_at ? new Date(user.last_activity_at).toLocaleString('ru-RU') : 'нет данных'}`} onClick={() => void openExternalUrl(user.profile_url)}>
-                  {user.display_name}
-                </SimpleCell>
-              ))}
-            </Group>
-          )}
-
-          <Group header={<Header>Демо-режим</Header>}>
+          <Group header={<Header>Демо-данные</Header>}>
             <Banner
               title="Начать презентацию с чистого листа"
-              subtitle="Сбросит только ваши группы, маршрут первокурсника, регистрации и настройки. Админ-доступ и созданные события останутся."
+              subtitle="Сбросит только ваши группы, маршрут первокурсника, регистрации и настройки. Админ-доступ и события останутся."
               actions={
                 <Button
                   appearance="negative"
@@ -370,12 +517,77 @@ export function AdminPanel({ id = 'admin' }: { id?: string }) {
                 </Button>
               }
             />
-            {resetDemo.isError && (
-              <Banner title="Не удалось выполнить сброс" subtitle="Попробуйте ещё раз." />
-            )}
+            {resetDemo.isError && <Banner title="Не удалось выполнить сброс" subtitle="Попробуйте ещё раз." />}
           </Group>
         </>
       )}
     </Panel>
   )
+}
+
+const feedbackStatus: Record<string, string> = {
+  new: 'Новое',
+  in_progress: 'В работе',
+  resolved: 'Решено',
+  closed: 'Закрыто',
+}
+
+export function AdminFeedbackPanel({ id = 'feedback' }: { id?: string }) {
+  const dashboard = useQuery({
+    queryKey: ['admin-dashboard'],
+    queryFn: getAdminDashboard,
+    retry: false,
+  })
+  const feedback = useQuery({
+    queryKey: ['admin-feedback'],
+    queryFn: getAdminFeedback,
+    retry: false,
+  })
+  const error = feedback.error ?? dashboard.error
+
+  return (
+    <Panel id={id}>
+      <AdminPanelHeader>Обратная связь</AdminPanelHeader>
+      {(feedback.isLoading || dashboard.isLoading) && <Spinner size="m" />}
+      {(feedback.isError || dashboard.isError) && (
+        <AccessState
+          error={error}
+          fallback={<Group><Banner title="Раздел временно недоступен" subtitle="Попробуйте обновить страницу." /></Group>}
+        />
+      )}
+      {feedback.data && dashboard.data && (
+        <>
+          <Group header={<Header>Обращения</Header>}>
+            <Metrics
+              items={[
+                { value: dashboard.data.new_feedback, label: 'новых сообщений' },
+                { value: dashboard.data.feedback_total, label: 'сообщений всего' },
+              ]}
+            />
+          </Group>
+          <Group header={<Header>Сообщения пользователей</Header>}>
+            {feedback.data.length === 0 && (
+              <Banner title="Новых сообщений пока нет" subtitle="Обращения из публичного приложения появятся здесь." />
+            )}
+            {feedback.data.map((item) => (
+              <SimpleCell
+                key={item.id}
+                className="admin-feedback-row"
+                subtitle={`${item.user_name} · ${formatDate(item.created_at)}`}
+                indicator={feedbackStatus[item.status] ?? item.status}
+                onClick={item.profile_url ? () => void openExternalUrl(item.profile_url!) : undefined}
+              >
+                {item.message}
+              </SimpleCell>
+            ))}
+          </Group>
+        </>
+      )}
+    </Panel>
+  )
+}
+
+// Kept as the default admin landing panel for direct component consumers and tests.
+export function AdminPanel({ id = 'events' }: { id?: string }) {
+  return <AdminEventsPanel id={id} />
 }

@@ -6,6 +6,7 @@ import hmac
 import secrets
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Literal
 from urllib.parse import parse_qsl, urlencode
 
 from fastapi import HTTPException, status
@@ -20,6 +21,7 @@ from app.models import User, UserRole, UserSession, utc_now
 @dataclass(frozen=True)
 class VerifiedLaunch:
     vk_user_id: int
+    vk_app_id: str
     issued_at: int
     params: dict[str, str]
 
@@ -39,6 +41,7 @@ def validate_vk_launch_params(
     launch_params: str,
     *,
     secret: str,
+    expected_app_id: str | None = None,
     max_age_seconds: int,
     now_timestamp: int | None = None,
 ) -> VerifiedLaunch:
@@ -55,6 +58,7 @@ def validate_vk_launch_params(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid VK signature")
 
     try:
+        vk_app_id = params["vk_app_id"]
         vk_user_id = int(params["vk_user_id"])
         issued_at = int(params["vk_ts"])
     except (KeyError, ValueError) as exc:
@@ -63,11 +67,32 @@ def validate_vk_launch_params(
             "Invalid VK launch parameters",
         ) from exc
 
+    if expected_app_id is not None and vk_app_id != expected_app_id:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unexpected VK application")
+
     now = int(utc_now().timestamp()) if now_timestamp is None else now_timestamp
     if issued_at > now + 60 or now - issued_at > max_age_seconds:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Expired VK launch parameters")
 
-    return VerifiedLaunch(vk_user_id=vk_user_id, issued_at=issued_at, params=params)
+    return VerifiedLaunch(
+        vk_user_id=vk_user_id,
+        vk_app_id=vk_app_id,
+        issued_at=issued_at,
+        params=params,
+    )
+
+
+def resolve_vk_app(
+    launch_params: str,
+    settings: Settings,
+) -> tuple[Literal["public", "admin"], str, str]:
+    params = dict(parse_qsl(launch_params.removeprefix("?"), keep_blank_values=True))
+    app_id = params.get("vk_app_id", "")
+    if app_id and app_id == settings.vk_app_id:
+        return "public", settings.vk_app_id, settings.vk_app_secret
+    if app_id and app_id == settings.vk_admin_app_id:
+        return "admin", settings.vk_admin_app_id, settings.vk_admin_app_secret
+    raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown VK application")
 
 
 def parse_bootstrap_admins(value: str) -> set[int]:
@@ -129,12 +154,14 @@ async def create_session(
     *,
     user: User,
     settings: Settings,
+    app_variant: Literal["public", "admin"],
 ) -> tuple[str, str, UserSession]:
     token = secrets.token_urlsafe(32)
     csrf_token = secrets.token_urlsafe(24)
     user_session = UserSession(
         token_hash=hash_token(token),
         csrf_hash=hash_token(csrf_token),
+        app_variant=app_variant,
         user_id=user.id,
         expires_at=utc_now() + timedelta(seconds=settings.session_ttl_seconds),
     )

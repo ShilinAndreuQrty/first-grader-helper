@@ -54,6 +54,17 @@ async def require_csrf(
     return user_session
 
 
+async def require_admin_app(
+    user_session: Annotated[UserSession, Depends(get_current_session)],
+) -> UserSession:
+    if user_session.app_variant != "admin":
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Admin application session required",
+        )
+    return user_session
+
+
 def require_roles(*allowed_roles: str) -> Callable[..., User]:
     allowed = set(allowed_roles)
 

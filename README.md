@@ -14,9 +14,15 @@ cp .env.example .env
 docker compose up --build
 ```
 
+`.env.example` — безопасный production-шаблон. Для локального запуска в `.env`
+задайте `APP_ENV=development`, `DEV_AUTH_ENABLED=true`, `COOKIE_SECURE=false`,
+`COOKIE_SAMESITE=lax`, URL `http://localhost:5173` и origins для портов 5173,
+5174. VK app ID и ключи в browser/dev режиме можно оставить пустыми.
+
 После запуска:
 
-- browser/dev режим: `http://localhost:5173`;
+- публичное приложение: `http://localhost:5173`;
+- служебное приложение: `http://localhost:5174`;
 - API и OpenAPI: `http://localhost:8000/api/docs`;
 - health: `http://localhost:8000/health`.
 
@@ -46,6 +52,10 @@ python -m venv .venv
 pnpm install --frozen-lockfile
 pnpm frontend:dev
 ```
+
+Админская сборка запускается отдельной командой `pnpm --filter frontend
+dev:admin` и слушает порт 5174. Production-сборка создаёт два каталога:
+`frontend/dist/public` и `frontend/dist/admin`.
 
 На Linux/macOS используйте `.venv/bin/...` вместо `.venv/Scripts/...`.
 

@@ -34,8 +34,9 @@ import {
   normalizeGroupCode,
 } from '../groupCode'
 import { openExternalUrl } from '../platformLinks'
+import { getPlatformAvatarUrl } from '../platform'
 import { PANEL_PATHS } from '../router'
-import { getMoreReturnPath, setAdminReturnPath } from '../navigation'
+import { getMoreReturnPath } from '../navigation'
 import { VkAvatar } from '../components/VkAvatar'
 
 export function MorePanel({ id = 'more' }: { id?: string }) {
@@ -62,9 +63,6 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     queryFn: getCurrentUser,
     retry: false,
   })
-  const isEditor = currentUser.data?.roles.some((role) =>
-    ['superadmin', 'content_editor', 'events_editor'].includes(role),
-  )
   const normalizedGroupCode = normalizeGroupCode(groupCode)
   const changePrimary = useMutation({
     mutationFn: () => saveGroupByCode(normalizedGroupCode, true),
@@ -106,6 +104,7 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
               <VkAvatar
                 size={48}
                 vkUrl={currentUser.data.profile_url}
+                preferredSrc={getPlatformAvatarUrl()}
                 initials={
                   currentUser.data.first_name.slice(0, 1) ||
                   currentUser.data.display_name.slice(0, 1) ||
@@ -278,19 +277,6 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         </SimpleCell>
       </Group>
 
-      {isEditor && (
-        <Group header={<Header>Для команды</Header>}>
-          <SimpleCell
-            subtitle="Контент, события и аудит"
-            onClick={() => {
-              setAdminReturnPath(PANEL_PATHS.more)
-              void navigator.push(PANEL_PATHS.admin)
-            }}
-          >
-            Админ-панель
-          </SimpleCell>
-        </Group>
-      )}
     </Panel>
   )
 }
