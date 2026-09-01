@@ -1,8 +1,10 @@
+from datetime import date
 from pathlib import Path
 
 from app.students.importer import parse_tutors_csv
 from app.students.seed import RESOURCE_SEED, TUTOR_SEED
 from app.students.service import (
+    has_active_tutorship,
     is_valid_group_code,
     normalize_bookmark_label,
     normalize_group_code,
@@ -20,6 +22,17 @@ def test_group_normalization_handles_spaces_case_and_dashes() -> None:
 
 def test_bookmark_label_is_trimmed_without_changing_user_text() -> None:
     assert normalize_bookmark_label("  Группа   Ксюши 😈  ") == "Группа Ксюши 😈"
+
+
+def test_tutorship_is_limited_to_current_autumn_intake() -> None:
+    autumn = date(2026, 9, 1)
+    assert has_active_tutorship("230761", autumn)
+    assert has_active_tutorship("230063-07", autumn)
+    assert not has_active_tutorship("230751", autumn)
+    assert not has_active_tutorship("230053-07", autumn)
+
+    assert not has_active_tutorship("230761", date(2027, 1, 1))
+    assert has_active_tutorship("230771", date(2027, 9, 1))
 
 
 def test_csv_import_validates_and_normalizes(tmp_path: Path) -> None:

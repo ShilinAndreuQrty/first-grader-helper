@@ -22,7 +22,11 @@ from app.models import (
 )
 from app.onboarding.service import complete_onboarding_step
 from app.students.schemas import BookmarkCreate, GroupRead, ResourceRead, TutorRead
-from app.students.service import normalize_bookmark_label, normalize_group_code
+from app.students.service import (
+    has_active_tutorship,
+    normalize_bookmark_label,
+    normalize_group_code,
+)
 
 router = APIRouter(tags=["students"])
 
@@ -54,6 +58,10 @@ async def group_tutors(
     group_id: str,
     db: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[TutorRead]:
+    group = await db.get(StudentGroup, group_id)
+    if group is None or not has_active_tutorship(group.normalized_code):
+        return []
+
     now = datetime.now(UTC)
     rows = list(
         (

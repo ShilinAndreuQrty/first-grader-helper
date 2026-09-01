@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { getOnboarding } from '../api/onboarding'
 import { ApiError } from '../api/client'
 import { getSchedule, saveGroupByCode, ScheduleLesson } from '../api/schedule'
-import { getMyGroups } from '../api/students'
+import { getMyGroups, getTutors } from '../api/students'
 import { AppPanelHeader } from '../components/AppPanelHeader'
 import ipmknLogo from '../assets/ipmkn-logo.png'
 import { isValidGroupCode, normalizeGroupCode } from '../groupCode'
@@ -25,6 +25,7 @@ import { setMoreReturnPath } from '../navigation'
 import { getLessonTiming, getMoscowDate } from '../scheduleFocus'
 
 const MOSCOW_TIME_ZONE = 'Europe/Moscow'
+const PROFBUREAU_URL = 'https://vk.ru/profburo_ipmkn_tsu'
 
 function getMoscowMinutes(now = new Date()): number {
   const parts = new Intl.DateTimeFormat('ru-RU', {
@@ -95,6 +96,12 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
     queryFn: getOnboarding,
   })
   const primaryGroup = groups.data?.find((group) => group.is_primary)
+  const tutors = useQuery({
+    queryKey: ['tutors', primaryGroup?.id],
+    queryFn: () => getTutors(primaryGroup!.id),
+    enabled: Boolean(primaryGroup),
+  })
+  const hasTutor = Boolean(primaryGroup && tutors.data?.length)
   const normalizedGroupCode = normalizeGroupCode(groupCode)
   const savePrimaryGroup = useMutation({
     mutationFn: () => saveGroupByCode(normalizedGroupCode, true),
@@ -296,18 +303,29 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
               <span className="home-action__icon"><Icon28UserCardOutline /></span>
               <span><strong>Личный кабинет</strong><small>ЛК ТулГУ</small></span>
             </button>
-            <button
-              type="button"
-              className="home-action home-action--tutor"
-              onClick={() => {
-                sessionStorage.setItem('ipmkn.moreTarget', 'my-tutor')
-                setMoreReturnPath(PANEL_PATHS.home)
-                void navigator.push(PANEL_PATHS.more)
-              }}
-            >
-              <span className="home-action__icon"><Icon28Users3Outline /></span>
-              <span><strong>Мой тьютор</strong><small>Контакт наставника</small></span>
-            </button>
+            {hasTutor ? (
+              <button
+                type="button"
+                className="home-action home-action--tutor"
+                onClick={() => {
+                  sessionStorage.setItem('ipmkn.moreTarget', 'my-tutor')
+                  setMoreReturnPath(PANEL_PATHS.home)
+                  void navigator.push(PANEL_PATHS.more)
+                }}
+              >
+                <span className="home-action__icon"><Icon28Users3Outline /></span>
+                <span><strong>Мой тьютор</strong><small>Контакт наставника</small></span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="home-action home-action--tutor"
+                onClick={() => void openExternalUrl(PROFBUREAU_URL)}
+              >
+                <span className="home-action__icon"><Icon28Users3Outline /></span>
+                <span><strong>Профбюро ИПМКН</strong><small>Новости и помощь студентам</small></span>
+              </button>
+            )}
             <button
               type="button"
               className="home-action home-action--links home-action--wide"

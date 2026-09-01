@@ -25,7 +25,6 @@ import { ApiError } from '../api/client'
 import { saveGroupByCode } from '../api/schedule'
 import {
   getMyGroups,
-  getResources,
   getTutors,
 } from '../api/students'
 import {
@@ -51,13 +50,6 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
     queryFn: () => getTutors(primaryGroup!.id),
     enabled: Boolean(primaryGroup),
   })
-  const resources = useQuery({
-    queryKey: ['resources'],
-    queryFn: getResources,
-  })
-  const profburo = resources.data?.find(
-    (resource) => resource.slug === 'profburo-ipmkn',
-  )
   const currentUser = useQuery({
     queryKey: ['current-user'],
     queryFn: getCurrentUser,
@@ -204,47 +196,27 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
         )}
       </Group>
 
-      <Group id="my-tutor" header={<Header>Мой тьютор</Header>}>
-        {!primaryGroup && (
-          <Banner
-            title="Укажите основную группу"
-            subtitle="После этого приложение найдёт назначенного тьютора."
-          />
-        )}
-        {primaryGroup && tutors.data?.length === 0 && (
-          <Banner
-            title="Тьютор пока не указан"
-            subtitle="Сообщите об этом профбюро ИПМКН — соответствие групп обновляется каждый учебный год."
-            actions={
-              <Button
-                disabled={!profburo}
-                onClick={() =>
-                  profburo && void openExternalUrl(profburo.url)
-                }
-              >
-                {profburo ? 'Написать профбюро' : 'Контакт не настроен'}
-              </Button>
-            }
-          />
-        )}
-        {tutors.data?.map((tutor) => (
-          <SimpleCell
-            key={tutor.id}
-            before={
-              <VkAvatar
-                size={48}
-                vkUrl={tutor.vk_url}
-                preferredSrc={tutor.photo_url}
-                initials={tutor.full_name.slice(0, 1)}
-              />
-            }
-            subtitle={tutor.description || `Тьютор группы ${primaryGroup?.code}`}
-            onClick={() => void openExternalUrl(tutor.vk_url)}
-          >
-            {tutor.full_name}
-          </SimpleCell>
-        ))}
-      </Group>
+      {tutors.data && tutors.data.length > 0 && (
+        <Group id="my-tutor" header={<Header>Мой тьютор</Header>}>
+          {tutors.data.map((tutor) => (
+            <SimpleCell
+              key={tutor.id}
+              before={
+                <VkAvatar
+                  size={48}
+                  vkUrl={tutor.vk_url}
+                  preferredSrc={tutor.photo_url}
+                  initials={tutor.full_name.slice(0, 1)}
+                />
+              }
+              subtitle={tutor.description || `Тьютор группы ${primaryGroup?.code}`}
+              onClick={() => void openExternalUrl(tutor.vk_url)}
+            >
+              {tutor.full_name}
+            </SimpleCell>
+          ))}
+        </Group>
+      )}
 
       <Group header={<Header>Приложение</Header>}>
         <SimpleCell
