@@ -6,11 +6,10 @@ import {
   Icon24CalendarOutline,
   Icon24EducationOutline,
 } from '@vkontakte/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import {
   Button,
-  Checkbox,
   Div,
   Panel,
   PanelHeader,
@@ -20,11 +19,9 @@ import {
 } from '@vkontakte/vkui'
 import type { CSSProperties, ReactNode } from 'react'
 
-import {
-  getOnboarding,
-  OnboardingStep,
-  setStepCompleted,
-} from '../api/onboarding'
+import { getOnboarding } from '../api/onboarding'
+import { getCurrentUser } from '../api/auth'
+import { dismissOnboarding } from '../onboardingDismissal'
 import { PANEL_PATHS } from '../router'
 
 const STEP_ICONS: Record<string, ReactNode> = {
@@ -37,35 +34,10 @@ const STEP_ICONS: Record<string, ReactNode> = {
 
 export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
   const navigator = useRouteNavigator()
-  const queryClient = useQueryClient()
   const steps = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
-  const progress = useMutation({
-    mutationFn: ({
-      stepId,
-      completed,
-    }: {
-      stepId: string
-      completed: boolean
-    }) => setStepCompleted(stepId, completed),
-    onMutate: async ({ stepId, completed }) => {
-      await queryClient.cancelQueries({ queryKey: ['onboarding'] })
-      const previous = queryClient.getQueryData<OnboardingStep[]>(['onboarding'])
-      queryClient.setQueryData<OnboardingStep[]>(
-        ['onboarding'],
-        (current) =>
-          current?.map((step) =>
-            step.id === stepId ? { ...step, completed } : step,
-          ),
-      )
-      return { previous }
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['onboarding'], context.previous)
-      }
-    },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ['onboarding'] }),
+  const currentUser = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
   })
   const completed = steps.data?.filter((step) => step.completed).length ?? 0
   const total = steps.data?.length ?? 0
@@ -95,7 +67,14 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
               Вы посмотрели основные разделы. Чек-лист больше не будет
               занимать место на главной, но сюда всегда можно вернуться.
             </Text>
-            <Button size="l" onClick={() => void navigator.push(PANEL_PATHS.home)}>
+            <Button
+              size="l"
+              disabled={!currentUser.data}
+              onClick={() => {
+                if (currentUser.data) dismissOnboarding(currentUser.data.id)
+                void navigator.push(PANEL_PATHS.home)
+              }}
+            >
               На главную
             </Button>
           </section>
@@ -106,8 +85,8 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
                 <Text className="eyebrow">Короткий чек-лист</Text>
                 <Title level="1">Пять полезных разделов</Title>
                 <Text>
-                  Быстро пройдитесь по возможностям приложения. Отмечайте
-                  просмотренное — прогресс сохранится автоматически.
+                  Быстро пройдитесь по возможностям приложения. Открывайте
+                  разделы — прогресс сохранится автоматически.
                 </Text>
               </div>
               <div
@@ -126,28 +105,16 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
                   key={step.id}
                   className={`onboarding-step${step.completed ? ' onboarding-step--completed' : ''}`}
                 >
-                  <Checkbox
-                    className="onboarding-step__checkbox"
-                    aria-label={step.title}
-                    checked={step.completed}
-                    onClick={(event) => event.stopPropagation()}
-                    onChange={(event) =>
-                      progress.mutate({
-                        stepId: step.id,
-                        completed: event.target.checked,
-                      })
-                    }
+                  <span
+                    className={`onboarding-step__status${step.completed ? ' onboarding-step__status--completed' : ''}`}
+                    role="img"
+                    aria-label={step.completed ? 'Выполнено' : 'Не выполнено'}
                   />
                   <button
                     type="button"
                     className="onboarding-step__main"
-                    aria-pressed={step.completed}
-                    onClick={() =>
-                      progress.mutate({
-                        stepId: step.id,
-                        completed: !step.completed,
-                      })
-                    }
+                    disabled={!step.action_path || step.completed}
+                    onClick={() => void navigator.push(step.action_path)}
                   >
                     <span className="onboarding-step__icon" aria-hidden>
                       {STEP_ICONS[step.slug] ?? <Icon24CheckCircleOn />}

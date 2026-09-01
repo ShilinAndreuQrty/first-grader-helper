@@ -13,6 +13,7 @@ import {
   Spinner,
   Switch,
 } from '@vkontakte/vkui'
+import { useState } from 'react'
 
 import {
   NotificationPreferences,
@@ -25,6 +26,13 @@ import { PANEL_PATHS } from '../router'
 export function SettingsPanel({ id = 'settings' }: { id?: string }) {
   const navigator = useRouteNavigator()
   const queryClient = useQueryClient()
+  const [permissionFeedback, setPermissionFeedback] = useState<{
+    title: string
+    subtitle: string
+  } | null>(null)
+  const [requestingPermission, setRequestingPermission] = useState<
+    'notifications' | 'community' | null
+  >(null)
   const config = useQuery({ queryKey: ['public-config'], queryFn: getPublicConfig })
   const preferences = useQuery({
     queryKey: ['notification-preferences'],
@@ -45,23 +53,67 @@ export function SettingsPanel({ id = 'settings' }: { id?: string }) {
   }
 
   const allowVkNotifications = async () => {
+    if (!bridge.isEmbedded()) {
+      setPermissionFeedback({
+        title: 'Откройте приложение внутри VK',
+        subtitle: 'Системное разрешение на уведомления доступно только в мобильном приложении или на сайте VK.',
+      })
+      return
+    }
+    setRequestingPermission('notifications')
     try {
-      await bridge.send('VKWebAppAllowNotifications')
+      const result = await bridge.send('VKWebAppAllowNotifications')
+      if (!result.result) throw new Error('Permission was not granted')
       update('vk_notifications_enabled', true)
+      setPermissionFeedback({
+        title: 'Уведомления VK разрешены',
+        subtitle: 'Вы сможете изменить это разрешение в настройках VK.',
+      })
     } catch {
       update('vk_notifications_enabled', false)
+      setPermissionFeedback({
+        title: 'Разрешение не получено',
+        subtitle: 'Проверьте настройки уведомлений VK и попробуйте ещё раз.',
+      })
+    } finally {
+      setRequestingPermission(null)
     }
   }
 
   const allowCommunityMessages = async () => {
-    if (!config.data?.vk_community_id) return
+    if (!bridge.isEmbedded()) {
+      setPermissionFeedback({
+        title: 'Откройте приложение внутри VK',
+        subtitle: 'Разрешение на сообщения сообщества запрашивается через VK.',
+      })
+      return
+    }
+    if (!config.data?.vk_community_id) {
+      setPermissionFeedback({
+        title: 'Сообщество пока не подключено',
+        subtitle: 'Нужно указать VK_COMMUNITY_ID на сервере приложения.',
+      })
+      return
+    }
+    setRequestingPermission('community')
     try {
-      await bridge.send('VKWebAppAllowMessagesFromGroup', {
+      const result = await bridge.send('VKWebAppAllowMessagesFromGroup', {
         group_id: config.data.vk_community_id,
       })
+      if (!result.result) throw new Error('Permission was not granted')
       update('community_messages_enabled', true)
+      setPermissionFeedback({
+        title: 'Сообщения профбюро разрешены',
+        subtitle: 'Профбюро ИПМКН ТулГУ сможет отправлять вам сообщения после включения рассылки на сервере.',
+      })
     } catch {
       update('community_messages_enabled', false)
+      setPermissionFeedback({
+        title: 'Разрешение не получено',
+        subtitle: 'Проверьте сообщения сообщества в настройках VK и попробуйте ещё раз.',
+      })
+    } finally {
+      setRequestingPermission(null)
     }
   }
 
@@ -151,33 +203,45 @@ export function SettingsPanel({ id = 'settings' }: { id?: string }) {
                 <Button
                   size="s"
                   mode="secondary"
-                  disabled={!bridge.isEmbedded()}
+                  loading={requestingPermission === 'notifications'}
+                  disabled={preferences.data.vk_notifications_enabled}
                   onClick={() => void allowVkNotifications()}
                 >
-                  Разрешить
+                  {preferences.data.vk_notifications_enabled
+                    ? 'Разрешено'
+                    : 'Разрешить'}
                 </Button>
               }
             >
               Уведомления VK
             </SimpleCell>
             <SimpleCell
-              subtitle="Сообщество Dev Zone, только после вашего согласия"
+              subtitle="Профбюро ИПМКН ТулГУ, только после вашего согласия"
               after={
                 <Button
                   size="s"
                   mode="secondary"
-                  disabled={
-                    !bridge.isEmbedded() || !config.data?.vk_community_id
-                  }
+                  loading={requestingPermission === 'community'}
+                  disabled={preferences.data.community_messages_enabled}
                   onClick={() => void allowCommunityMessages()}
                 >
-                  Разрешить
+                  {preferences.data.community_messages_enabled
+                    ? 'Разрешено'
+                    : 'Разрешить'}
                 </Button>
               }
             >
               Сообщения сообщества
             </SimpleCell>
           </Group>
+          {permissionFeedback && (
+            <Group>
+              <Banner
+                title={permissionFeedback.title}
+                subtitle={permissionFeedback.subtitle}
+              />
+            </Group>
+          )}
           {!config.data?.notifications_enabled && (
             <Group>
               <Banner

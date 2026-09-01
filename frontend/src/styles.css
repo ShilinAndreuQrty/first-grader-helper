@@ -119,9 +119,11 @@ html.vkui .vkuiPanel__in {
   position: relative;
   z-index: 1;
   display: grid;
-  max-width: 560px;
+  width: 100%;
+  box-sizing: border-box;
   gap: 7px;
   padding: 24px 24px 12px;
+  overflow: hidden;
 }
 
 .home-spotlight__date {
@@ -141,10 +143,12 @@ html.vkui .vkuiPanel__in {
 .home-spotlight__logo {
   position: absolute;
   z-index: 0;
-  inset-block-start: 18px;
-  inset-inline-end: 18px;
-  width: clamp(150px, 25vw, 235px);
-  max-width: 38%;
+  inset-block: 16px;
+  inset-inline-end: 16px;
+  width: min(34%, 190px);
+  height: calc(100% - 32px);
+  object-fit: contain;
+  object-position: right center;
   opacity: 1;
   pointer-events: none;
   user-select: none;
@@ -188,6 +192,37 @@ html.vkui .vkuiPanel__in {
   display: grid;
   gap: 10px;
   padding: 4px 12px 12px;
+}
+
+.profile-achievement {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 12px;
+  padding: 10px 12px;
+  color: var(--app-highlight);
+  background: color-mix(in srgb, var(--app-highlight) 9%, var(--app-surface));
+  border: 1px solid color-mix(in srgb, var(--app-highlight) 22%, transparent);
+  border-radius: 14px;
+}
+
+.profile-achievement__icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  background: color-mix(in srgb, var(--app-highlight) 14%, transparent);
+  border-radius: 50%;
+  place-items: center;
+}
+
+.profile-achievement > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.profile-achievement small {
+  color: var(--vkui--color_text_secondary);
 }
 
 .campus-catalog__summary {
@@ -1427,8 +1462,27 @@ html.vkui .vkuiPanel__in {
   box-shadow: none;
 }
 
-.onboarding-step__checkbox {
-  margin: 0;
+.onboarding-step__status {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  border: 2px solid var(--vkui--color_icon_secondary);
+  border-radius: 4px;
+  place-items: center;
+}
+
+.onboarding-step__status--completed {
+  background: var(--app-highlight);
+  border-color: var(--app-highlight);
+}
+
+.onboarding-step__status--completed::after {
+  content: "✓";
 }
 
 .onboarding-step__icon {

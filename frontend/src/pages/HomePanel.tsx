@@ -12,6 +12,7 @@ import { Button, Div, Input, Panel, Text, Title } from '@vkontakte/vkui'
 import { useEffect, useState } from 'react'
 
 import { getOnboarding } from '../api/onboarding'
+import { getCurrentUser } from '../api/auth'
 import { ApiError } from '../api/client'
 import { getSchedule, saveGroupByCode, ScheduleLesson } from '../api/schedule'
 import { getMyGroups, getTutors } from '../api/students'
@@ -23,6 +24,7 @@ import { openExternalUrl } from '../platformLinks'
 import { PANEL_PATHS } from '../router'
 import { setMoreReturnPath } from '../navigation'
 import { getLessonTiming, getMoscowDate } from '../scheduleFocus'
+import { isOnboardingDismissed } from '../onboardingDismissal'
 
 const MOSCOW_TIME_ZONE = 'Europe/Moscow'
 const PROFBUREAU_URL = 'https://vk.ru/profburo_ipmkn_tsu'
@@ -95,6 +97,10 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
     queryKey: ['onboarding'],
     queryFn: getOnboarding,
   })
+  const currentUser = useQuery({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+  })
   const primaryGroup = groups.data?.find((group) => group.is_primary)
   const tutors = useQuery({
     queryKey: ['tutors', primaryGroup?.id],
@@ -121,6 +127,9 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
     onboarding.data?.filter((step) => step.completed).length ?? 0
   const totalSteps = onboarding.data?.length ?? 0
   const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
+  const onboardingDismissed = currentUser.data
+    ? isOnboardingDismissed(currentUser.data.id)
+    : false
   const today = getMoscowDate(now)
   const upcomingLesson = getUpcomingLesson(schedule.data?.lessons ?? [], now)
   const upcomingIsToday = upcomingLesson?.date === today
@@ -151,8 +160,8 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
           role={primaryGroup ? 'button' : undefined}
           tabIndex={primaryGroup ? 0 : undefined}
         >
-          <img className="home-spotlight__logo" src={ipmknLogo} alt="" aria-hidden />
           <div className="home-spotlight__welcome">
+            <img className="home-spotlight__logo" src={ipmknLogo} alt="" aria-hidden />
             <Text className="home-spotlight__date">{formatHomeDate(today)}</Text>
             <Title level="1">{getGreeting(now)}</Title>
             {!primaryGroup && (
@@ -338,7 +347,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
           </div>
         </section>
 
-        {primaryGroup && nextStep && (
+        {primaryGroup && totalSteps > 0 && !onboardingDismissed && (
           <button
             type="button"
             className="home-progress-card"
@@ -352,7 +361,11 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
               <span style={{ width: `${progress}%` }} />
             </span>
             <span className="home-progress-card__next">
-              <span><small>Следующий шаг</small><strong>{nextStep.title}</strong></span>
+              {nextStep ? (
+                <span><small>Следующий шаг</small><strong>{nextStep.title}</strong></span>
+              ) : (
+                <span><small>Все шаги выполнены</small><strong>Знакомство завершено</strong></span>
+              )}
               <Icon20ChevronRight aria-hidden />
             </span>
           </button>

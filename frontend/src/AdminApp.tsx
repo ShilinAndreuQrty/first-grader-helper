@@ -31,7 +31,7 @@ const sections = [
 
 export function AdminApp() {
   const [activeSection, setActiveSection] = useState<AdminSection>('events')
-  const colorScheme = useAppColorScheme()
+  const { colorScheme } = useAppColorScheme()
 
   return (
     <ConfigProvider colorScheme={colorScheme}>

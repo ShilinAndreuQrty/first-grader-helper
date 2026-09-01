@@ -1,4 +1,7 @@
 import {
+  Icon24Moon,
+  Icon24SunOutline,
+  Icon24CheckCircleOn,
   Icon28BookSpreadOutline,
   Icon28HelpCircleOutline,
   Icon28PrivacyOutline,
@@ -15,12 +18,14 @@ import {
   Panel,
   PanelHeader,
   PanelHeaderBack,
+  PanelHeaderButton,
   SimpleCell,
 } from '@vkontakte/vkui'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
 import { useEffect, useState } from 'react'
 
 import { getCurrentUser } from '../api/auth'
+import { getOnboarding } from '../api/onboarding'
 import { ApiError } from '../api/client'
 import { saveGroupByCode } from '../api/schedule'
 import {
@@ -37,8 +42,17 @@ import { getPlatformAvatarUrl } from '../platform'
 import { PANEL_PATHS } from '../router'
 import { getMoreReturnPath } from '../navigation'
 import { VkAvatar } from '../components/VkAvatar'
+import type { AppColorScheme } from '../theme'
 
-export function MorePanel({ id = 'more' }: { id?: string }) {
+export function MorePanel({
+  id = 'more',
+  colorScheme,
+  onToggleColorScheme,
+}: {
+  id?: string
+  colorScheme: AppColorScheme
+  onToggleColorScheme: () => void
+}) {
   const navigator = useRouteNavigator()
   const queryClient = useQueryClient()
   const [editingPrimary, setEditingPrimary] = useState(false)
@@ -65,6 +79,13 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] })
     },
   })
+  const onboarding = useQuery({
+    queryKey: ['onboarding'],
+    queryFn: getOnboarding,
+  })
+  const onboardingFinished = Boolean(
+    onboarding.data?.length && onboarding.data.every((step) => step.completed),
+  )
   useEffect(() => {
     const target = sessionStorage.getItem('ipmkn.moreTarget')
     if (!target) return
@@ -85,6 +106,18 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
             aria-label="Назад"
             onClick={() => void navigator.push(getMoreReturnPath())}
           />
+        }
+        after={
+          <PanelHeaderButton
+            aria-label={
+              colorScheme === 'dark'
+                ? 'Включить светлую тему'
+                : 'Включить тёмную тему'
+            }
+            onClick={onToggleColorScheme}
+          >
+            {colorScheme === 'dark' ? <Icon24SunOutline /> : <Icon24Moon />}
+          </PanelHeaderButton>
         }
       >
         Ещё
@@ -111,6 +144,17 @@ export function MorePanel({ id = 'more' }: { id?: string }) {
           >
             {currentUser.data.display_name || 'Пользователь VK'}
           </SimpleCell>
+        )}
+        {onboardingFinished && (
+          <div className="profile-achievement">
+            <span className="profile-achievement__icon" aria-hidden>
+              <Icon24CheckCircleOn />
+            </span>
+            <span>
+              <strong>База собрана</strong>
+              <small>Знакомство с приложением пройдено</small>
+            </span>
+          </div>
         )}
       </Group>
       <Group header={<Header>Моя группа</Header>}>
