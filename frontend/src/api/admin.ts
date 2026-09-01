@@ -91,7 +91,3 @@ export function updateEvent({
 export function deleteEvent(id: string): Promise<void> {
   return apiRequest(`/admin/events/${id}`, { method: 'DELETE' })
 }
-
-export function resetMyDemoData(): Promise<void> {
-  return apiRequest('/admin/demo/reset-me', { method: 'POST' })
-}

@@ -2,6 +2,17 @@ import { CampusBuilding } from './api/campus'
 
 const MAP_TARGET_KEY = 'ipmkn.mapTargetRoom'
 
+export function formatRoomLocation(
+  buildingSlug: string,
+  roomNumber: string,
+  floor: string,
+): string {
+  if (buildingSlug === 'building-9') return `9 корпус, ${floor} этаж`
+  if (roomNumber === '001') return roomNumber
+  if (buildingSlug === 'main') return `Гл.-${roomNumber}`
+  return roomNumber
+}
+
 export function normalizeCampusLocation(value: string): string {
   return value
     .normalize('NFKC')
@@ -45,7 +56,11 @@ export function buildingMatchesQuery(
       building.short_name,
       building.building_number,
       building.address,
-      ...building.rooms.flatMap((room) => [room.room_number, room.title]),
+      ...building.rooms.flatMap((room) => [
+        room.room_number,
+        room.title,
+        room.directions,
+      ]),
     ].join(' '),
   )
   return (

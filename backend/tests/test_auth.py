@@ -57,6 +57,8 @@ def auth_client(tmp_path: Path) -> Iterator[TestClient]:
         app_env="test",
         app_secret_key=TEST_APP_SECRET,
         database_url=f"sqlite+aiosqlite:///{tmp_path / 'auth.sqlite3'}",
+        cookie_secure=False,
+        cookie_samesite="lax",
         dev_auth_enabled=True,
         vk_app_id="42",
         vk_app_secret=TEST_SIGNING_KEY,
@@ -330,56 +332,6 @@ def test_admin_can_manage_event_and_see_registration(auth_client: TestClient) ->
     )
     assert deleted.status_code == 204
     assert auth_client.get("/api/admin/events").json() == []
-
-
-def test_demo_reset_preserves_admin_and_created_events(auth_client: TestClient) -> None:
-    auth = auth_client.post(
-        "/api/auth/dev",
-        json={
-            "vk_user_id": 81,
-            "display_name": "Demo admin",
-            "profile": "superadmin",
-            "app_variant": "admin",
-        },
-    )
-    csrf = auth.json()["csrf_token"]
-    payload = {
-        "title": "Событие для презентации",
-        "description": "",
-        "event_type": "other",
-        "starts_at": "2030-09-02T15:00:00Z",
-        "ends_at": "2030-09-02T16:30:00Z",
-        "location": "Главный корпус",
-        "organizer": "ИПМКН",
-        "external_url": None,
-        "status": "published",
-        "occurrence_status": "scheduled",
-        "is_confirmed": True,
-    }
-    created = auth_client.post(
-        "/api/admin/events",
-        json=payload,
-        headers={"X-CSRF-Token": csrf},
-    )
-    event_id = created.json()["id"]
-    subscribed = auth_client.post(
-        "/api/event-subscriptions",
-        json={"event_id": event_id},
-        headers={"X-CSRF-Token": csrf},
-    )
-    assert subscribed.status_code == 201
-
-    reset = auth_client.post(
-        "/api/admin/demo/reset-me",
-        headers={"X-CSRF-Token": csrf},
-    )
-    assert reset.status_code == 204
-    assert auth_client.get("/api/auth/me").json()["roles"] == ["superadmin"]
-    assert auth_client.get("/api/me/event-subscriptions").json() == []
-    events = auth_client.get("/api/admin/events").json()
-    assert len(events) == 1
-    assert events[0]["id"] == event_id
-    assert events[0]["registration_count"] == 0
 
 
 def test_vk_auth_rejects_profile_from_another_user(auth_client: TestClient) -> None:

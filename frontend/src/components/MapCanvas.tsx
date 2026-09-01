@@ -10,6 +10,28 @@ const MAP_KEY = import.meta.env.VITE_DGIS_MAPGL_KEY
 const FLOORS_LOADER_URL = 'https://floors-widget.api.2gis.ru/loader.js'
 const FLOORS_INIT_TIMEOUT_MS = 10_000
 
+// The classic 2GIS widget accepts organization ids, while some campus links
+// point to building ids. This verified match keeps the corresponding keyless
+// campus point on its exact organization card.
+const DGIS_WIDGET_ORGANIZATIONS: Record<string, string> = {
+  '70030076867233638': '5067533128372225',
+}
+
+function getWidgetUrl(building: CampusBuilding): string {
+  const organizationId =
+    DGIS_WIDGET_ORGANIZATIONS[building.dgis_object_id] ?? building.dgis_object_id
+  const options = {
+    pos: {
+      lat: building.latitude,
+      lon: building.longitude,
+      zoom: 17,
+    },
+    opt: { city: 'tula' },
+    org: organizationId,
+  }
+  return `https://widgets.2gis.com/widget?type=firmsonmap&options=${encodeURIComponent(JSON.stringify(options))}`
+}
+
 interface MapInstance {
   destroy: () => void
 }
@@ -87,7 +109,7 @@ function fallbackMessage(mode: MapMode): string {
   if (mode === 'missing-coordinates') {
     return 'Для этого объекта нет координат или этажей. Используйте прямую страницу объекта в 2ГИС.'
   }
-  return 'Ключ MapGL не настроен. Используйте прямую страницу объекта в 2ГИС.'
+  return 'Для этого здания 2ГИС не предоставляет встраиваемую карточку. Откройте точную метку по кнопке ниже.'
 }
 
 export function MapCanvas({ building }: { building: CampusBuilding }) {
@@ -169,6 +191,20 @@ export function MapCanvas({ building }: { building: CampusBuilding }) {
       mapContainer.replaceChildren()
     }
   }, [building, mode])
+
+  if (mode === 'widget') {
+    return (
+      <div className="map-shell">
+        <iframe
+          className="map-canvas"
+          src={getWidgetUrl(building)}
+          title={`Карта 2ГИС: ${building.short_name}`}
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+    )
+  }
 
   if (mode !== 'floors' && mode !== 'mapgl') {
     return <div className="map-fallback">{fallbackMessage(mode)}</div>

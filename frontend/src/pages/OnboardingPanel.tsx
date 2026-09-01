@@ -1,11 +1,10 @@
 import {
   Icon20ChevronRight,
   Icon24CheckCircleOn,
-  Icon24DoorArrowRightOutline,
-  Icon24InfoCircleOutline,
   Icon24ChainOutline,
   Icon24PlaceOutline,
-  Icon24Users3Outline,
+  Icon24CalendarOutline,
+  Icon24EducationOutline,
 } from '@vkontakte/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router'
@@ -29,12 +28,11 @@ import {
 import { PANEL_PATHS } from '../router'
 
 const STEP_ICONS: Record<string, ReactNode> = {
-  'find-tutor': <Icon24Users3Outline />,
-  'get-pass': <Icon24DoorArrowRightOutline />,
-  'find-office': <Icon24PlaceOutline />,
-  'learn-union': <Icon24InfoCircleOutline />,
-  'check-events': <Icon24CheckCircleOn />,
-  'save-links': <Icon24ChainOutline />,
+  'choose-group': <Icon24EducationOutline />,
+  'open-schedule': <Icon24CalendarOutline />,
+  'explore-map': <Icon24PlaceOutline />,
+  'open-events': <Icon24CalendarOutline />,
+  'open-resources': <Icon24ChainOutline />,
 }
 
 export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
@@ -84,7 +82,7 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
           />
         }
       >
-        Маршрут первака
+        Знакомство с приложением
       </PanelHeader>
       <Div className="onboarding-page">
         {isFinished ? (
@@ -94,7 +92,7 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
             </span>
             <Title level="1">База собрана!</Title>
             <Text>
-              Вы разобрались с основными вещами. Маршрут больше не будет
+              Вы посмотрели основные разделы. Чек-лист больше не будет
               занимать место на главной, но сюда всегда можно вернуться.
             </Text>
             <Button size="l" onClick={() => void navigator.push(PANEL_PATHS.home)}>
@@ -106,10 +104,10 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
             <section className="onboarding-hero">
               <div className="onboarding-hero__copy">
                 <Text className="eyebrow">Короткий чек-лист</Text>
-                <Title level="1">Освоиться в ИПМКН</Title>
+                <Title level="1">Пять полезных разделов</Title>
                 <Text>
-                  Только то, что пригодится в первые недели. Отмечайте
-                  сделанное — прогресс сохранится автоматически.
+                  Быстро пройдитесь по возможностям приложения. Отмечайте
+                  просмотренное — прогресс сохранится автоматически.
                 </Text>
               </div>
               <div
@@ -122,7 +120,7 @@ export function OnboardingPanel({ id = 'onboarding' }: { id?: string }) {
               </div>
             </section>
 
-            <section className="onboarding-checklist" aria-label="Шаги маршрута">
+            <section className="onboarding-checklist" aria-label="Знакомство с приложением">
               {steps.data?.map((step, index) => (
                 <article
                   key={step.id}

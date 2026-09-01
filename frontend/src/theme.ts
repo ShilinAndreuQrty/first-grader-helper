@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 export type AppColorScheme = 'light' | 'dark'
 
 export function resolveAppColorScheme(
@@ -21,3 +23,23 @@ export function applyAppTheme(colorScheme: AppColorScheme): void {
 }
 
 export const appColorScheme = resolveAppColorScheme()
+
+export function useAppColorScheme(): AppColorScheme {
+  const [colorScheme, setColorScheme] = useState(resolveAppColorScheme)
+
+  useEffect(() => {
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+    const launchScheme = new URLSearchParams(window.location.search).get(
+      'vk_color_scheme',
+    )
+
+    applyAppTheme(colorScheme)
+    if (launchScheme || !media) return
+
+    const handleChange = () => setColorScheme(media.matches ? 'dark' : 'light')
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [colorScheme])
+
+  return colorScheme
+}

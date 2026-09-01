@@ -3,6 +3,7 @@ import { RouterProvider, createHashRouter } from '@vkontakte/vk-mini-apps-router
 import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 
+import { formatRoomLocation } from '../campusLocation'
 import { MapPanel } from './MapPanel'
 
 describe('MapPanel', () => {
@@ -92,8 +93,16 @@ describe('MapPanel', () => {
     expect(screen.getByText('Часто нужные кабинеты').closest('details')).not.toHaveAttribute('open')
     screen.getByText('Часто нужные кабинеты').click()
     expect(screen.getByText('Дирекция ИПМКН')).toBeInTheDocument()
-    expect(screen.getByText('Гл-123 и Гл-125')).toBeInTheDocument()
+    expect(screen.getByText('Гл.-123 и Гл.-125')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Открыть в 2ГИС' })).toBeEnabled()
     vi.restoreAllMocks()
+  })
+
+  it('formats important room locations without inventing a main-building prefix', () => {
+    expect(formatRoomLocation('main', '123', '1')).toBe('Гл.-123')
+    expect(formatRoomLocation('main', '001', '0')).toBe('001')
+    expect(formatRoomLocation('building-9', '4', '4')).toBe(
+      '9 корпус, 4 этаж',
+    )
   })
 })

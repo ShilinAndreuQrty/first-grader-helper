@@ -22,7 +22,7 @@ class ResourceSeed:
 
 @dataclass(frozen=True)
 class TutorSeed:
-    group_code: str
+    group_codes: tuple[str, ...]
     full_name: str
     vk_url: str
     description: str
@@ -30,10 +30,64 @@ class TutorSeed:
 
 TUTOR_SEED = (
     TutorSeed(
-        group_code="221451",
+        group_codes=("230761", "230063-07"),
+        full_name="Алина Атавина",
+        vk_url="https://vk.ru/savmu101",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("220661", "220063-06", "222261"),
+        full_name="Артем Дикарев",
+        vk_url="https://vk.ru/v1tiligo",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("220061-05", "220561"),
+        full_name="Андрей Левченко",
+        vk_url="https://vk.ru/id757657602",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("221661", "220061-16"),
+        full_name="Алексей Мешавкин",
+        vk_url="https://vk.ru/bobikalex",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("220662",),
+        full_name="Karina Molostova",
+        vk_url="https://vk.ru/molkarden",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("222262", "220063-22"),
+        full_name="Анна Ратахина",
+        vk_url="https://vk.ru/ratushkaa",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("221161", "220062-11", "221162"),
+        full_name="Никита Рыженков",
+        vk_url="https://vk.ru/jooral",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("221461", "220061-14"),
         full_name="Андрей Шилин",
         vk_url="https://vk.ru/shilin_qrty",
-        description="Наставник группы 221451",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("221361", "220062-13"),
+        full_name="Катя Юрченко",
+        vk_url="https://vk.ru/id873303008",
+        description="Контакт тьютора вашей группы",
+    ),
+    TutorSeed(
+        group_codes=("221561", "220063-15", "221562"),
+        full_name="Ксения Якунина",
+        vk_url="https://vk.ru/ksenia1115",
+        description="Контакт тьютора вашей группы",
     ),
 )
 
@@ -222,23 +276,16 @@ async def seed_resources() -> dict[str, int]:
 
 
 async def seed_tutors() -> dict[str, int]:
-    counters = {"groups_created": 0, "tutors_created": 0, "links_created": 0}
+    counters = {
+        "groups_created": 0,
+        "tutors_created": 0,
+        "links_created": 0,
+        "links_removed": 0,
+    }
     async with SessionFactory() as db:
+        desired_links: set[tuple[str, str]] = set()
+        seeded_tutor_ids: list[str] = []
         for item in TUTOR_SEED:
-            group = await db.scalar(
-                select(StudentGroup).where(
-                    StudentGroup.normalized_code == item.group_code
-                )
-            )
-            if group is None:
-                group = StudentGroup(
-                    code=item.group_code,
-                    normalized_code=item.group_code,
-                )
-                db.add(group)
-                await db.flush()
-                counters["groups_created"] += 1
-
             tutor = await db.scalar(
                 select(Tutor).where(Tutor.vk_url == item.vk_url)
             )
@@ -256,14 +303,45 @@ async def seed_tutors() -> dict[str, int]:
             tutor.description = item.description
             tutor.status = "published"
             tutor.deleted_at = None
+            seeded_tutor_ids.append(tutor.id)
 
-            association = await db.get(
-                GroupTutor,
-                {"group_id": group.id, "tutor_id": tutor.id},
-            )
-            if association is None:
-                db.add(GroupTutor(group_id=group.id, tutor_id=tutor.id))
-                counters["links_created"] += 1
+            for group_code in item.group_codes:
+                group = await db.scalar(
+                    select(StudentGroup).where(
+                        StudentGroup.normalized_code == group_code
+                    )
+                )
+                if group is None:
+                    group = StudentGroup(
+                        code=group_code,
+                        normalized_code=group_code,
+                    )
+                    db.add(group)
+                    await db.flush()
+                    counters["groups_created"] += 1
+
+                desired_links.add((group.id, tutor.id))
+                association = await db.get(
+                    GroupTutor,
+                    {"group_id": group.id, "tutor_id": tutor.id},
+                )
+                if association is None:
+                    db.add(GroupTutor(group_id=group.id, tutor_id=tutor.id))
+                    counters["links_created"] += 1
+
+        existing_links = list(
+            (
+                await db.scalars(
+                    select(GroupTutor).where(
+                        GroupTutor.tutor_id.in_(seeded_tutor_ids)
+                    )
+                )
+            ).all()
+        )
+        for association in existing_links:
+            if (association.group_id, association.tutor_id) not in desired_links:
+                await db.delete(association)
+                counters["links_removed"] += 1
         await db.commit()
     return counters
 

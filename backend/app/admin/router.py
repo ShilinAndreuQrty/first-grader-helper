@@ -6,7 +6,7 @@ from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.schemas import (
@@ -33,18 +33,13 @@ from app.models import (
     EventSubscription,
     FaqEntry,
     FaqEntryVersion,
-    FaqFeedback,
     IssueReport,
-    NotificationDelivery,
-    NotificationJob,
-    NotificationPreference,
     OnboardingStep,
     ResourceCategory,
     ResourceLink,
     StudentGroup,
     User,
     UserGroupBookmark,
-    UserOnboardingProgress,
     UserSession,
     new_id,
     utc_now,
@@ -283,44 +278,6 @@ async def admin_feedback(_: AdminUser, db: Db) -> list[AdminFeedbackRead]:
         )
         for feedback, user in rows
     ]
-
-
-@router.post("/demo/reset-me", status_code=status.HTTP_204_NO_CONTENT)
-async def reset_current_admin_demo_data(
-    actor: AdminUser,
-    _: CsrfSession,
-    db: Db,
-) -> None:
-    notification_job_ids = select(NotificationJob.id).where(
-        NotificationJob.user_id == actor.id
-    )
-    await db.execute(
-        delete(NotificationDelivery).where(
-            NotificationDelivery.job_id.in_(notification_job_ids)
-        )
-    )
-    for model in (
-        NotificationJob,
-        EventSubscription,
-        NotificationPreference,
-        UserOnboardingProgress,
-        UserGroupBookmark,
-        FaqFeedback,
-    ):
-        await db.execute(delete(model).where(model.user_id == actor.id))
-    await db.execute(
-        update(IssueReport)
-        .where(IssueReport.user_id == actor.id)
-        .values(user_id=None)
-    )
-    add_audit(
-        db,
-        actor,
-        "reset_demo_data",
-        actor,
-        details={"preserved": ["account", "roles", "sessions", "events"]},
-    )
-    await db.commit()
 
 
 @router.get("/faq", response_model=list[FaqAdminRead])

@@ -55,6 +55,8 @@ def test_resource_catalog_has_stable_contextual_metadata() -> None:
 
 
 def test_tutor_seed_has_unique_published_profiles() -> None:
-    assert len({item.group_code for item in TUTOR_SEED}) == len(TUTOR_SEED)
     assert len({item.vk_url for item in TUTOR_SEED}) == len(TUTOR_SEED)
+    group_codes = [group_code for item in TUTOR_SEED for group_code in item.group_codes]
+    assert len(group_codes) == 22
+    assert len(set(group_codes)) == len(group_codes)
     assert all(item.vk_url.startswith("https://vk.ru/") for item in TUTOR_SEED)

@@ -217,13 +217,19 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
                   </small>
                   <strong>{upcomingLesson.subject}</strong>
                   <span className="home-spotlight__meta">
-                    <Icon20ClockOutline aria-hidden />
-                    {[
-                      !upcomingIsToday && formatHomeDate(upcomingLesson.date),
-                      upcomingLesson.time,
-                      formatLessonType(upcomingLesson.lesson_type),
-                      upcomingLesson.room,
-                    ].filter(Boolean).join(' · ')}
+                    <span className="home-spotlight__meta-row">
+                      <Icon20ClockOutline aria-hidden />
+                      {[
+                        !upcomingIsToday && formatHomeDate(upcomingLesson.date),
+                        upcomingLesson.time,
+                      ].filter(Boolean).join(' · ')}
+                    </span>
+                    <span className="home-spotlight__meta-row">
+                      {[
+                        formatLessonType(upcomingLesson.lesson_type),
+                        upcomingLesson.room,
+                      ].filter(Boolean).join(' · ')}
+                    </span>
                   </span>
                 </span>
                 {lessonTiming.isInProgress && (
@@ -321,7 +327,7 @@ export function HomePanel({ id = 'home' }: { id?: string }) {
             onClick={() => void navigator.push(PANEL_PATHS.onboarding)}
           >
             <span className="home-progress-card__topline">
-              <strong>Маршрут первокурсника</strong>
+              <strong>Знакомство с приложением</strong>
               <small>{completedSteps} из {totalSteps}</small>
             </span>
             <span className="home-progress-card__track" aria-hidden>

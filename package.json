@@ -1,7 +1,7 @@
 {
   "name": "first-grader-helper",
   "private": true,
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.19.0",
   "scripts": {
     "frontend:dev": "pnpm --filter frontend dev",
     "frontend:build": "pnpm --filter frontend build",

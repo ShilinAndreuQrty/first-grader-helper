@@ -18,7 +18,7 @@ import { OnboardingPanel } from './pages/OnboardingPanel'
 import { SchedulePanel } from './pages/SchedulePanel'
 import { SettingsPanel } from './pages/SettingsPanel'
 import { ResourcesPanel } from './pages/ResourcesPanel'
-import { appColorScheme } from './theme'
+import { useAppColorScheme } from './theme'
 
 const MapPanel = lazy(() =>
   import('./pages/MapPanel').then((module) => ({
@@ -36,9 +36,10 @@ function LazyMapPanel({ id }: { id: string }) {
 
 export function App() {
   const { panel = 'home' } = useActiveVkuiLocation()
+  const colorScheme = useAppColorScheme()
 
   return (
-    <ConfigProvider colorScheme={appColorScheme}>
+    <ConfigProvider colorScheme={colorScheme}>
       <AdaptivityProvider>
         <AppRoot>
           <Epic

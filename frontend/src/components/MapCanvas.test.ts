@@ -34,7 +34,17 @@ describe('resolveMapMode', () => {
     expect(resolveMapMode(withoutFloors, true, 'public-browser-key')).toBe(
       'mapgl',
     )
-    expect(resolveMapMode(withoutFloors, true, '')).toBe('missing-key')
+    expect(
+      resolveMapMode(
+        {
+          ...withoutFloors,
+          dgis_url: 'https://2gis.ru/tula/firm/5067533128372221',
+        },
+        true,
+        '',
+      ),
+    ).toBe('widget')
+    expect(resolveMapMode(withoutFloors, true, '')).toBe('missing-embed')
     expect(
       resolveMapMode(
         { ...withoutFloors, latitude: null, longitude: null },

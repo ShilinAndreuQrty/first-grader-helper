@@ -22,11 +22,10 @@ import {
 import { useMemo, useState } from 'react'
 
 import { getCampusBuildings } from '../api/campus'
-import { getSchedule } from '../api/schedule'
-import { getMyGroups } from '../api/students'
 import {
   buildingMatchesQuery,
   consumeMapTargetRoom,
+  formatRoomLocation,
   matchBuildingByLocation,
 } from '../campusLocation'
 import { AppPanelHeader } from '../components/AppPanelHeader'
@@ -44,28 +43,6 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
     queryKey: ['campus'],
     queryFn: () => getCampusBuildings(),
   })
-  const savedGroups = useQuery({
-    queryKey: ['my-groups'],
-    queryFn: getMyGroups,
-  })
-  const primaryGroup = savedGroups.data?.find((group) => group.is_primary)
-  const schedule = useQuery({
-    queryKey: ['schedule', primaryGroup?.code],
-    queryFn: () => getSchedule(primaryGroup!.code),
-    enabled: Boolean(primaryGroup),
-  })
-
-  const pinnedIds = useMemo(() => {
-    const result: string[] = []
-    for (const lesson of schedule.data?.lessons ?? []) {
-      const building = matchBuildingByLocation(
-        lesson.room,
-        buildings.data ?? [],
-      )
-      if (building && !result.includes(building.id)) result.push(building.id)
-    }
-    return result
-  }, [buildings.data, schedule.data])
   const academicBuildings = useMemo(
     () =>
       (buildings.data ?? []).filter(
@@ -83,16 +60,11 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
   const sortedBuildings = useMemo(
     () =>
       [...academicBuildings].sort((left, right) => {
-        const leftPin = pinnedIds.indexOf(left.id)
-        const rightPin = pinnedIds.indexOf(right.id)
-        if (leftPin >= 0 || rightPin >= 0) {
-          if (leftPin < 0) return 1
-          if (rightPin < 0) return -1
-          return leftPin - rightPin
-        }
+        if (left.complex_slug === 'main-9' && right.complex_slug !== 'main-9') return -1
+        if (right.complex_slug === 'main-9' && left.complex_slug !== 'main-9') return 1
         return left.sort_order - right.sort_order
       }),
-    [academicBuildings, pinnedIds],
+    [academicBuildings],
   )
   const filteredLocations = useMemo(
     () =>
@@ -135,6 +107,7 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
         title: string
         floor: string
         roomNumbers: string[]
+        directions: string[]
       }
     >()
     for (const building of academicBuildings) {
@@ -143,12 +116,16 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
         const existing = grouped.get(key)
         if (existing) {
           existing.roomNumbers.push(room.room_number)
+          if (room.directions && !existing.directions.includes(room.directions)) {
+            existing.directions.push(room.directions)
+          }
         } else {
           grouped.set(key, {
             building,
             title: room.title,
             floor: room.floor,
             roomNumbers: [room.room_number],
+            directions: room.directions ? [room.directions] : [],
           })
         }
       }
@@ -246,10 +223,6 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
         {catalogBuildings.map((building) => {
           const isMainComplex = building.complex_slug === 'main-9'
           const isPinned = isMainComplex
-            ? academicBuildings.some(
-                (item) => item.complex_slug === 'main-9' && pinnedIds.includes(item.id),
-              )
-            : pinnedIds.includes(building.id)
           return (
             <SimpleCell
               key={building.id}
@@ -262,7 +235,7 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
                 isPinned ? (
                   <Icon20PinOutline
                     className="campus-pin"
-                    aria-label="Есть в расписании группы"
+                    aria-label="Закреплено"
                   />
                 ) : (
                   <Icon20PlaceOutline aria-hidden />
@@ -270,7 +243,7 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
               }
               subtitle={
                 isPinned
-                  ? `Есть в расписании выбранной группы · ${building.address}`
+                  ? `Закреплено · ${building.address}`
                   : building.address
               }
               onClick={() => {
@@ -322,12 +295,22 @@ export function MapPanel({ id = 'map' }: { id?: string }) {
           <Icon20ChevronRightOutline aria-hidden />
         </summary>
         <Group>
-        {importantRooms.map(({ building, title, floor, roomNumbers }) => (
+        {importantRooms.map(({
+          building,
+          title,
+          floor,
+          roomNumbers,
+          directions,
+        }) => (
           <SimpleCell
             key={`${building.id}:${title}`}
-            subtitle={`${building.short_name} · ${floor} этаж`}
+            subtitle={
+              directions.join(' · ') || `${building.short_name} · ${floor} этаж`
+            }
             indicator={roomNumbers
-              .map((roomNumber) => `Гл-${roomNumber}`)
+              .map((roomNumber) =>
+                formatRoomLocation(building.slug, roomNumber, floor),
+              )
               .join(' и ')}
             onClick={() => {
               setSearch('')

@@ -19,7 +19,7 @@ import {
   AdminFeedbackPanel,
   AdminUsersPanel,
 } from './pages/AdminPanel'
-import { appColorScheme } from './theme'
+import { useAppColorScheme } from './theme'
 
 type AdminSection = 'events' | 'users' | 'feedback'
 
@@ -31,9 +31,10 @@ const sections = [
 
 export function AdminApp() {
   const [activeSection, setActiveSection] = useState<AdminSection>('events')
+  const colorScheme = useAppColorScheme()
 
   return (
-    <ConfigProvider colorScheme={appColorScheme}>
+    <ConfigProvider colorScheme={colorScheme}>
       <AdaptivityProvider>
         <AppRoot>
           <Epic

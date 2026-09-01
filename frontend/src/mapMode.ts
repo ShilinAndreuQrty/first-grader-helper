@@ -4,8 +4,9 @@ export type MapMode =
   | 'disabled'
   | 'floors'
   | 'mapgl'
+  | 'widget'
   | 'missing-coordinates'
-  | 'missing-key'
+  | 'missing-embed'
 
 export function resolveMapMode(
   building: CampusBuilding,
@@ -17,6 +18,13 @@ export function resolveMapMode(
   if (building.latitude === null || building.longitude === null) {
     return 'missing-coordinates'
   }
-  if (!mapKey) return 'missing-key'
+  if (!mapKey) {
+    const hasOrganizationCard = building.dgis_url.includes('/firm/')
+    const hasKnownOrganizationMatch =
+      building.dgis_object_id === '70030076867233638'
+    return hasOrganizationCard || hasKnownOrganizationMatch
+      ? 'widget'
+      : 'missing-embed'
+  }
   return 'mapgl'
 }

@@ -36,7 +36,6 @@ import {
   getAdminEvents,
   getAdminFeedback,
   getAdminStudents,
-  resetMyDemoData,
   updateEvent,
 } from '../api/admin'
 import { ApiError } from '../api/client'
@@ -407,7 +406,6 @@ export function AdminEventsPanel({ id = 'events' }: { id?: string }) {
 }
 
 export function AdminUsersPanel({ id = 'users' }: { id?: string }) {
-  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const dashboard = useQuery({
     queryKey: ['admin-dashboard'],
@@ -418,16 +416,6 @@ export function AdminUsersPanel({ id = 'users' }: { id?: string }) {
     queryKey: ['admin-users'],
     queryFn: getAdminStudents,
     retry: false,
-  })
-  const resetDemo = useMutation({
-    mutationFn: resetMyDemoData,
-    onSuccess: () => {
-      sessionStorage.removeItem('ipmkn.assistant-history-v1')
-      sessionStorage.removeItem('ipmkn.assistant-session')
-      sessionStorage.removeItem('ipmkn.mapTargetRoom')
-      sessionStorage.removeItem('ipmkn.moreTarget')
-      void queryClient.invalidateQueries()
-    },
   })
   const filteredUsers = useMemo(() => {
     const value = search.trim().toLocaleLowerCase('ru-RU')
@@ -499,26 +487,6 @@ export function AdminUsersPanel({ id = 'users' }: { id?: string }) {
             ))}
           </Group>
 
-          <Group header={<Header>Демо-данные</Header>}>
-            <Banner
-              title="Начать презентацию с чистого листа"
-              subtitle="Сбросит только ваши группы, маршрут первокурсника, регистрации и настройки. Админ-доступ и события останутся."
-              actions={
-                <Button
-                  appearance="negative"
-                  loading={resetDemo.isPending}
-                  onClick={() => {
-                    if (window.confirm('Сбросить ваши пользовательские данные для демонстрации?')) {
-                      resetDemo.mutate()
-                    }
-                  }}
-                >
-                  Сбросить мои данные
-                </Button>
-              }
-            />
-            {resetDemo.isError && <Banner title="Не удалось выполнить сброс" subtitle="Попробуйте ещё раз." />}
-          </Group>
         </>
       )}
     </Panel>

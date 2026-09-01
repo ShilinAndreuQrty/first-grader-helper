@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.db import SessionFactory
 from app.models import CampusBuilding, CampusRoom
 
-CHECKED_AT = datetime(2026, 7, 29, tzinfo=UTC)
+CHECKED_AT = datetime(2026, 9, 1, tzinfo=UTC)
 
 
 class BuildingSeed(TypedDict):
@@ -32,9 +32,16 @@ class BuildingSeed(TypedDict):
     sort_order: int
 
 
+class RoomSeed(TypedDict):
+    room_number: str
+    title: str
+    floor: str
+    directions: str
+
+
 # Every row is backed by both the official Tulsu campus page and a direct
-# public 2GIS object page. Missing coordinates stay null instead of being
-# reconstructed from screenshots or undocumented endpoints.
+# public 2GIS object page. Coordinates come from the visible route links in
+# those 2GIS cards.
 BUILDINGS: list[BuildingSeed] = [
     {
         "slug": "main",
@@ -66,8 +73,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "5067533128372221",
         "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/2",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.172968",
+        "longitude": "37.596290",
         "sort_order": 1,
     },
     {
@@ -100,8 +107,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "70000001096985234",
         "dgis_complex_id": "70000001096985234",
         "source_url": "https://tulsu.ru/facilities/academic-building/10",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.171589",
+        "longitude": "37.589311",
         "sort_order": 3,
     },
     {
@@ -117,8 +124,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "5067533128372217",
         "dgis_complex_id": "5067533128372217",
         "source_url": "https://tulsu.ru/facilities/academic-building/12",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.173325",
+        "longitude": "37.591994",
         "sort_order": 5,
     },
     {
@@ -134,8 +141,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "5067533128433198",
         "dgis_complex_id": "5067533128433198",
         "source_url": "https://tulsu.ru/facilities/academic-building/13",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.167928",
+        "longitude": "37.588873",
         "sort_order": 6,
     },
     {
@@ -151,8 +158,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "70000001067025114",
         "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/16",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.167518",
+        "longitude": "37.588360",
         "sort_order": 8,
     },
     {
@@ -205,8 +212,8 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "5067533128433192",
         "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/3",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.167809",
+        "longitude": "37.586927",
         "sort_order": 11,
     },
     {
@@ -239,11 +246,78 @@ BUILDINGS: list[BuildingSeed] = [
         "dgis_object_id": "5067185235967331",
         "dgis_complex_id": None,
         "source_url": "https://tulsu.ru/facilities/academic-building/14",
-        "latitude": None,
-        "longitude": None,
+        "latitude": "54.168529",
+        "longitude": "37.587819",
         "sort_order": 20,
     },
 ]
+
+ROOMS_BY_BUILDING: dict[str, tuple[RoomSeed, ...]] = {
+    "main": (
+        {
+            "room_number": "425",
+            "title": "Дирекция ИПМКН",
+            "floor": "4",
+            "directions": "",
+        },
+        {
+            "room_number": "123",
+            "title": "Профком",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "125",
+            "title": "Профком",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "111",
+            "title": "Отдел стипендий",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "124",
+            "title": "Архив",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "133",
+            "title": "Библиотека",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "133а",
+            "title": "Студенческое пространство",
+            "floor": "1",
+            "directions": "",
+        },
+        {
+            "room_number": "001",
+            "title": "Студенческий офис",
+            "floor": "0",
+            "directions": "Переход между 9-м и главным корпусами",
+        },
+        {
+            "room_number": "229",
+            "title": "Отдел кадров",
+            "floor": "2",
+            "directions": "Направо — сектор студентов",
+        },
+    ),
+    "building-9": (
+        {
+            "room_number": "4",
+            "title": "Фойе актового зала",
+            "floor": "4",
+            "directions": "",
+        },
+    ),
+}
 
 DORMITORIES: list[BuildingSeed] = [
     {
@@ -499,31 +573,30 @@ async def seed_campus() -> dict[str, int]:
             building.deleted_at = None
             await db.flush()
 
-            if data["slug"] == "main":
-                for room_number, title, floor in (
-                    ("425", "Дирекция ИПМКН", "4"),
-                    ("123", "Профком", "1"),
-                    ("125", "Профком", "1"),
-                ):
-                    room = await db.scalar(
-                        select(CampusRoom).where(
-                            CampusRoom.building_id == building.id,
-                            CampusRoom.room_number == room_number,
-                        )
+            for room_data in ROOMS_BY_BUILDING.get(data["slug"], ()):
+                room_number = room_data["room_number"]
+                title = room_data["title"]
+                floor = room_data["floor"]
+                directions = room_data["directions"]
+                room = await db.scalar(
+                    select(CampusRoom).where(
+                        CampusRoom.building_id == building.id,
+                        CampusRoom.room_number == room_number,
                     )
-                    if room is None:
-                        room = CampusRoom(
-                            building_id=building.id,
-                            room_number=room_number,
-                        )
-                        db.add(room)
-                        changed["rooms"] += 1
-                    room.title = title
-                    room.floor = floor
-                    room.directions = ""
-                    room.status = "published"
-                    room.verified_at = CHECKED_AT
-                    room.deleted_at = None
+                )
+                if room is None:
+                    room = CampusRoom(
+                        building_id=building.id,
+                        room_number=room_number,
+                    )
+                    db.add(room)
+                    changed["rooms"] += 1
+                room.title = title
+                room.floor = floor
+                room.directions = directions
+                room.status = "published"
+                room.verified_at = CHECKED_AT
+                room.deleted_at = None
         await db.commit()
     return changed
 

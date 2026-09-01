@@ -1,5 +1,5 @@
 from app.campus.schemas import BuildingRead
-from app.campus.seed import BUILDINGS, DORMITORIES
+from app.campus.seed import BUILDINGS, DORMITORIES, ROOMS_BY_BUILDING
 from app.campus.service import alias_matches_location
 
 
@@ -73,3 +73,25 @@ def test_official_dormitory_catalog_has_direct_2gis_cards() -> None:
         dormitory["latitude"] and dormitory["longitude"]
         for dormitory in DORMITORIES
     )
+
+
+def test_all_published_campus_locations_have_map_coordinates() -> None:
+    assert all(
+        location["latitude"] and location["longitude"]
+        for location in [*BUILDINGS, *DORMITORIES]
+    )
+
+
+def test_release_room_catalog_contains_requested_student_services() -> None:
+    main_rooms = {
+        room["room_number"]: (room["title"], room["directions"])
+        for room in ROOMS_BY_BUILDING["main"]
+    }
+
+    assert main_rooms["111"][0] == "Отдел стипендий"
+    assert main_rooms["124"][0] == "Архив"
+    assert main_rooms["133"][0] == "Библиотека"
+    assert main_rooms["133а"][0] == "Студенческое пространство"
+    assert "Переход между 9-м и главным корпусами" in main_rooms["001"][1]
+    assert "сектор студентов" in main_rooms["229"][1]
+    assert ROOMS_BY_BUILDING["building-9"][0]["title"] == "Фойе актового зала"

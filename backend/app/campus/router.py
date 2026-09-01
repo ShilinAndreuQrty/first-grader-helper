@@ -53,7 +53,9 @@ async def buildings(
                 room
                 for room in rooms
                 if normalized_query
-                in normalize_campus_query(f"{room.room_number} {room.title}")
+                in normalize_campus_query(
+                    f"{room.room_number} {room.title} {room.directions}"
+                )
             ]
             matches_alias = any(
                 alias_matches_location(query, alias) for alias in aliases
