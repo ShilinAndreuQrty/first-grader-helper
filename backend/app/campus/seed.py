@@ -112,6 +112,31 @@ BUILDINGS: list[BuildingSeed] = [
         "sort_order": 3,
     },
     {
+        "slug": "foc",
+        "name": "Физкультурно-оздоровительный центр ТулГУ",
+        "short_name": "ФОЦ",
+        "building_number": "ФОЦ",
+        "address": "Тула, проспект Ленина, 84 к1",
+        "entrance_hint": "",
+        "aliases": [
+            "фоц",
+            "физкультурно-оздоровительный центр",
+            "бассейн",
+            "спорткомплекс",
+        ],
+        "complex_slug": "",
+        "dgis_url": "https://2gis.ru/tula/firm/5067077861791631",
+        "dgis_object_id": "5067077861791631",
+        "dgis_complex_id": None,
+        "source_url": (
+            "https://tulsu.ru/faculty-landing/"
+            "institut-pedagogiki-fizicheskoy-kultury-sporta-i-turizma"
+        ),
+        "latitude": "54.171858",
+        "longitude": "37.592401",
+        "sort_order": 4,
+    },
+    {
         "slug": "building-5",
         "name": "Учебный корпус №5 ТулГУ",
         "short_name": "Корпус №5",

@@ -82,6 +82,18 @@ def test_all_published_campus_locations_have_map_coordinates() -> None:
     )
 
 
+def test_foc_has_a_searchable_direct_map_card() -> None:
+    foc = next(building for building in BUILDINGS if building["slug"] == "foc")
+
+    assert foc["short_name"] == "ФОЦ"
+    assert foc["address"] == "Тула, проспект Ленина, 84 к1"
+    assert foc["dgis_url"] == "https://2gis.ru/tula/firm/5067077861791631"
+    assert foc["latitude"] == "54.171858"
+    assert foc["longitude"] == "37.592401"
+    assert alias_matches_location("ФОЦ", "фоц")
+    assert alias_matches_location("ФОЦ бассейн", "фоц")
+
+
 def test_release_room_catalog_contains_requested_student_services() -> None:
     main_rooms = {
         room["room_number"]: (room["title"], room["directions"])
